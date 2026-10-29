@@ -1,0 +1,8 @@
+SVGs próprios para cada proposta Fixable.
+01: contornos técnicos arredondados e casa protegida.
+02: desenho angular, linhas finas e marca arquitetônica.
+03: curvas suaves, inspiração natural e casa-folha.
+04: traço editorial fino e marca em medalhão.
+05: geometria forte, traço robusto e casa com check.
+Cada pasta contém icones.svg (sprite), marca.svg e 12 ícones de serviços exportados.
+Os HTMLs incorporam os vetores para funcionar sem dependências.

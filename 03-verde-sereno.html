@@ -182,7 +182,7 @@ section{ position:relative; z-index:1; padding:96px 0; }
 .pkg-card h3{ font-size:1.2rem; }
 .pkg-price{ font-family:'Sora'; font-weight:700; color:hsl(var(--muted-foreground)); font-size:.95rem; margin:10px 0 16px; }
 .pkg-list{ list-style:none; display:flex; flex-direction:column; gap:8px; margin-bottom:22px; flex:1; font-size:.88rem; color:hsl(var(--muted-foreground)); }
-.pkg-list li::before{ content:"✓ "; color:hsl(var(--success)); font-weight:700; }
+.pkg-list li::before{ content:""; color:hsl(var(--success)); font-weight:700; }
 .pkg-featured{ border-color:hsl(var(--primary)); box-shadow:none; }
 
 /* professionals */
@@ -433,20 +433,40 @@ body{font-family:'Manrope',sans-serif}html{scroll-padding-top:100px}::selection{
 header#nav{background:#faf9f4;backdrop-filter:none}.nav-inner{height:90px}.wrap{max-width:1280px}h1,h2{font-family:'DM Serif Display',Georgia,serif;font-weight:400;letter-spacing:-.025em}.hero-copy h1{font-size:clamp(3.1rem,4.8vw,4.5rem);line-height:1.05}.hero-copy p{font-size:1rem;color:#53665a;margin-top:25px}.hero-grid{gap:72px;grid-template-columns:1fr 1fr}#hero{padding:64px 0 110px}.btn{border-radius:6px;padding:14px 24px;font-size:.83rem}.btn-primary{background:#2a4d3c;color:#fff}.btn-ghost{border-color:#b2beb0}.hero-img{border-radius:12px;aspect-ratio:1/1}.hero-img .house-photo{object-position:62%}.hero-data{background:#fff;border:0;left:22px;right:22px;bottom:-38px;border-radius:12px;padding:22px;box-shadow:0 14px 36px #2a4d3c16}.float-badge{background:#fff;border:0;top:20px;left:20px;border-radius:8px;font-size:0.75rem;box-shadow:none}.float-badge small{font-size:0.75rem}.hd-score{color:#746029}.section-head h2{font-size:clamp(2rem,3.8vw,3.1rem)}#problem,#packages,#solicitar{background:#eaf0e6}section{padding:90px 0}.card{border:0;background:#f9faf5;border-radius:12px}.card h3{font-family:'Manrope';font-weight:700}.card p{font-size:.89rem}.icon-badge{background:transparent;border-radius:0;width:28px;height:30px;color:#2a4d3c}.problem-highlight{background:none;color:#2a4d3c;border-radius:0;border-top:1px solid #bacab8;padding:32px 0 0;font-family:'DM Serif Display';font-weight:400;font-size:1.85rem}.step-num{border-radius:8px;background:#2a4d3c}.step h4{font-family:'Manrope'}.checkup-card{background:#fff;border:0;border-radius:12px}.checkup-row{border:0;background:#f1f4ed;border-radius:6px}.status-warning{background:#efe8d2;color:#705424}.status-priority{background:#f6e4df;color:#8a3a32}.status-ok{color:#245a3b;background:#e2eedf}.fixid-card{background:#eaf0e6;border:0;border-radius:12px}.fixid-tag{color:#36543f;background:#d7e2ce}.fixid-item .ic{background:transparent}.pkg-featured{background:#d5e3d0}.pkg-price{color:#53665a}.seal{border:0;background:#eaf0e6}.seal strong{color:#2a4d3c}#for-business{background:#2a4d3c}#for-business .btn-primary{background:#edf2da;color:#264234}.biz-panel{border-radius:12px}.form-wrap{background:#fff;border:0;border-radius:12px}.field input,.field textarea,.field select{background:#fafbf7;border-color:#b7c5b1;border-radius:6px}.field input:focus,.field textarea:focus,.field select:focus{outline-color:#2a4d3c}.pf-hero{background:#2a4d3c}footer{background:#233e32}.footer-grid a{color:#d0dbca}.footer-bottom{color:#bfcdba}#services .card{border:1px solid #d1dccb;background:transparent}.faq-q{font-family:'Manrope';font-weight:700}.faq-q .plus{color:#2a4d3c}.compare-dock{background:#233e32}.compare-dock a[aria-current]{background:#d5e3b9;color:#233e32}
 @media(max-width:960px){.hero-grid{grid-template-columns:1fr;gap:30px}.hero-copy h1{max-width:18ch}.hero-visual{max-width:680px;width:100%;margin:0 auto 30px}.hero-img{aspect-ratio:16/10}.hero-copy p{max-width:60ch}}
 @media(max-width:680px){#hero{padding-top:36px;padding-bottom:80px}.hero-copy h1{font-size:3.35rem}.hero-copy p{font-size:.93rem}.hero-ctas{margin-bottom:10px}.hero-ctas .btn{flex:1;font-size:.76rem;padding:12px 10px}.hero-img{aspect-ratio:1.1}.hero-data{left:12px;right:12px;bottom:-68px;padding:17px}.hero-visual{margin-bottom:65px}.section-head.center{text-align:left}.section-head h2{font-size:2.5rem}.float-badge{left:12px;top:12px}.checkup-wrap,.fixid-wrap,.pros-wrap,.biz-grid{gap:30px}}
-</style></head>
-<body>
+</style><style id="fixable-select-styles">:root{--fx-field-bg:#fafbf7;--fx-field-border:#b7c5b1;--fx-menu-bg:#fff;--fx-radius:6px;--fx-caret:#2a4d3c;}
+a[href],button,[role="button"],[role="combobox"],select,input[type="checkbox"],input[type="radio"],.chk,.chk *{cursor:pointer}
+button *,[role="button"] *,[role="combobox"] *{cursor:inherit}
+button:disabled,select:disabled,input[type="checkbox"]:disabled,input[type="radio"]:disabled,[aria-disabled="true"],.chk:has(input:disabled),.chk:has(input:disabled) *{cursor:not-allowed}
+.fx-select{position:relative;width:100%;min-width:0}
+select.fx-select-native{display:none!important}
+.fx-select-trigger{display:flex;align-items:center;justify-content:space-between;gap:16px;width:100%;min-width:0;min-height:46px;margin:0;padding:11px 13px;border:1px solid var(--fx-field-border,hsl(var(--border)));border-radius:var(--fx-radius,9px);background:var(--fx-field-bg,hsl(var(--card)));color:hsl(var(--foreground));font-family:inherit;font-size:1rem;font-weight:400;line-height:1.5;text-align:left;transition:border-color .16s,background .16s}
+.fx-select-value{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fx-select-trigger>svg{flex-shrink:0;color:var(--fx-caret,hsl(var(--muted-foreground)));transition:transform .16s}
+.fx-select-trigger[aria-expanded="true"]>svg{transform:rotate(180deg)}
+.fx-select-trigger[data-placeholder="true"] .fx-select-value{color:hsl(var(--muted-foreground))}
+.fx-select-trigger:hover:not(:disabled){border-color:hsl(var(--accent))}
+.fx-select-trigger:focus-visible,.fx-select-trigger[aria-expanded="true"]{outline:2px solid hsl(var(--accent));outline-offset:2px}
+.fx-select-trigger[aria-invalid="true"]{border-color:hsl(var(--destructive))}
+.fx-select-trigger:disabled{opacity:.55}
+.fx-select-menu{position:fixed;z-index:1000;box-sizing:border-box;padding:6px;overflow-y:auto;overscroll-behavior:contain;border:1px solid hsl(var(--border));border-radius:var(--fx-menu-radius,12px);background:var(--fx-menu-bg,hsl(var(--card)));color:hsl(var(--foreground));box-shadow:0 12px 30px #00000020;font-family:inherit;font-size:.9375rem;line-height:1.5;scrollbar-width:thin;scrollbar-color:hsl(var(--accent)) transparent}
+.fx-select-menu[hidden]{display:none!important}
+.fx-select-option{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:44px;padding:10px 12px;border-radius:var(--fx-option-radius,6px);cursor:pointer;user-select:none}
+.fx-select-option>svg{flex-shrink:0;opacity:0;color:var(--fx-caret,hsl(var(--accent)))}
+.fx-select-option[aria-selected="true"]{font-weight:600;background:color-mix(in srgb,hsl(var(--accent)) 12%,var(--fx-menu-bg,hsl(var(--card))))}
+.fx-select-option[aria-selected="true"]>svg{opacity:1}
+.fx-select-option.is-active{background:color-mix(in srgb,hsl(var(--accent)) 20%,var(--fx-menu-bg,hsl(var(--card))))}
+.fx-select-option[aria-disabled="true"]{opacity:.45;cursor:not-allowed}
+@media(max-width:680px){.fx-select-menu{font-size:1rem}.fx-select-option{min-height:46px}}
+@media(prefers-reduced-motion:reduce){.fx-select-trigger,.fx-select-trigger>svg{transition:none}}
+</style><style id="fixable-svg-styles">footer .fixable-mark{color:inherit!important}.fx-icon{display:inline-block;width:24px;height:24px;vertical-align:middle;flex-shrink:0}.icon-badge .fx-icon{width:26px;height:26px}.pros-list .fx-icon,.biz-feats .fx-icon,.pkg-list .fx-icon{width:18px;height:18px}.pkg-list li{display:flex;align-items:flex-start;gap:8px}.pkg-list li::before{content:none!important}.pkg-list .fx-icon{color:hsl(var(--success));margin-top:2px}.demo-banner{gap:9px}.demo-banner>.fx-icon{width:18px;height:18px}.social-row .fx-icon{width:20px;height:20px}.fixable-mark{display:block;flex-shrink:0}.form-success .ic .fx-icon{width:27px;height:27px}</style><style id="fixable-control-refinements">.chk input[type="checkbox"]{width:16px!important;min-width:16px!important;height:16px;margin:0;flex-shrink:0;accent-color:var(--fx-caret,hsl(var(--accent)))}</style></head>
+<body><svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute;overflow:hidden" aria-hidden="true"><defs><symbol id="fx3-electric" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2C9 5 6 9 4 13h7l-1 9c4-4 7-8 10-13h-7l1-7Z"/></symbol><symbol id="fx3-water" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3C10 8 6 10 6 15a6 6 0 0 0 12 0c0-5-4-7-6-12ZM9 15c0 2 1 3 3 3"/></symbol><symbol id="fx3-gas" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3c0 5 6 7 6 12a7 7 0 0 1-14 0c0-3 2-5 4-7 0 4 3 5 3 2l1-7Z"/></symbol><symbol id="fx3-climate" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h11c4 0 5-5 1-5-2 0-3 2-2 3M3 12h15c4 0 4 6 0 6-2 0-3-2-2-3M5 16h5c3 0 3 5 0 5"/></symbol><symbol id="fx3-paint" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h11a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2ZM18 6h3v8H11v6a2 2 0 0 1-4 0v-6"/></symbol><symbol id="fx3-wood" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2ZM4 11h16M12 3v18M8 15v2m8-2v2"/></symbol><symbol id="fx3-masonry" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2ZM3 10h18M3 15h18M10 4v6m6 0v5m-6 0v5"/></symbol><symbol id="fx3-door" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V7a7 7 0 0 1 14 0v14M2 21h20M9 5v16m6-8v1"/></symbol><symbol id="fx3-seal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c3 2 5 3 8 3v7c0 4-5 7-8 9-3-2-8-5-8-9V6c3 0 5-1 8-3ZM8 12l3 3 5-5"/></symbol><symbol id="fx3-security" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10h10a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2ZM8 10V7a4 4 0 0 1 8 0v3m-4 5v2"/></symbol><symbol id="fx3-garden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V10M12 16C5 17 2 13 3 7c6-1 9 3 9 7M12 12c0-6 3-9 9-9 0 7-3 10-9 9"/></symbol><symbol id="fx3-repair" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3a6 6 0 0 0-8 8l-4 5a3 3 0 0 0 5 5l5-6a6 6 0 0 0 8-8l-5 4-3-3 2-5Z"/></symbol><symbol id="fx3-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(1 1) scale(.92)"><path d="m5 12 4 4L19 6"/></g></symbol><symbol id="fx3-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(1 1) scale(.92)"><path d="M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0"/></g></symbol><symbol id="fx3-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(1 1) scale(.92)"><path d="m12 3 8 3v7c0 4-8 8-8 8s-8-4-8-8V6ZM8 12l3 3 5-6"/></g></symbol><symbol id="fx3-history" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(1 1) scale(.92)"><path d="M4 7V3m0 4h4M4 7a9 9 0 1 1-1 8m9-9v6l4 2"/></g></symbol><symbol id="fx3-repeat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(1 1) scale(.92)"><path d="M4 7h14l-4-4m4 4-4 4M20 17H6l4-4m-4 4 4 4"/></g></symbol><symbol id="fx3-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(1 1) scale(.92)"><path d="M8 3H4v4c0 7 6 13 13 13h4v-4l-5-2-2 2-6-6 2-2-2-5Z"/></g></symbol><symbol id="fx3-wallet" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(1 1) scale(.92)"><path d="M3 5h17v15H3ZM3 5l14-3v3M16 11h6v5h-6Z"/></g></symbol><symbol id="fx3-receipt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(1 1) scale(.92)"><path d="M5 2h14v20l-3-2-4 2-4-2-3 2ZM8 7h8M8 11h8M8 15h4"/></g></symbol><symbol id="fx3-camera" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(1 1) scale(.92)"><path d="M3 6h5l2-3h4l2 3h5v15H3ZM16 13a4 4 0 1 1-8 0 4 4 0 0 1 8 0"/></g></symbol><symbol id="fx3-person" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(1 1) scale(.92)"><path d="M17 7a5 5 0 1 1-10 0 5 5 0 0 1 10 0M4 22v-3a8 8 0 0 1 16 0v3"/></g></symbol><symbol id="fx3-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(1 1) scale(.92)"><path d="M4 17h16l-2-3V9a6 6 0 0 0-12 0v5l-2 3ZM10 21h4M12 1v2"/></g></symbol><symbol id="fx3-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(1 1) scale(.92)"><path d="m12 3 10 18H2ZM12 9v5m0 3v1"/></g></symbol><symbol id="fx3-chat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(1 1) scale(.92)"><path d="M3 3h18v14H9l-6 5ZM7 8h10M7 12h7"/></g></symbol><symbol id="fx3-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(1 1) scale(.92)"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12ZM15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0"/></g></symbol><symbol id="fx3-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(1 1) scale(.92)"><path d="m12 2 3 6 7 1-5 5 1 8-6-4-6 4 1-8-5-5 7-1Z"/></g></symbol><symbol id="fx3-instagram" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(1 1) scale(.92)"><path d="M3 3h18v18H3ZM16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0M17 6h1"/></g></symbol><symbol id="fx3-linkedin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(1 1) scale(.92)"><path d="M4 9v12M4 3v1M10 21V9m0 5c0-6 10-7 10 0v7"/></g></symbol><symbol id="fx3-document" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(1 1) scale(.92)"><path d="M5 2h10l4 4v16H5ZM15 2v5h4M8 12h8M8 16h6"/></g></symbol></defs></svg>
 <div class="grain"></div>
 
 <!-- ============ NAVBAR ============ -->
 <header id="nav">
   <div class="wrap nav-inner">
     <a href="#/" onclick="go('home');" style="display:flex;align-items:center;gap:10px;">
-      <svg width="30" height="30" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="24" cy="24" r="24" fill="hsl(210,33%,94%)"/>
-        <path d="M24 10c1 0 1.9.6 2.2 1.6l.7 2.2c.9.2 1.8.6 2.6 1l2-1.2c.9-.5 2-.4 2.7.3l1.9 1.9c.7.7.8 1.8.3 2.7l-1.2 2c.4.8.8 1.7 1 2.6l2.2.7c1 .3 1.6 1.2 1.6 2.2v2.7c0 1-.6 1.9-1.6 2.2l-2.2.7c-.2.9-.6 1.8-1 2.6l1.2 2c.5.9.4 2-.3 2.7l-1.9 1.9c-.7.7-1.8.8-2.7.3l-2-1.2c-.8.4-1.7.8-2.6 1l-.7 2.2c-.3 1-1.2 1.6-2.2 1.6h-2.7c-1 0-1.9-.6-2.2-1.6l-.7-2.2c-.9-.2-1.8-.6-2.6-1l-2 1.2c-.9.5-2 .4-2.7-.3l-1.9-1.9c-.7-.7-.8-1.8-.3-2.7l1.2-2c-.4-.8-.8-1.7-1-2.6l-2.2-.7c-1-.3-1.6-1.2-1.6-2.2v-2.7c0-1 .6-1.9 1.6-2.2l2.2-.7c.2-.9.6-1.8 1-2.6l-1.2-2c-.5-.9-.4-2 .3-2.7l1.9-1.9c.7-.7 1.8-.8 2.7-.3l2 1.2c.8-.4 1.7-.8 2.6-1l.7-2.2c.3-1 1.2-1.6 2.2-1.6H24z" fill="hsl(220,60%,17%)"/>
-        <circle cx="24" cy="24" r="6.4" fill="hsl(210,33%,94%)"/>
-        <path d="M24 20.5l4.2 3.4v6.1h-2.9v-3.9h-2.6v3.9h-2.9v-6.1L24 20.5z" fill="hsl(220,60%,17%)"/>
-      </svg>
+      <svg xmlns="http://www.w3.org/2000/svg" class="fixable-mark" width="30" height="30" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" style="color:#2a4d3c" aria-hidden="true"><path d="m4 14 12-9 12 9v14H4Z"/><path d="M16 24v-7M16 21c-5 0-7-3-7-6 4 0 7 2 7 6M16 17c0-4 2-7 7-7 0 4-2 7-7 7"/></svg>
       <span style="font-family:'Sora'; font-weight:800; font-size:1.15rem; letter-spacing:-0.01em;">fixable</span>
     </a>
     <nav class="nav-links">
@@ -560,11 +580,11 @@ header#nav{background:#faf9f4;backdrop-filter:none}.nav-inner{height:90px}.wrap{
   <div class="wrap fixid-wrap">
     <div class="fixid-card reveal">
       <span class="fixid-tag">Recurso em implementação</span>
-      <div class="fixid-item"><div class="ic">🧾</div><div><strong>Orçamentos e notas fiscais</strong><br><span class="muted">Centralizados por serviço</span></div></div>
-      <div class="fixid-item"><div class="ic">📷</div><div><strong>Fotos antes/depois</strong><br><span class="muted">Registro visual de cada intervenção</span></div></div>
-      <div class="fixid-item"><div class="ic">🛡</div><div><strong>Garantias</strong><br><span class="muted">Prazo e cobertura de cada serviço</span></div></div>
-      <div class="fixid-item"><div class="ic">👷</div><div><strong>Histórico de profissionais</strong><br><span class="muted">Quem esteve na sua casa e quando</span></div></div>
-      <div class="fixid-item"><div class="ic">🔔</div><div><strong>Recomendações preventivas</strong><br><span class="muted">Manutenções futuras sugeridas</span></div></div>
+      <div class="fixid-item"><div class="ic"><svg class="fx-icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><use href="#fx3-receipt"/></svg></div><div><strong>Orçamentos e notas fiscais</strong><br><span class="muted">Centralizados por serviço</span></div></div>
+      <div class="fixid-item"><div class="ic"><svg class="fx-icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><use href="#fx3-camera"/></svg></div><div><strong>Fotos antes/depois</strong><br><span class="muted">Registro visual de cada intervenção</span></div></div>
+      <div class="fixid-item"><div class="ic"><svg class="fx-icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><use href="#fx3-shield"/></svg></div><div><strong>Garantias</strong><br><span class="muted">Prazo e cobertura de cada serviço</span></div></div>
+      <div class="fixid-item"><div class="ic"><svg class="fx-icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><use href="#fx3-person"/></svg></div><div><strong>Histórico de profissionais</strong><br><span class="muted">Quem esteve na sua casa e quando</span></div></div>
+      <div class="fixid-item"><div class="ic"><svg class="fx-icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><use href="#fx3-bell"/></svg></div><div><strong>Recomendações preventivas</strong><br><span class="muted">Manutenções futuras sugeridas</span></div></div>
     </div>
     <div class="reveal">
 
@@ -607,13 +627,13 @@ header#nav{background:#faf9f4;backdrop-filter:none}.nav-inner{height:90px}.wrap{
       <h2>Profissionais preparados para fazer a diferença.</h2>
       <p class="muted mt-16">Todo profissional passa por um programa de treinamento e avaliação antes de atender pela Fixable.</p>
       <ul class="pros-list">
-        <li><span class="ic">✓</span>Verificação de documentação e experiência</li>
-        <li><span class="ic">✓</span>Entrevista técnica por especialidade</li>
-        <li><span class="ic">✓</span>Treinamento em atendimento Fixable</li>
-        <li><span class="ic">✓</span>Avaliação prática de serviços anteriores</li>
-        <li><span class="ic">✓</span>Acompanhamento contínuo de qualidade</li>
-        <li><span class="ic">✓</span>Avaliação pós-serviço pelo cliente</li>
-        <li><span class="ic">✓</span>Renovação periódica de certificação</li>
+        <li><span class="ic"><svg class="fx-icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><use href="#fx3-check"/></svg></span>Verificação de documentação e experiência</li>
+        <li><span class="ic"><svg class="fx-icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><use href="#fx3-check"/></svg></span>Entrevista técnica por especialidade</li>
+        <li><span class="ic"><svg class="fx-icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><use href="#fx3-check"/></svg></span>Treinamento em atendimento Fixable</li>
+        <li><span class="ic"><svg class="fx-icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><use href="#fx3-check"/></svg></span>Avaliação prática de serviços anteriores</li>
+        <li><span class="ic"><svg class="fx-icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><use href="#fx3-check"/></svg></span>Acompanhamento contínuo de qualidade</li>
+        <li><span class="ic"><svg class="fx-icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><use href="#fx3-check"/></svg></span>Avaliação pós-serviço pelo cliente</li>
+        <li><span class="ic"><svg class="fx-icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><use href="#fx3-check"/></svg></span>Renovação periódica de certificação</li>
       </ul>
       <button class="btn btn-primary" onclick="go('profissionais')">Faça parte da Fixable</button>
     </div>
@@ -648,10 +668,10 @@ header#nav{background:#faf9f4;backdrop-filter:none}.nav-inner{height:90px}.wrap{
       <h2>Manutenção residencial em escala.</h2>
       <p>Para imobiliárias, administradoras e condomínios que gerenciam múltiplos imóveis.</p>
       <div class="biz-feats">
-        <div><span>✓</span>Gestão centralizada de múltiplos imóveis</div>
-        <div><span>✓</span>Relatórios consolidados de manutenção</div>
-        <div><span>✓</span>SLA e priorização por carteira</div>
-        <div><span>✓</span>Atendimento comercial dedicado</div>
+        <div><span><svg class="fx-icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><use href="#fx3-check"/></svg></span>Gestão centralizada de múltiplos imóveis</div>
+        <div><span><svg class="fx-icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><use href="#fx3-check"/></svg></span>Relatórios consolidados de manutenção</div>
+        <div><span><svg class="fx-icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><use href="#fx3-check"/></svg></span>SLA e priorização por carteira</div>
+        <div><span><svg class="fx-icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><use href="#fx3-check"/></svg></span>Atendimento comercial dedicado</div>
       </div>
       <button class="btn btn-outline-light" onclick="go('home','#solicitar')">Falar com o time comercial</button>
     </div>
@@ -713,7 +733,7 @@ header#nav{background:#faf9f4;backdrop-filter:none}.nav-inner{height:90px}.wrap{
         <p class="muted mt-16" style="font-size:.76rem; text-align:center;">Modo demonstração: sem banco de dados real conectado nesta prévia, sua solicitação é salva apenas neste navegador.</p>
       </form>
       <div class="form-success" id="d-success">
-        <div class="ic">✓</div>
+        <div class="ic"><svg class="fx-icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><use href="#fx3-check"/></svg></div>
         <h3>Prévia salva neste navegador.</h3>
         <p class="muted mt-8">Nenhuma solicitação foi enviada. Este formulário é uma demonstração local.</p>
         <button class="btn btn-ghost mt-24" onclick="resetDiagForm()">Enviar outra solicitação</button>
@@ -782,7 +802,7 @@ header#nav{background:#faf9f4;backdrop-filter:none}.nav-inner{height:90px}.wrap{
           <p class="muted mt-16" style="font-size:.76rem; text-align:center;">Modo demonstração: candidatura salva localmente nesta prévia, sem aprovação automática.</p>
         </form>
         <div class="form-success" id="p-success">
-          <div class="ic">✓</div>
+          <div class="ic"><svg class="fx-icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><use href="#fx3-check"/></svg></div>
           <h3>Candidatura recebida.</h3>
           <p class="muted mt-8">Sua candidatura está com status <strong>pendente</strong> e passará por análise da equipe Fixable.</p>
           <button class="btn btn-ghost mt-24" onclick="resetProForm()">Enviar outra candidatura</button>
@@ -797,7 +817,7 @@ header#nav{background:#faf9f4;backdrop-filter:none}.nav-inner{height:90px}.wrap{
   <section>
     <div class="wrap" id="painel-login-wrap">
       <div class="login-shell">
-        <div class="demo-banner">⚠ Demonstração</div>
+        <div class="demo-banner"><svg class="fx-icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><use href="#fx3-alert"/></svg> Demonstração</div>
         <h2 style="margin-bottom:6px;">Entrar no painel</h2>
         <p class="muted" style="font-size:.88rem;margin-bottom:24px;">Estrutura inicial de autenticação. Neste MVP, o acesso é simulado.</p>
         <div class="field"><label for="l-email">E-mail</label><input id="l-email" type="email" placeholder="voce@email.com" value="cliente@demo.fixable.com.br"></div>
@@ -807,7 +827,7 @@ header#nav{background:#faf9f4;backdrop-filter:none}.nav-inner{height:90px}.wrap{
     </div>
 
     <div class="wrap" id="painel-dashboard-wrap" style="display:none;">
-      <div class="demo-banner">⚠ Todos os dados abaixo são demonstrativos</div>
+      <div class="demo-banner"><svg class="fx-icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><use href="#fx3-alert"/></svg> Todos os dados abaixo são demonstrativos</div>
       <h2 style="margin-bottom:22px;">Painel do cliente</h2>
       <div class="tabs" id="painel-tabs"></div>
       <div id="painel-content"></div>
@@ -822,14 +842,14 @@ header#nav{background:#faf9f4;backdrop-filter:none}.nav-inner{height:90px}.wrap{
     <div class="footer-grid">
       <div>
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
-          <svg width="26" height="26" viewBox="0 0 48 48"><circle cx="24" cy="24" r="24" fill="hsla(0,0%,100%,.1)"/><path d="M24 10c1 0 1.9.6 2.2 1.6l.7 2.2c.9.2 1.8.6 2.6 1l2-1.2c.9-.5 2-.4 2.7.3l1.9 1.9c.7.7.8 1.8.3 2.7l-1.2 2c.4.8.8 1.7 1 2.6l2.2.7c1 .3 1.6 1.2 1.6 2.2v2.7c0 1-.6 1.9-1.6 2.2l-2.2.7c-.2.9-.6 1.8-1 2.6l1.2 2c.5.9.4 2-.3 2.7l-1.9 1.9c-.7.7-1.8.8-2.7.3l-2-1.2c-.8.4-1.7.8-2.6 1l-.7 2.2c-.3 1-1.2 1.6-2.2 1.6h-2.7c-1 0-1.9-.6-2.2-1.6l-.7-2.2c-.9-.2-1.8-.6-2.6-1l-2 1.2c-.9.5-2 .4-2.7-.3l-1.9-1.9c-.7-.7-.8-1.8-.3-2.7l1.2-2c-.4-.8-.8-1.7-1-2.6l-2.2-.7c-1-.3-1.6-1.2-1.6-2.2v-2.7c0-1 .6-1.9 1.6-2.2l2.2-.7c.2-.9.6-1.8 1-2.6l-1.2-2c-.5-.9-.4-2 .3-2.7l1.9-1.9c.7-.7 1.8-.8 2.7-.3l2 1.2c.8-.4 1.7-.8 2.6-1l.7-2.2c.3-1 1.2-1.6 2.2-1.6H24z" fill="#fff"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" class="fixable-mark" width="30" height="30" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" style="color:#2a4d3c" aria-hidden="true"><path d="m4 14 12-9 12 9v14H4Z"/><path d="M16 24v-7M16 21c-5 0-7-3-7-6 4 0 7 2 7 6M16 17c0-4 2-7 7-7 0 4-2 7-7 7"/></svg>
           <span style="font-family:'Sora'; font-weight:800; font-size:1.1rem; color:#fff;">fixable</span>
         </div>
         <p style="font-size:.86rem;max-width:260px;color:hsla(0,0%,100%,.65);">Fixing before breaking. Gestão e manutenção residencial de ponta a ponta.</p>
         <div class="social-row">
-          <a href="#" aria-label="Instagram">📷</a>
+          <a href="#" aria-label="Instagram"><svg class="fx-icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><use href="#fx3-camera"/></svg></a>
           <a href="#" aria-label="LinkedIn">in</a>
-          <a href="#" aria-label="WhatsApp">💬</a>
+          <a href="#" aria-label="WhatsApp"><svg class="fx-icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><use href="#fx3-chat"/></svg></a>
         </div>
       </div>
       <div>
@@ -860,25 +880,25 @@ header#nav{background:#faf9f4;backdrop-filter:none}.nav-inner{height:90px}.wrap{
   </div>
 </footer>
 
-<script>function serviceIcon(name){const paths={"Elétrica":'<path d="m13 2-9 12h7l-1 8 10-12h-7z"/>',"Hidráulica":'<path d="M12 3C9 7 5 11 5 15a7 7 0 0 0 14 0c0-4-4-8-7-12Z"/><path d="M9 16a3 3 0 0 0 3 3"/>',"Gás":'<path d="M12 3c1 5 6 7 6 12a6 6 0 0 1-12 0c0-3 2-5 3-6 0 3 2 3 2 0Z"/>',"Ar-condicionado":'<path d="M12 2v20M3 7l18 10M3 17 21 7M9 4l3 3 3-3M9 20l3-3 3 3"/>',"Pintura":'<rect x="3" y="3" width="15" height="7" rx="2"/><path d="M18 6h3v8H11v7H8v-7"/>',"Marcenaria":'<path d="M4 4h16v16H4zM4 11h16M12 4v16M7 15v2m10-2v2"/>',"Alvenaria":'<path d="M3 4h18v16H3zM3 9h18M3 15h18M9 4v5m7 0v6m-7 0v5"/>',"Portas e janelas":'<path d="M4 21V3h15v18M1 21h22M8 3v18m7-10v2"/>',"Impermeabilização":'<path d="m12 3 8 4v6c0 4-8 8-8 8s-8-4-8-8V7zM9 12l2 2 4-5"/>',"Segurança residencial":'<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V6a4 4 0 0 1 8 0v4m-4 5v2"/>',"Área externa":'<path d="M20 3C8 2 3 9 6 15c6 6 14 0 14-12ZM4 21 16 9"/>',"Pequenos reparos":'<path d="M14 5a5 5 0 0 0-6 6L3 16a3 3 0 0 0 5 5l6-6a5 5 0 0 0 6-6l-4 3-4-4 2-3Z"/>'};return '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(paths[name]||'<path d="m5 12 4 4L19 6"/>')+'</svg>';}
+<script>const fixableIconNames={"Elétrica": "electric", "Hidráulica": "water", "Gás": "gas", "Ar-condicionado": "climate", "Pintura": "paint", "Marcenaria": "wood", "Alvenaria": "masonry", "Portas e janelas": "door", "Impermeabilização": "seal", "Segurança residencial": "security", "Área externa": "garden", "Pequenos reparos": "repair", "Tempo perdido": "clock", "Falta de confiança": "shield", "Zero histórico": "history", "Problemas que voltam": "repeat", "Comunicação fragmentada": "chat", "Orçamento às cegas": "wallet", "Transparência": "receipt", "Comunicação": "chat", "Acompanhamento": "eye", "Registro": "document", "Avaliação": "star", "Garantia": "shield"};function fixableIcon(name){const key=fixableIconNames[name]||name;return `<svg class="fx-icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><use href="#fx3-${key}"/></svg>`;}function serviceIcon(name){return fixableIcon(name);}
 
 /* ---------------- SERVICES DATA ---------------- */
 const services = [
-  ["⚡","Elétrica","Instalações, reparos e troca de quadros e pontos."],
-  ["🚿","Hidráulica","Vazamentos, tubulações, registros e caixas d'água."],
-  ["🔥","Gás","Instalação e manutenção de rede e equipamentos a gás."],
-  ["❄️","Ar-condicionado","Instalação, limpeza e manutenção de climatização."],
-  ["🎨","Pintura","Pintura interna, externa e tratamento de superfícies."],
-  ["🪚","Marcenaria","Móveis planejados, reparos e ajustes sob medida."],
-  ["🧱","Alvenaria","Reformas estruturais, reboco e acabamento."],
-  ["🚪","Portas e janelas","Instalação, ajuste e troca de esquadrias."],
-  ["💧","Impermeabilização","Proteção contra infiltrações e umidade."],
-  ["🔒","Segurança residencial","Fechaduras, câmeras e sistemas de alarme."],
-  ["🌿","Área externa","Jardim, quintal, calçadas e áreas de lazer."],
-  ["🔧","Pequenos reparos","Ajustes gerais do dia a dia da casa."],
+  ["electric","Elétrica","Instalações, reparos e troca de quadros e pontos."],
+  ["water","Hidráulica","Vazamentos, tubulações, registros e caixas d'água."],
+  ["gas","Gás","Instalação e manutenção de rede e equipamentos a gás."],
+  ["climate","Ar-condicionado","Instalação, limpeza e manutenção de climatização."],
+  ["paint","Pintura","Pintura interna, externa e tratamento de superfícies."],
+  ["wood","Marcenaria","Móveis planejados, reparos e ajustes sob medida."],
+  ["masonry","Alvenaria","Reformas estruturais, reboco e acabamento."],
+  ["door","Portas e janelas","Instalação, ajuste e troca de esquadrias."],
+  ["seal","Impermeabilização","Proteção contra infiltrações e umidade."],
+  ["security","Segurança residencial","Fechaduras, câmeras e sistemas de alarme."],
+  ["garden","Área externa","Jardim, quintal, calçadas e áreas de lazer."],
+  ["repair","Pequenos reparos","Ajustes gerais do dia a dia da casa."],
 ];
 document.getElementById('services-grid').innerHTML = services.map(s => `
-  <div class="card"><div class="icon-badge"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 12h15M13 5l7 7-7 7"/></svg></div><h3>${s[1]}</h3><p>${s[2]}</p><a href="#/" onclick="go('home','#solicitar')" style="display:inline-block;margin-top:10px;font-weight:700;font-size:.85rem;color:hsl(var(--primary));">Saiba mais</a></div>
+  <div class="card"><div class="icon-badge">${serviceIcon(s[1])}</div><h3>${s[1]}</h3><p>${s[2]}</p><a href="#/" onclick="go('home','#solicitar')" style="display:inline-block;margin-top:10px;font-weight:700;font-size:.85rem;color:hsl(var(--primary));">Saiba mais</a></div>
 `).join('');
 
 /* ---------------- FAQ DATA ---------------- */
@@ -1160,5 +1180,179 @@ function switchTab(id,button){
   document.getElementById('pv-'+id).classList.add('active');
 }
 </script>
-<nav class="compare-dock" aria-label="Comparar propostas"><a class="all" href="index.html">Todas as opções</a><a href="01-original-identico.html" title="Original idêntico">1</a><a href="02-azul-e-dourado.html" title="Azul & dourado">2</a><a href="03-verde-sereno.html" title="Verde sereno" aria-current="page">3</a><a href="04-casa-editorial.html" title="Casa editorial">4</a><a href="05-fixable-direto.html" title="Fixable direto">5</a></nav><script>document.querySelectorAll('.fixid-item .ic').forEach((e,i)=>e.innerHTML=serviceIcon(['Elétrica','Pintura','Segurança residencial','Pequenos reparos','Área externa'][i]));document.querySelectorAll('.social-row').forEach(e=>e.remove());document.querySelectorAll('.form-success').forEach(e=>e.setAttribute('role','status'));document.querySelectorAll('input,select,textarea').forEach((e,i)=>{if(!e.id)e.id='field-'+i;const l=e.closest('.field')?.querySelector('label');if(l)l.htmlFor=e.id;});document.querySelectorAll('.hamburger').forEach(b=>{b.setAttribute('aria-expanded','false');b.setAttribute('aria-controls','mobile-menu');b.addEventListener('click',()=>b.setAttribute('aria-expanded',document.getElementById('mobile-menu').classList.contains('open')));});</script></body>
+<nav class="compare-dock" aria-label="Comparar propostas"><a class="all" href="index.html">Todas as opções</a><a href="01-original-identico.html" title="Original idêntico">1</a><a href="02-azul-e-dourado.html" title="Azul & dourado">2</a><a href="03-verde-sereno.html" title="Verde sereno" aria-current="page">3</a><a href="04-casa-editorial.html" title="Casa editorial">4</a><a href="05-fixable-direto.html" title="Fixable direto">5</a></nav><script>document.querySelectorAll('.fixid-item .ic').forEach((e,i)=>e.innerHTML=serviceIcon(['Elétrica','Pintura','Segurança residencial','Pequenos reparos','Área externa'][i]));document.querySelectorAll('.social-row').forEach(e=>e.remove());document.querySelectorAll('.form-success').forEach(e=>e.setAttribute('role','status'));document.querySelectorAll('input,select,textarea').forEach((e,i)=>{if(!e.id)e.id='field-'+i;const l=e.closest('.field')?.querySelector('label');if(l)l.htmlFor=e.id;});document.querySelectorAll('.hamburger').forEach(b=>{b.setAttribute('aria-expanded','false');b.setAttribute('aria-controls','mobile-menu');b.addEventListener('click',()=>b.setAttribute('aria-expanded',document.getElementById('mobile-menu').classList.contains('open')));});</script><script id="fixable-select-controls">(() => {
+  const chevron = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
+  const tick = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>';
+  let opened = null;
+  const normalize = text => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR');
+
+  document.querySelectorAll('select').forEach((select, number) => {
+    const id = select.id || `fixable-select-${number}`;
+    select.id = id;
+    const field = select.closest('.field');
+    const label = document.querySelector(`label[for="${CSS.escape(id)}"]`) || field?.querySelector('label');
+    const wrap = document.createElement('div');
+    wrap.className = 'fx-select';
+    select.before(wrap);
+    wrap.append(select);
+    const trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.id = `${id}-control`;
+    trigger.className = 'fx-select-trigger';
+    trigger.setAttribute('role', 'combobox');
+    trigger.setAttribute('aria-haspopup', 'listbox');
+    trigger.setAttribute('aria-expanded', 'false');
+    trigger.setAttribute('aria-controls', `${id}-options`);
+    const value = document.createElement('span');
+    value.id = `${id}-value`;
+    value.className = 'fx-select-value';
+    trigger.append(value);
+    trigger.insertAdjacentHTML('beforeend', chevron);
+    if (label) {
+      label.id ||= `${id}-label`;
+      label.htmlFor = trigger.id;
+      trigger.setAttribute('aria-labelledby', `${label.id} ${value.id}`);
+    } else {
+      trigger.setAttribute('aria-label', select.name);
+    }
+    wrap.append(trigger);
+    select.classList.add('fx-select-native');
+    select.tabIndex = -1;
+    select.setAttribute('aria-hidden', 'true');
+    const menu = document.createElement('div');
+    menu.id = `${id}-options`;
+    menu.className = 'fx-select-menu';
+    menu.setAttribute('role', 'listbox');
+    menu.setAttribute('aria-labelledby', label?.id || trigger.id);
+    menu.hidden = true;
+    document.body.append(menu);
+    let active = -1;
+    let search = '';
+    let searchedAt = 0;
+    const options = Array.from(select.options);
+    const rows = options.map((option, index) => {
+      const row = document.createElement('div');
+      row.id = `${id}-option-${index}`;
+      row.className = 'fx-select-option';
+      row.setAttribute('role', 'option');
+      row.setAttribute('aria-disabled', String(option.disabled));
+      const text = document.createElement('span');
+      text.textContent = option.label;
+      row.append(text);
+      row.insertAdjacentHTML('beforeend', tick);
+      row.addEventListener('pointerdown', event => event.preventDefault());
+      row.addEventListener('pointermove', () => { if (!option.disabled) setActive(index, false); });
+      row.addEventListener('click', () => { if (!option.disabled) commit(index); });
+      menu.append(row);
+      return row;
+    });
+    function sync() {
+      const selected = select.selectedIndex;
+      value.textContent = options[selected]?.label || 'Selecione';
+      trigger.dataset.placeholder = String(!select.value);
+      trigger.disabled = select.disabled;
+      rows.forEach((row, index) => row.setAttribute('aria-selected', String(index === selected)));
+    }
+    function setActive(index, scroll = true) {
+      active = index;
+      rows.forEach((row, i) => row.classList.toggle('is-active', i === index));
+      if (rows[index]) {
+        trigger.setAttribute('aria-activedescendant', rows[index].id);
+        if (scroll) rows[index].scrollIntoView({ block: 'nearest', behavior: 'instant' });
+      }
+    }
+    function position() {
+      const rect = trigger.getBoundingClientRect();
+      const above = rect.top - 12;
+      const below = innerHeight - rect.bottom - 12;
+      const down = below >= Math.min(menu.scrollHeight, 220) || below >= above;
+      const width = Math.min(rect.width, innerWidth - 24);
+      menu.style.width = `${width}px`;
+      menu.style.maxHeight = `${Math.max(64, Math.min(264, down ? below : above))}px`;
+      menu.style.left = `${Math.max(12, Math.min(rect.left, innerWidth - width - 12))}px`;
+      menu.style.top = `${down ? rect.bottom + 6 : Math.max(6, rect.top - 6 - menu.offsetHeight)}px`;
+    }
+    function close() {
+      menu.hidden = true;
+      trigger.setAttribute('aria-expanded', 'false');
+      trigger.removeAttribute('aria-activedescendant');
+      if (opened?.trigger === trigger) opened = null;
+    }
+    function open() {
+      if (select.disabled) return;
+      opened?.close();
+      menu.hidden = false;
+      sync();
+      position();
+      trigger.setAttribute('aria-expanded', 'true');
+      opened = { trigger, wrap, menu, close, position };
+      search = '';
+      setActive(select.selectedIndex >= 0 ? select.selectedIndex : options.findIndex(o => !o.disabled));
+    }
+    function commit(index) {
+      select.selectedIndex = index;
+      if (select.value && error) error.textContent = "";
+      sync();
+      select.dispatchEvent(new Event('input', { bubbles: true }));
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+      close();
+      trigger.focus({ preventScroll: true });
+    }
+    trigger.addEventListener('click', () => menu.hidden ? open() : close());
+    trigger.addEventListener('keydown', event => {
+      if (event.key === 'Tab') { close(); return; }
+      if (event.key === 'Escape') { if (!menu.hidden) event.preventDefault(); close(); return; }
+      if (['Enter', ' '].includes(event.key)) {
+        event.preventDefault();
+        if (menu.hidden) open(); else if (active >= 0) commit(active);
+        return;
+      }
+      if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) {
+        event.preventDefault();
+        const wasClosed = menu.hidden;
+        if (wasClosed) open();
+        const enabled = options.map((o, i) => o.disabled ? -1 : i).filter(i => i !== -1);
+        const cursor = enabled.indexOf(active);
+        let next = event.key === 'Home' ? enabled[0] : event.key === 'End' ? enabled.at(-1) : active;
+        if (!wasClosed && event.key === 'ArrowDown') next = enabled[Math.min(cursor + 1, enabled.length - 1)];
+        if (!wasClosed && event.key === 'ArrowUp') next = enabled[Math.max(cursor - 1, 0)];
+        setActive(next);
+        return;
+      }
+      if (event.key.length === 1 && !event.ctrlKey && !event.altKey && !event.metaKey) {
+        event.preventDefault();
+        const previousSearch = performance.now() - searchedAt < 700 ? search : '';
+        if (menu.hidden) open();
+        search = previousSearch + normalize(event.key);
+        searchedAt = performance.now();
+        const found = options.findIndex(o => !o.disabled && normalize(o.label).startsWith(search));
+        if (found >= 0) setActive(found);
+      }
+    });
+    trigger.addEventListener('blur', () => close());
+    select.addEventListener('change', sync);
+    select.form?.addEventListener('reset', () => { close(); setTimeout(sync, 0); });
+    const error = field?.querySelector('.err');
+    if (error) {
+      error.id ||= `${id}-error`;
+      trigger.setAttribute('aria-describedby', error.id);
+      const syncError = () => trigger.setAttribute('aria-invalid', String(Boolean(error.textContent.trim())));
+      new MutationObserver(syncError).observe(error, { childList: true, characterData: true, subtree: true });
+      syncError();
+    }
+    sync();
+  });
+  document.addEventListener('pointerdown', event => {
+    if (opened && !opened.wrap.contains(event.target) && !opened.menu.contains(event.target)) opened.close();
+  }, true);
+  document.addEventListener('scroll', event => {
+    if (opened && !opened.menu.contains(event.target)) {
+      const rect = opened.trigger.getBoundingClientRect();
+      if (rect.bottom <= 0 || rect.top >= innerHeight) opened.close();
+      else opened.position();
+    }
+  }, true);
+  window.addEventListener('resize', () => opened?.close());
+})();
+</script><script id="fixable-vector-enhancement">document.querySelectorAll('#problem .card,#guarantee .card').forEach(card=>{const badge=card.querySelector('.icon-badge');if(badge)badge.innerHTML=fixableIcon(card.querySelector('h3').textContent);});document.querySelectorAll('.fixid-item .ic').forEach((e,i)=>e.innerHTML=fixableIcon(['receipt','camera','shield','person','bell'][i]));document.querySelectorAll('.pkg-list li').forEach(e=>e.insertAdjacentHTML('afterbegin',fixableIcon('check')));document.querySelectorAll('.social-row a').forEach(e=>{const name=e.getAttribute('aria-label')?.toLowerCase();e.innerHTML=fixableIcon(name==='instagram'?'instagram':name==='linkedin'?'linkedin':'chat');});</script></body>
 </html>
