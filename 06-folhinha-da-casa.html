@@ -502,7 +502,9 @@ html{scroll-behavior:auto}
 @keyframes fadeout{to{opacity:0}}
 }
 </style>
-</head>
+<style id="fixable-validation-motion-style">[data-fx-validation-control][aria-invalid="true"]{border-color:var(--fx-validation-color,hsl(var(--destructive)))}
+[data-fx-validation-group][aria-invalid="true"]>label{border-color:var(--fx-validation-color,hsl(var(--destructive)))}
+</style></head>
 <body>
 <a class="skip" href="#conteudo">Pular para o conteúdo</a>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -1328,5 +1330,59 @@ $('#painel-tabs [role=tab]').focus();
 requestAnimationFrame(placeHere);
 fromHash();
 </script>
-</body>
+<script id="fixable-validation-motion">(() => {
+  const preference = matchMedia('(prefers-reduced-motion: reduce)');
+  const running = new WeakMap();
+  document.querySelectorAll('form').forEach(form => {
+    const fields = Array.from(form.querySelectorAll('.err[data-for]')).map(error => {
+      const field = error.closest('.field,.cell');
+      const target = field?.querySelector('.fx-select-trigger,[role="combobox"]') || field?.querySelector('.checkbox-grid,.chips,.keys') ||
+        field?.querySelector('input:not([type="checkbox"]):not([type="radio"]),textarea,select');
+      if (!target) return null;
+      error.id ||= `${form.id}-${error.dataset.for}-error`;
+      target.setAttribute('aria-describedby', error.id);
+      target.dataset.fxValidationControl = '';
+      if (target.matches('.checkbox-grid,.chips,.keys')) {
+        target.setAttribute('role', 'group');
+        target.dataset.fxValidationGroup = '';
+        const label = field.querySelector('legend,label');
+        if (label) {
+          label.id ||= `${form.id}-${error.dataset.for}-label`;
+          target.setAttribute('aria-labelledby', label.id);
+        }
+      }
+      return { error, target };
+    }).filter(Boolean);
+    function sync(animate) {
+      fields.forEach(({ error, target }) => {
+        const invalid = Boolean(error.textContent.trim());
+        target.setAttribute('aria-invalid', String(invalid));
+        if (invalid) target.style.setProperty('--fx-validation-color', getComputedStyle(error).color);
+        if (!invalid) { running.get(target)?.cancel(); return; }
+        if (!animate || preference.matches || !target.getClientRects().length || typeof target.animate !== 'function') return;
+        running.get(target)?.cancel();
+        const animation = target.animate([
+          { transform: 'translateX(0)' },
+          { transform: 'translateX(-3px)' },
+          { transform: 'translateX(3px)' },
+          { transform: 'translateX(-2px)' },
+          { transform: 'translateX(2px)' },
+          { transform: 'translateX(-1px)' },
+          { transform: 'translateX(0)' }
+        ], { duration: 360, easing: 'ease-in-out' });
+        running.set(target, animation);
+        animation.onfinish = () => { animation.cancel(); running.delete(target); };
+      });
+    }
+    form.addEventListener('submit', () => sync(true));
+    form.addEventListener('reset', () => { fields.forEach(({ target }) => running.get(target)?.cancel()); });
+    const observer = new MutationObserver(() => sync(false));
+    fields.forEach(({ error }) => observer.observe(error, { childList: true, characterData: true, subtree: true }));
+    preference.addEventListener('change', event => {
+      if (event.matches) fields.forEach(({ target }) => running.get(target)?.cancel());
+    });
+    sync(false);
+  });
+})();
+</script></body>
 </html>
