@@ -502,7 +502,40 @@ html{scroll-behavior:auto}
 @keyframes fadeout{to{opacity:0}}
 }
 </style>
-<style id="fixable-validation-motion-style">[data-fx-validation-control][aria-invalid="true"]{border-color:var(--fx-validation-color,hsl(var(--destructive)))}
+<style id="fixable-select-styles">.fx-select{position:relative;width:100%;min-width:0}
+select.fx-select-native{display:none!important}
+.fx-select-trigger{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-width:0;margin:0;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.fx-select-trigger *{cursor:inherit;pointer-events:none}
+.fx-select-value{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fx-select-trigger>svg{flex:none;display:block;transition:transform .18s ease}
+.fx-select-trigger[aria-expanded="true"]>svg{transform:rotate(180deg)}
+.fx-select-trigger:disabled{cursor:not-allowed}
+.fx-select-menu{position:fixed;z-index:1000;box-sizing:border-box;margin:0;overflow-y:auto;overscroll-behavior:contain;animation:fx-select-in .14s ease-out}
+.fx-select-menu[data-side="above"]{animation-name:fx-select-in-above}
+.fx-select-menu[hidden]{display:none!important}
+.fx-select-option{display:flex;align-items:center;justify-content:space-between;gap:14px;min-height:44px;cursor:pointer;user-select:none;-webkit-user-select:none}
+.fx-select-option>span{min-width:0}
+.fx-select-option>svg{flex:none;display:block;opacity:0}
+.fx-select-option[aria-selected="true"]>svg{opacity:1}
+.fx-select-option[aria-disabled="true"]{cursor:not-allowed;opacity:.45}
+@keyframes fx-select-in{from{opacity:0;transform:translateY(-4px)}}
+@keyframes fx-select-in-above{from{opacity:0;transform:translateY(4px)}}
+@media(max-width:680px){.fx-select-option{min-height:46px}}
+@media(prefers-reduced-motion:reduce){.fx-select-trigger,.fx-select-trigger>svg,.fx-select-option{transition:none!important}.fx-select-menu{animation:none!important}}
+.fx-select-trigger.inp{padding:11px 12px;text-align:left}
+.fx-select-trigger>svg{width:14px;height:9px;color:var(--ink)}
+.fx-select-trigger[data-placeholder="true"] .fx-select-value{color:#6b6e76}
+.fx-select-trigger[aria-expanded="true"]{outline:3px solid var(--board);outline-offset:1px;box-shadow:inset 0 0 0 1px var(--ink)}
+.fx-select-trigger[aria-invalid="true"]>svg{color:var(--red-ink)}
+.fx-select-trigger:disabled{background:var(--sheet-under);border-color:var(--ink-soft);color:var(--ink-soft);box-shadow:none}
+.fx-select-menu{padding:0;background:#fff;color:var(--ink);border:2px solid var(--ink);border-radius:0;font-family:"Archivo",system-ui,sans-serif;font-size:16px;font-stretch:100%;line-height:1.3;box-shadow:0 20px 36px -16px rgba(15,37,133,.5);scrollbar-width:thin;scrollbar-color:var(--ink) #fff}
+.fx-select-option{padding:11px 12px;border-top:1px solid var(--rule);font-weight:500;transition:background-color .12s}
+.fx-select-option:first-child{border-top:0}
+.fx-select-option>svg{width:20px;height:20px;color:var(--red-ink)}
+.fx-select-option[aria-selected="true"]{font-weight:800}
+.fx-select-option.is-active{background:var(--sun)}
+.fx-select-option[aria-disabled="true"].is-active{background:transparent}
+</style><style id="fixable-validation-motion-style">[data-fx-validation-control][aria-invalid="true"]{border-color:var(--fx-validation-color,hsl(var(--destructive)))}
 [data-fx-validation-group][aria-invalid="true"]>label{border-color:var(--fx-validation-color,hsl(var(--destructive)))}
 </style></head>
 <body>
@@ -1330,7 +1363,209 @@ $('#painel-tabs [role=tab]').focus();
 requestAnimationFrame(placeHere);
 fromHash();
 </script>
-<script id="fixable-validation-motion">(() => {
+<script id="fixable-select-controls">(() => {
+  const chevron = '<svg width="14" height="9" viewBox="0 0 14 9" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M1 1l6 6 6-6"/></svg>';
+  const tick = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4.5 12.5 5 5 10-11"/></svg>';
+  const anchorSelector = '';
+  const menuGap = 6;
+  const nativeValue = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
+  const nativeIndex = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'selectedIndex');
+  let opened = null;
+  const normalize = text => text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLocaleLowerCase('pt-BR');
+
+  document.querySelectorAll('select').forEach((select, number) => {
+    const id = select.id || `fixable-select-${number}`;
+    select.id = id;
+    const field = select.closest('.field,.cell') || select.parentElement;
+    const label = document.querySelector(`label[for="${CSS.escape(id)}"]`) || field?.querySelector('label');
+    const error = (select.name && select.form?.querySelector(`.err[data-for="${CSS.escape(select.name)}"]`)) || field?.querySelector('.err');
+    const wrap = document.createElement('div');
+    wrap.className = 'fx-select';
+    select.before(wrap);
+    wrap.append(select);
+    const trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.id = `${id}-control`;
+    trigger.className = `${select.className} fx-select-trigger`.trim();
+    trigger.setAttribute('role', 'combobox');
+    trigger.setAttribute('aria-haspopup', 'listbox');
+    trigger.setAttribute('aria-expanded', 'false');
+    trigger.setAttribute('aria-controls', `${id}-options`);
+    const value = document.createElement('span');
+    value.id = `${id}-value`;
+    value.className = 'fx-select-value';
+    trigger.append(value);
+    trigger.insertAdjacentHTML('beforeend', chevron);
+    if (label) {
+      label.id ||= `${id}-label`;
+      label.htmlFor = trigger.id;
+      trigger.setAttribute('aria-labelledby', `${label.id} ${value.id}`);
+    } else {
+      trigger.setAttribute('aria-label', select.name || id);
+    }
+    wrap.append(trigger);
+    select.classList.add('fx-select-native');
+    select.tabIndex = -1;
+    select.setAttribute('aria-hidden', 'true');
+    const menu = document.createElement('div');
+    menu.id = `${id}-options`;
+    menu.className = 'fx-select-menu';
+    menu.setAttribute('role', 'listbox');
+    menu.setAttribute('aria-labelledby', label?.id || trigger.id);
+    menu.hidden = true;
+    menu.addEventListener('pointerdown', event => event.preventDefault());
+    menu.addEventListener('mousedown', event => event.preventDefault());
+    document.body.append(menu);
+    let active = -1;
+    let search = '';
+    let searchedAt = 0;
+    const options = Array.from(select.options);
+    const rows = options.map((option, index) => {
+      const row = document.createElement('div');
+      row.id = `${id}-option-${index}`;
+      row.className = 'fx-select-option';
+      row.setAttribute('role', 'option');
+      row.setAttribute('aria-disabled', String(option.disabled));
+      const text = document.createElement('span');
+      text.textContent = option.label;
+      row.append(text);
+      row.insertAdjacentHTML('beforeend', tick);
+      row.addEventListener('pointermove', () => { if (!option.disabled && active !== index) setActive(index, false); });
+      row.addEventListener('click', () => { if (!option.disabled) commit(index); });
+      menu.append(row);
+      return row;
+    });
+    function syncInvalid() {
+      const invalid = Boolean(error?.textContent.trim()) || select.getAttribute('aria-invalid') === 'true';
+      trigger.setAttribute('aria-invalid', String(invalid));
+    }
+    function sync() {
+      const selected = nativeIndex.get.call(select);
+      value.textContent = options[selected]?.label || 'Selecione';
+      trigger.dataset.placeholder = String(!nativeValue.get.call(select));
+      trigger.disabled = select.disabled;
+      rows.forEach((row, index) => row.setAttribute('aria-selected', String(index === selected)));
+      if (select.disabled && !menu.hidden) close();
+    }
+    Object.defineProperty(select, 'value', {
+      configurable: true,
+      get() { return nativeValue.get.call(this); },
+      set(next) { nativeValue.set.call(this, next); sync(); }
+    });
+    Object.defineProperty(select, 'selectedIndex', {
+      configurable: true,
+      get() { return nativeIndex.get.call(this); },
+      set(next) { nativeIndex.set.call(this, next); sync(); }
+    });
+    select.focus = focusOptions => trigger.focus(focusOptions);
+    function setActive(index, scroll = true) {
+      active = index;
+      rows.forEach((row, i) => row.classList.toggle('is-active', i === index));
+      if (rows[index]) {
+        trigger.setAttribute('aria-activedescendant', rows[index].id);
+        if (scroll) rows[index].scrollIntoView({ block: 'nearest', behavior: 'instant' });
+      }
+    }
+    function position() {
+      const anchor = (anchorSelector && trigger.closest(anchorSelector)) || trigger;
+      const rect = anchor.getBoundingClientRect();
+      const above = rect.top - 12;
+      const below = innerHeight - rect.bottom - 12;
+      const down = below >= Math.min(menu.scrollHeight, 220) || below >= above;
+      const width = Math.min(rect.width, innerWidth - 24);
+      menu.style.width = `${width}px`;
+      menu.style.maxHeight = `${Math.max(64, Math.min(296, down ? below : above))}px`;
+      menu.style.left = `${Math.max(12, Math.min(rect.left, innerWidth - width - 12))}px`;
+      menu.style.top = `${down ? rect.bottom + menuGap : Math.max(6, rect.top - menuGap - menu.offsetHeight)}px`;
+      menu.dataset.side = down ? 'below' : 'above';
+    }
+    function close() {
+      menu.hidden = true;
+      trigger.setAttribute('aria-expanded', 'false');
+      trigger.removeAttribute('aria-activedescendant');
+      wrap.classList.remove('is-open');
+      if (opened?.trigger === trigger) opened = null;
+    }
+    function open() {
+      if (select.disabled) return;
+      opened?.close();
+      menu.hidden = false;
+      sync();
+      position();
+      trigger.setAttribute('aria-expanded', 'true');
+      wrap.classList.add('is-open');
+      opened = { trigger, wrap, menu, close, position };
+      search = '';
+      const selected = nativeIndex.get.call(select);
+      setActive(selected >= 0 ? selected : options.findIndex(o => !o.disabled));
+    }
+    function commit(index) {
+      const changed = index !== nativeIndex.get.call(select);
+      nativeIndex.set.call(select, index);
+      sync();
+      if (changed) {
+        select.dispatchEvent(new Event('input', { bubbles: true }));
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+      close();
+      trigger.focus({ preventScroll: true });
+    }
+    trigger.addEventListener('click', () => menu.hidden ? open() : close());
+    trigger.addEventListener('keydown', event => {
+      if (event.key === 'Tab') { close(); return; }
+      if (event.key === 'Escape') { if (!menu.hidden) event.preventDefault(); close(); return; }
+      if (['Enter', ' '].includes(event.key)) {
+        event.preventDefault();
+        if (menu.hidden) open(); else if (active >= 0) commit(active);
+        return;
+      }
+      if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) {
+        event.preventDefault();
+        const wasClosed = menu.hidden;
+        if (wasClosed) open();
+        const enabled = options.map((o, i) => o.disabled ? -1 : i).filter(i => i !== -1);
+        const cursor = enabled.indexOf(active);
+        let next = event.key === 'Home' ? enabled[0] : event.key === 'End' ? enabled.at(-1) : active;
+        if (!wasClosed && event.key === 'ArrowDown') next = enabled[Math.min(cursor + 1, enabled.length - 1)];
+        if (!wasClosed && event.key === 'ArrowUp') next = enabled[Math.max(cursor - 1, 0)];
+        setActive(next);
+        return;
+      }
+      if (event.key.length === 1 && !event.ctrlKey && !event.altKey && !event.metaKey) {
+        event.preventDefault();
+        const previousSearch = performance.now() - searchedAt < 700 ? search : '';
+        if (menu.hidden) open();
+        search = previousSearch + normalize(event.key);
+        searchedAt = performance.now();
+        const found = options.findIndex(o => !o.disabled && normalize(o.label).startsWith(search));
+        if (found >= 0) setActive(found);
+      }
+    });
+    trigger.addEventListener('blur', () => close());
+    select.addEventListener('change', sync);
+    select.form?.addEventListener('reset', () => { close(); setTimeout(sync, 0); });
+    new MutationObserver(() => { sync(); syncInvalid(); }).observe(select, { attributes: true, attributeFilter: ['disabled', 'aria-invalid'] });
+    if (error) {
+      error.id ||= `${id}-error`;
+      trigger.setAttribute('aria-describedby', error.id);
+      new MutationObserver(syncInvalid).observe(error, { childList: true, characterData: true, subtree: true });
+    }
+    syncInvalid();
+    sync();
+  });
+  document.addEventListener('pointerdown', event => {
+    if (opened && !opened.wrap.contains(event.target) && !opened.menu.contains(event.target)) opened.close();
+  }, true);
+  document.addEventListener('scroll', event => {
+    if (opened && !opened.menu.contains(event.target)) {
+      const rect = opened.trigger.getBoundingClientRect();
+      if (rect.bottom <= 0 || rect.top >= innerHeight) opened.close();
+      else opened.position();
+    }
+  }, true);
+  window.addEventListener('resize', () => opened?.close());
+})();
+</script><script id="fixable-validation-motion">(() => {
   const preference = matchMedia('(prefers-reduced-motion: reduce)');
   const running = new WeakMap();
   document.querySelectorAll('form').forEach(form => {

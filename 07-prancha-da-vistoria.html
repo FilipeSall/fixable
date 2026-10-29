@@ -149,7 +149,7 @@ h2.t{font-size:clamp(30px,3.3vw,46px);line-height:1.06;font-weight:800;letter-sp
 .q-detail{padding:4px 20px 16px 60px;background:var(--red-wash)}
 .q-detail ol{counter-reset:c;display:grid;gap:3px;font-size:14px;color:var(--ink-2)}
 .q-detail ol li{counter-increment:c;display:flex;gap:8px;border:0}
-.q-detail ol li::before{content:counter(c);font-family:var(--mono);font-size:11.5px;color:var(--red-ink);border:1px solid var(--red);border-radius:50%;width:19px;height:19px;display:grid;place-items:center;flex:none;margin-top:1px;line-height:1;text-align:center;font-variant-numeric:tabular-nums;text-box:trim-both cap alphabetic}
+.q-detail ol li .qn{flex:none;width:19px;height:19px;margin-top:1px}
 .q-areas{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
 .chip{display:inline-flex;align-items:center;gap:7px;border:1.5px solid var(--ink);background:#fff;padding:5px 10px 4px;font-size:14px;font-weight:700;cursor:pointer;user-select:none}
 .chip input{appearance:none;width:14px;height:14px;border:1.5px solid var(--ink);margin:0;display:grid;place-items:center;background:#fff}
@@ -433,7 +433,52 @@ h2.t{font-size:clamp(30px,3.3vw,46px);line-height:1.06;font-weight:800;letter-sp
   *,*::before,*::after{animation:none!important;transition:none!important}
 }
 </style>
-<style id="fixable-validation-motion-style">[data-fx-validation-control][aria-invalid="true"]{border-color:var(--fx-validation-color,hsl(var(--destructive)))}
+<style id="fixable-circled-numbers-style">.fx-ring{display:block;overflow:visible}
+.qn .fx-ring circle{fill:none;stroke:var(--red);stroke-width:1}
+.qn .fx-ring-digits{fill:var(--red-ink)}
+.bub.fx-ringed{position:relative;border:0;background:transparent}
+.bub .fx-ring circle,.seg .dl .num .fx-ring circle{fill:#fff;stroke:var(--ink);stroke-width:1.5}
+.fx-ring-digits{fill:currentColor}
+.fx-ringed .fx-ring-text{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.seg .dl .num .fx-ring{display:none}
+.seg .dl .num.fx-ringed .fx-ring-text{position:static;width:auto;height:auto;overflow:visible;clip:auto}
+@media (max-width:700px){.seg .dl .num.fx-ringed{border:0;background:transparent}.seg .dl .num.fx-ringed .fx-ring{display:block}.seg .dl .num.fx-ringed .fx-ring-text{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}}
+</style><style id="fixable-select-styles">.fx-select{position:relative;width:100%;min-width:0}
+select.fx-select-native{display:none!important}
+.fx-select-trigger{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-width:0;margin:0;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.fx-select-trigger *{cursor:inherit;pointer-events:none}
+.fx-select-value{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fx-select-trigger>svg{flex:none;display:block;transition:transform .18s ease}
+.fx-select-trigger[aria-expanded="true"]>svg{transform:rotate(180deg)}
+.fx-select-trigger:disabled{cursor:not-allowed}
+.fx-select-menu{position:fixed;z-index:1000;box-sizing:border-box;margin:0;overflow-y:auto;overscroll-behavior:contain;animation:fx-select-in .14s ease-out}
+.fx-select-menu[data-side="above"]{animation-name:fx-select-in-above}
+.fx-select-menu[hidden]{display:none!important}
+.fx-select-option{display:flex;align-items:center;justify-content:space-between;gap:14px;min-height:44px;cursor:pointer;user-select:none;-webkit-user-select:none}
+.fx-select-option>span{min-width:0}
+.fx-select-option>svg{flex:none;display:block;opacity:0}
+.fx-select-option[aria-selected="true"]>svg{opacity:1}
+.fx-select-option[aria-disabled="true"]{cursor:not-allowed;opacity:.45}
+@keyframes fx-select-in{from{opacity:0;transform:translateY(-4px)}}
+@keyframes fx-select-in-above{from{opacity:0;transform:translateY(4px)}}
+@media(max-width:680px){.fx-select-option{min-height:46px}}
+@media(prefers-reduced-motion:reduce){.fx-select-trigger,.fx-select-trigger>svg,.fx-select-option{transition:none!important}.fx-select-menu{animation:none!important}}
+.cell .fx-select-trigger{border:0;border-radius:0;background:transparent;padding:4px 0;font-size:17px;color:var(--ink);outline:none}
+.cell .fx-select-trigger:focus-visible{outline:none}
+.fx-select-trigger>svg{width:12px;height:6px;margin-right:6px;color:var(--ink)}
+.fx-select-trigger[data-placeholder="true"] .fx-select-value{color:var(--cota)}
+.cell:has(.fx-select-trigger[aria-expanded="true"]){background:var(--red-wash)}
+.cell:has(.fx-select-trigger[aria-expanded="true"])>label{color:var(--red-ink)}
+.fx-select-trigger[aria-invalid="true"]>svg,.cell.err-on .fx-select-trigger>svg{color:var(--red-ink)}
+.fx-select-trigger:disabled{color:var(--cota)}
+.fx-select-menu{padding:0;background:#fff;color:var(--ink);border:1.5px solid var(--ink);border-radius:0;font-family:var(--sans);font-size:16px;line-height:1.35;box-shadow:0 18px 30px -16px rgba(27,42,58,.4);scrollbar-width:thin;scrollbar-color:var(--ink) #fff}
+.fx-select-option{padding:10px 16px 9px;border-top:1px solid var(--hair);transition:background-color .12s,box-shadow .12s}
+.fx-select-option:first-child{border-top:0}
+.fx-select-option>svg{width:18px;height:18px;color:var(--red-ink)}
+.fx-select-option[aria-selected="true"]{font-weight:700}
+.fx-select-option.is-active{background:var(--red-wash);box-shadow:inset 3px 0 0 var(--red)}
+.fx-select-option[aria-disabled="true"].is-active{background:transparent;box-shadow:none}
+</style><style id="fixable-validation-motion-style">[data-fx-validation-control][aria-invalid="true"]{border-color:var(--fx-validation-color,hsl(var(--destructive)))}
 [data-fx-validation-group][aria-invalid="true"]>label{border-color:var(--fx-validation-color,hsl(var(--destructive)))}
 </style></head>
 <body>
@@ -1158,7 +1203,246 @@ sync();
 const h=location.hash;
 if(h==='#/profissionais')go('profissionais');else if(h==='#/painel')go('painel');
 </script>
-<script id="fixable-validation-motion">(() => {
+<script id="fixable-circled-numbers">(() => {
+  const glyphs = {"400":{"0":"M616 24Q476 24 383 -39Q289 -102 233 -207Q178 -312 154 -441Q130 -569 130 -700Q130 -791 143 -891Q156 -991 188 -1085Q220 -1180 275 -1256Q331 -1333 415 -1378Q498 -1424 616 -1424Q756 -1424 850 -1360Q944 -1296 999 -1191Q1055 -1085 1079 -957Q1103 -829 1103 -700Q1103 -608 1090 -508Q1076 -408 1044 -314Q1012 -220 956 -143Q900 -66 816 -21Q733 24 616 24ZM616 -126Q715 -126 776 -179Q838 -232 872 -318Q906 -404 918 -504Q930 -605 930 -700Q930 -805 916 -907Q902 -1008 867 -1091Q832 -1174 771 -1224Q710 -1274 616 -1274Q518 -1274 455 -1220Q392 -1167 359 -1081Q325 -995 312 -894Q298 -794 298 -700Q298 -594 313 -492Q327 -390 362 -308Q397 -225 459 -176Q521 -126 616 -126ZM616 -568Q560 -568 524 -608Q486 -648 486 -698Q486 -749 524 -789Q560 -828 616 -828Q672 -828 709 -789Q746 -749 746 -698Q746 -648 709 -608Q672 -568 616 -568Z","1":"M536 0V-1180L229 -1076V-1236L700 -1406V0ZM188 0V-158H1044V0Z","2":"M184 0Q184 -132 214 -228Q244 -324 299 -397Q354 -470 427 -531Q500 -593 587 -654Q660 -707 724 -761Q787 -815 826 -879Q865 -942 865 -1025Q865 -1132 801 -1203Q737 -1274 624 -1274Q506 -1274 433 -1215Q360 -1156 334 -1060L188 -1126Q212 -1210 272 -1278Q333 -1345 423 -1384Q512 -1424 625 -1424Q754 -1424 845 -1374Q937 -1324 986 -1234Q1034 -1145 1034 -1026Q1034 -902 983 -814Q932 -726 847 -657Q762 -588 662 -520Q590 -471 524 -416Q458 -360 414 -296Q370 -232 364 -158H1046V0Z","3":"M612 24Q486 24 399 -19Q312 -62 256 -136Q200 -210 166 -304L318 -366Q365 -244 436 -187Q508 -130 613 -130Q690 -130 754 -158Q819 -186 857 -243Q895 -300 895 -386Q895 -505 820 -578Q746 -652 601 -652H499V-804H584Q700 -804 770 -868Q840 -933 840 -1040Q840 -1147 773 -1209Q706 -1270 615 -1270Q542 -1270 492 -1240Q441 -1209 408 -1163Q376 -1117 357 -1071L206 -1129Q234 -1206 289 -1273Q343 -1340 423 -1382Q504 -1424 610 -1424Q724 -1424 815 -1378Q905 -1332 957 -1251Q1010 -1169 1010 -1060Q1010 -966 962 -884Q915 -801 833 -756Q940 -714 1003 -619Q1066 -524 1066 -390Q1066 -268 1004 -175Q943 -82 840 -29Q736 24 612 24Z","4":"M758 0V-360H118V-450L796 -1400H920V-504H1116V-360H920V0ZM328 -504H758V-1119Z","5":"M582 24Q482 24 400 -2Q319 -28 260 -67Q202 -106 169 -146L263 -268Q321 -210 394 -168Q467 -126 580 -126Q672 -126 742 -170Q812 -212 852 -286Q892 -358 892 -448Q892 -533 861 -603Q831 -672 772 -713Q714 -754 632 -754Q538 -754 471 -713Q404 -672 365 -627L222 -678L322 -1400H986V-1249H460L392 -805Q442 -855 510 -882Q578 -910 659 -910Q779 -910 870 -851Q961 -793 1012 -691Q1063 -588 1063 -457Q1063 -364 1030 -278Q997 -192 934 -124Q872 -56 783 -16Q694 24 582 24Z","6":"M622 24Q471 24 369 -48Q268 -119 216 -242Q165 -364 165 -518Q165 -670 217 -816Q268 -962 364 -1086Q460 -1210 592 -1299Q724 -1387 884 -1424V-1286Q762 -1252 652 -1171Q543 -1090 466 -981Q390 -872 366 -754Q412 -810 487 -841Q562 -872 657 -872Q776 -872 869 -810Q962 -749 1014 -650Q1067 -550 1067 -438Q1067 -306 1007 -202Q948 -97 846 -37Q745 24 622 24ZM617 -126Q704 -126 769 -165Q834 -204 871 -270Q908 -337 908 -422Q908 -556 829 -641Q751 -726 617 -726Q532 -726 467 -687Q401 -648 363 -579Q326 -511 326 -422Q326 -337 365 -270Q403 -204 469 -165Q535 -126 617 -126Z","7":"M440 0Q440 -230 480 -446Q519 -663 616 -874Q712 -1086 883 -1302L924 -1254H197V-1400H1034V-1280Q898 -1122 814 -949Q729 -777 684 -606Q638 -436 621 -281Q604 -126 604 0Z","8":"M616 24Q478 24 372 -32Q266 -87 206 -183Q146 -278 146 -400Q146 -528 215 -630Q284 -731 394 -772Q308 -811 258 -890Q208 -969 208 -1060Q208 -1160 260 -1242Q313 -1325 405 -1374Q496 -1424 616 -1424Q735 -1424 827 -1374Q919 -1325 972 -1242Q1024 -1160 1024 -1060Q1024 -969 976 -890Q927 -811 836 -773Q947 -730 1017 -629Q1086 -528 1086 -400Q1086 -278 1026 -183Q966 -87 860 -32Q753 24 616 24ZM616 -124Q745 -124 831 -202Q917 -279 917 -412Q917 -493 879 -560Q841 -627 774 -667Q706 -707 616 -707Q525 -707 457 -667Q390 -627 352 -560Q314 -493 314 -412Q314 -279 400 -202Q486 -124 616 -124ZM616 -828Q727 -828 793 -891Q858 -954 858 -1047Q858 -1151 789 -1214Q720 -1276 616 -1276Q510 -1276 442 -1214Q374 -1151 374 -1047Q374 -954 439 -891Q505 -828 616 -828Z","9":"M376 24V-114Q504 -146 612 -227Q720 -309 793 -421Q866 -533 886 -658Q838 -598 758 -566Q677 -533 572 -533Q453 -533 358 -591Q262 -649 206 -747Q150 -844 150 -962Q150 -1095 213 -1199Q276 -1303 382 -1364Q489 -1424 622 -1424Q778 -1424 880 -1353Q982 -1281 1031 -1158Q1081 -1036 1081 -882Q1081 -723 1031 -574Q981 -426 889 -302Q796 -178 666 -93Q536 -8 376 24ZM614 -672Q703 -672 772 -711Q840 -750 879 -819Q918 -888 918 -976Q918 -1060 878 -1128Q838 -1196 770 -1235Q701 -1274 614 -1274Q523 -1274 454 -1235Q386 -1196 348 -1128Q310 -1060 310 -976Q310 -843 392 -758Q474 -672 614 -672Z"},"600":{"0":"M616 24Q472 24 375 -39Q278 -103 222 -208Q165 -314 141 -442Q116 -570 116 -700Q116 -797 131 -899Q145 -1000 178 -1094Q212 -1187 269 -1262Q326 -1337 412 -1380Q498 -1424 616 -1424Q761 -1424 858 -1361Q954 -1298 1011 -1192Q1068 -1086 1093 -958Q1117 -830 1117 -700Q1117 -603 1102 -501Q1088 -400 1054 -306Q1020 -212 963 -138Q905 -63 820 -19Q734 24 616 24ZM616 -176Q702 -176 758 -222Q813 -269 844 -346Q874 -423 887 -516Q900 -608 900 -700Q900 -797 886 -890Q872 -984 841 -1059Q810 -1135 754 -1180Q699 -1224 616 -1224Q530 -1224 475 -1178Q419 -1131 388 -1054Q357 -976 344 -884Q332 -791 332 -700Q332 -603 345 -509Q358 -416 389 -340Q421 -265 476 -220Q532 -176 616 -176ZM616 -562Q558 -562 518 -602Q480 -642 480 -700Q480 -756 518 -796Q558 -836 616 -836Q674 -836 714 -796Q754 -756 754 -700Q754 -642 714 -602Q674 -562 616 -562Z","1":"M512 0V-1126L207 -1036V-1238L726 -1404V0ZM164 0V-204H1068V0Z","2":"M158 0Q158 -144 193 -253Q228 -361 289 -443Q350 -525 431 -590Q511 -654 601 -710Q665 -750 720 -794Q775 -838 809 -892Q843 -946 843 -1015Q843 -1109 786 -1167Q728 -1224 630 -1224Q525 -1224 459 -1174Q392 -1123 362 -1038L172 -1124Q203 -1212 269 -1279Q334 -1347 426 -1386Q518 -1424 627 -1424Q763 -1424 860 -1372Q957 -1319 1008 -1228Q1060 -1136 1060 -1020Q1060 -893 1010 -807Q961 -722 878 -657Q795 -592 694 -530Q622 -486 560 -436Q499 -387 457 -329Q416 -272 404 -204H1072V0Z","3":"M614 24Q492 24 401 -18Q310 -59 247 -133Q184 -208 148 -304L340 -384Q388 -275 458 -226Q527 -176 619 -176Q689 -176 746 -202Q802 -227 836 -276Q869 -325 869 -398Q869 -498 805 -562Q741 -626 611 -626H493V-828H602Q700 -828 758 -882Q818 -936 818 -1026Q818 -1116 761 -1170Q705 -1224 617 -1224Q555 -1224 510 -1199Q465 -1175 434 -1137Q403 -1099 383 -1057L190 -1131Q224 -1212 283 -1279Q342 -1346 425 -1385Q508 -1424 616 -1424Q737 -1424 831 -1376Q925 -1328 979 -1243Q1032 -1158 1032 -1050Q1032 -952 986 -872Q940 -793 859 -746Q958 -708 1022 -618Q1086 -529 1086 -400Q1086 -271 1024 -175Q963 -80 856 -28Q750 24 614 24Z","4":"M752 0V-322H92V-452L766 -1400H962V-516H1146V-322H962V0ZM368 -516H752V-1085Z","5":"M574 24Q471 24 389 1Q307 -22 247 -58Q187 -93 151 -130L269 -294Q324 -248 394 -212Q464 -176 574 -176Q659 -176 725 -212Q790 -248 827 -312Q864 -376 864 -458Q864 -534 837 -592Q810 -651 758 -684Q707 -718 634 -718Q549 -718 490 -684Q432 -650 391 -605L198 -686L268 -1400H1000V-1199H458L414 -843Q462 -879 522 -900Q582 -920 653 -920Q788 -920 883 -860Q979 -799 1030 -695Q1081 -592 1081 -463Q1081 -360 1045 -271Q1008 -182 941 -116Q874 -50 781 -13Q688 24 574 24Z","6":"M620 24Q459 24 350 -48Q241 -119 186 -241Q131 -364 131 -516Q131 -678 181 -825Q231 -973 329 -1095Q427 -1218 572 -1303Q717 -1388 906 -1424V-1232Q792 -1206 688 -1144Q583 -1081 506 -989Q428 -897 396 -784Q439 -828 506 -854Q572 -880 659 -880Q788 -880 887 -820Q987 -760 1044 -659Q1101 -558 1101 -434Q1101 -301 1038 -197Q975 -94 866 -35Q758 24 620 24ZM619 -176Q698 -176 760 -207Q821 -238 856 -295Q890 -351 890 -426Q890 -542 816 -613Q741 -684 619 -684Q540 -684 478 -651Q416 -618 381 -560Q346 -502 346 -426Q346 -351 382 -295Q418 -238 479 -207Q541 -176 619 -176Z","7":"M434 0Q434 -236 477 -449Q520 -662 617 -862Q714 -1063 877 -1262L932 -1202H159V-1400H1072V-1226Q946 -1082 862 -919Q779 -755 732 -588Q685 -422 665 -271Q646 -119 646 0Z","8":"M614 24Q467 24 356 -32Q245 -88 183 -186Q120 -284 120 -410Q120 -536 189 -630Q258 -725 370 -770Q290 -808 235 -883Q180 -958 180 -1058Q180 -1161 234 -1244Q288 -1327 386 -1376Q484 -1424 614 -1424Q746 -1424 845 -1376Q943 -1327 998 -1244Q1052 -1161 1052 -1058Q1052 -959 998 -883Q943 -808 858 -771Q971 -726 1041 -630Q1112 -535 1112 -410Q1112 -284 1049 -186Q987 -88 876 -32Q764 24 614 24ZM614 -168Q736 -168 815 -237Q895 -306 895 -420Q895 -491 859 -548Q824 -606 760 -639Q697 -673 614 -673Q531 -673 468 -639Q405 -606 370 -548Q336 -491 336 -420Q336 -306 414 -237Q493 -168 614 -168ZM614 -854Q717 -854 778 -907Q840 -961 840 -1041Q840 -1128 776 -1181Q713 -1234 614 -1234Q516 -1234 454 -1181Q392 -1128 392 -1041Q392 -961 453 -907Q513 -854 614 -854Z","9":"M358 24V-168Q474 -187 577 -246Q680 -305 753 -401Q827 -498 856 -630Q813 -584 742 -555Q670 -527 578 -527Q450 -527 349 -583Q248 -640 190 -739Q132 -838 132 -968Q132 -1102 195 -1205Q258 -1308 369 -1366Q479 -1424 620 -1424Q784 -1424 890 -1353Q996 -1282 1048 -1159Q1099 -1036 1099 -882Q1099 -703 1050 -547Q1002 -391 908 -270Q814 -149 676 -72Q538 4 358 24ZM614 -720Q696 -720 757 -752Q819 -784 853 -841Q888 -898 888 -976Q888 -1049 852 -1106Q818 -1162 756 -1195Q695 -1228 616 -1228Q532 -1228 471 -1195Q409 -1162 376 -1106Q342 -1049 342 -976Q342 -860 415 -790Q488 -720 614 -720Z"}};
+  const ink = {"400":{"0":[130,1103],"1":[188,1044],"2":[184,1046],"3":[166,1066],"4":[118,1116],"5":[169,1063],"6":[165,1067],"7":[197,1034],"8":[146,1086],"9":[150,1081]},"600":{"0":[116,1117],"1":[164,1068],"2":[158,1072],"3":[148,1086],"4":[92,1146],"5":[151,1081],"6":[131,1101],"7":[159,1072],"8":[120,1112],"9":[132,1099]}};
+  const advance = 1232;
+  function numeral(text, weight, size, center) {
+    const digits = Array.from(String(text)).filter(digit => glyphs[weight][digit]);
+    if (!digits.length) return '';
+    const scale = size / 2000;
+    const left = ink[weight][digits[0]][0];
+    const right = (digits.length - 1) * advance + ink[weight][digits.at(-1)][1];
+    const x = center - (left + right) / 2 * scale;
+    const y = center + 700 * scale;
+    return digits.map((digit, index) => `<path transform="translate(${(x + index * advance * scale).toFixed(3)} ${y.toFixed(3)}) scale(${scale})" d="${glyphs[weight][digit]}"/>`).join('');
+  }
+  function ring(text, box, radius, weight, size) {
+    const center = box / 2;
+    return `<svg class="fx-ring" viewBox="0 0 ${box} ${box}" width="${box}" height="${box}" aria-hidden="true" focusable="false"><circle cx="${center}" cy="${center}" r="${radius}"/><g class="fx-ring-digits">${numeral(text, weight, size, center)}</g></svg>`;
+  }
+  document.querySelectorAll('.q-detail ol').forEach(list => {
+    Array.from(list.children).forEach((item, index) => {
+      if (item.querySelector(':scope > .qn')) return;
+      item.insertAdjacentHTML('afterbegin', `<span class="qn">${ring(index + 1, 19, 9, 400, 11.5)}</span>`);
+    });
+  });
+  document.querySelectorAll('.bub, .seg .dl .num').forEach(node => {
+    if (node.querySelector('.fx-ring')) return;
+    const text = node.textContent.trim();
+    const size = parseFloat(getComputedStyle(node).fontSize) || 14;
+    node.textContent = '';
+    const label = document.createElement('span');
+    label.className = 'fx-ring-text';
+    label.textContent = text;
+    node.insertAdjacentHTML('afterbegin', ring(text, 34, 16.25, 600, size));
+    node.append(label);
+    node.classList.add('fx-ringed');
+  });
+})();
+</script><script id="fixable-select-controls">(() => {
+  const chevron = '<svg width="12" height="6" viewBox="0 0 12 6" aria-hidden="true"><path d="M0 0h12L6 6z" fill="currentColor"/></svg>';
+  const tick = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>';
+  const anchorSelector = '.cell';
+  const menuGap = -1;
+  const nativeValue = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
+  const nativeIndex = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'selectedIndex');
+  let opened = null;
+  const normalize = text => text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLocaleLowerCase('pt-BR');
+
+  document.querySelectorAll('select').forEach((select, number) => {
+    const id = select.id || `fixable-select-${number}`;
+    select.id = id;
+    const field = select.closest('.field,.cell') || select.parentElement;
+    const label = document.querySelector(`label[for="${CSS.escape(id)}"]`) || field?.querySelector('label');
+    const error = (select.name && select.form?.querySelector(`.err[data-for="${CSS.escape(select.name)}"]`)) || field?.querySelector('.err');
+    const wrap = document.createElement('div');
+    wrap.className = 'fx-select';
+    select.before(wrap);
+    wrap.append(select);
+    const trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.id = `${id}-control`;
+    trigger.className = `${select.className} fx-select-trigger`.trim();
+    trigger.setAttribute('role', 'combobox');
+    trigger.setAttribute('aria-haspopup', 'listbox');
+    trigger.setAttribute('aria-expanded', 'false');
+    trigger.setAttribute('aria-controls', `${id}-options`);
+    const value = document.createElement('span');
+    value.id = `${id}-value`;
+    value.className = 'fx-select-value';
+    trigger.append(value);
+    trigger.insertAdjacentHTML('beforeend', chevron);
+    if (label) {
+      label.id ||= `${id}-label`;
+      label.htmlFor = trigger.id;
+      trigger.setAttribute('aria-labelledby', `${label.id} ${value.id}`);
+    } else {
+      trigger.setAttribute('aria-label', select.name || id);
+    }
+    wrap.append(trigger);
+    select.classList.add('fx-select-native');
+    select.tabIndex = -1;
+    select.setAttribute('aria-hidden', 'true');
+    const menu = document.createElement('div');
+    menu.id = `${id}-options`;
+    menu.className = 'fx-select-menu';
+    menu.setAttribute('role', 'listbox');
+    menu.setAttribute('aria-labelledby', label?.id || trigger.id);
+    menu.hidden = true;
+    menu.addEventListener('pointerdown', event => event.preventDefault());
+    menu.addEventListener('mousedown', event => event.preventDefault());
+    document.body.append(menu);
+    let active = -1;
+    let search = '';
+    let searchedAt = 0;
+    const options = Array.from(select.options);
+    const rows = options.map((option, index) => {
+      const row = document.createElement('div');
+      row.id = `${id}-option-${index}`;
+      row.className = 'fx-select-option';
+      row.setAttribute('role', 'option');
+      row.setAttribute('aria-disabled', String(option.disabled));
+      const text = document.createElement('span');
+      text.textContent = option.label;
+      row.append(text);
+      row.insertAdjacentHTML('beforeend', tick);
+      row.addEventListener('pointermove', () => { if (!option.disabled && active !== index) setActive(index, false); });
+      row.addEventListener('click', () => { if (!option.disabled) commit(index); });
+      menu.append(row);
+      return row;
+    });
+    function syncInvalid() {
+      const invalid = Boolean(error?.textContent.trim()) || select.getAttribute('aria-invalid') === 'true';
+      trigger.setAttribute('aria-invalid', String(invalid));
+    }
+    function sync() {
+      const selected = nativeIndex.get.call(select);
+      value.textContent = options[selected]?.label || 'Selecione';
+      trigger.dataset.placeholder = String(!nativeValue.get.call(select));
+      trigger.disabled = select.disabled;
+      rows.forEach((row, index) => row.setAttribute('aria-selected', String(index === selected)));
+      if (select.disabled && !menu.hidden) close();
+    }
+    Object.defineProperty(select, 'value', {
+      configurable: true,
+      get() { return nativeValue.get.call(this); },
+      set(next) { nativeValue.set.call(this, next); sync(); }
+    });
+    Object.defineProperty(select, 'selectedIndex', {
+      configurable: true,
+      get() { return nativeIndex.get.call(this); },
+      set(next) { nativeIndex.set.call(this, next); sync(); }
+    });
+    select.focus = focusOptions => trigger.focus(focusOptions);
+    function setActive(index, scroll = true) {
+      active = index;
+      rows.forEach((row, i) => row.classList.toggle('is-active', i === index));
+      if (rows[index]) {
+        trigger.setAttribute('aria-activedescendant', rows[index].id);
+        if (scroll) rows[index].scrollIntoView({ block: 'nearest', behavior: 'instant' });
+      }
+    }
+    function position() {
+      const anchor = (anchorSelector && trigger.closest(anchorSelector)) || trigger;
+      const rect = anchor.getBoundingClientRect();
+      const above = rect.top - 12;
+      const below = innerHeight - rect.bottom - 12;
+      const down = below >= Math.min(menu.scrollHeight, 220) || below >= above;
+      const width = Math.min(rect.width, innerWidth - 24);
+      menu.style.width = `${width}px`;
+      menu.style.maxHeight = `${Math.max(64, Math.min(296, down ? below : above))}px`;
+      menu.style.left = `${Math.max(12, Math.min(rect.left, innerWidth - width - 12))}px`;
+      menu.style.top = `${down ? rect.bottom + menuGap : Math.max(6, rect.top - menuGap - menu.offsetHeight)}px`;
+      menu.dataset.side = down ? 'below' : 'above';
+    }
+    function close() {
+      menu.hidden = true;
+      trigger.setAttribute('aria-expanded', 'false');
+      trigger.removeAttribute('aria-activedescendant');
+      wrap.classList.remove('is-open');
+      if (opened?.trigger === trigger) opened = null;
+    }
+    function open() {
+      if (select.disabled) return;
+      opened?.close();
+      menu.hidden = false;
+      sync();
+      position();
+      trigger.setAttribute('aria-expanded', 'true');
+      wrap.classList.add('is-open');
+      opened = { trigger, wrap, menu, close, position };
+      search = '';
+      const selected = nativeIndex.get.call(select);
+      setActive(selected >= 0 ? selected : options.findIndex(o => !o.disabled));
+    }
+    function commit(index) {
+      const changed = index !== nativeIndex.get.call(select);
+      nativeIndex.set.call(select, index);
+      sync();
+      if (changed) {
+        select.dispatchEvent(new Event('input', { bubbles: true }));
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+      close();
+      trigger.focus({ preventScroll: true });
+    }
+    trigger.addEventListener('click', () => menu.hidden ? open() : close());
+    trigger.addEventListener('keydown', event => {
+      if (event.key === 'Tab') { close(); return; }
+      if (event.key === 'Escape') { if (!menu.hidden) event.preventDefault(); close(); return; }
+      if (['Enter', ' '].includes(event.key)) {
+        event.preventDefault();
+        if (menu.hidden) open(); else if (active >= 0) commit(active);
+        return;
+      }
+      if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) {
+        event.preventDefault();
+        const wasClosed = menu.hidden;
+        if (wasClosed) open();
+        const enabled = options.map((o, i) => o.disabled ? -1 : i).filter(i => i !== -1);
+        const cursor = enabled.indexOf(active);
+        let next = event.key === 'Home' ? enabled[0] : event.key === 'End' ? enabled.at(-1) : active;
+        if (!wasClosed && event.key === 'ArrowDown') next = enabled[Math.min(cursor + 1, enabled.length - 1)];
+        if (!wasClosed && event.key === 'ArrowUp') next = enabled[Math.max(cursor - 1, 0)];
+        setActive(next);
+        return;
+      }
+      if (event.key.length === 1 && !event.ctrlKey && !event.altKey && !event.metaKey) {
+        event.preventDefault();
+        const previousSearch = performance.now() - searchedAt < 700 ? search : '';
+        if (menu.hidden) open();
+        search = previousSearch + normalize(event.key);
+        searchedAt = performance.now();
+        const found = options.findIndex(o => !o.disabled && normalize(o.label).startsWith(search));
+        if (found >= 0) setActive(found);
+      }
+    });
+    trigger.addEventListener('blur', () => close());
+    select.addEventListener('change', sync);
+    select.form?.addEventListener('reset', () => { close(); setTimeout(sync, 0); });
+    new MutationObserver(() => { sync(); syncInvalid(); }).observe(select, { attributes: true, attributeFilter: ['disabled', 'aria-invalid'] });
+    if (error) {
+      error.id ||= `${id}-error`;
+      trigger.setAttribute('aria-describedby', error.id);
+      new MutationObserver(syncInvalid).observe(error, { childList: true, characterData: true, subtree: true });
+    }
+    syncInvalid();
+    sync();
+  });
+  document.addEventListener('pointerdown', event => {
+    if (opened && !opened.wrap.contains(event.target) && !opened.menu.contains(event.target)) opened.close();
+  }, true);
+  document.addEventListener('scroll', event => {
+    if (opened && !opened.menu.contains(event.target)) {
+      const rect = opened.trigger.getBoundingClientRect();
+      if (rect.bottom <= 0 || rect.top >= innerHeight) opened.close();
+      else opened.position();
+    }
+  }, true);
+  window.addEventListener('resize', () => opened?.close());
+})();
+</script><script id="fixable-validation-motion">(() => {
   const preference = matchMedia('(prefers-reduced-motion: reduce)');
   const running = new WeakMap();
   document.querySelectorAll('form').forEach(form => {
