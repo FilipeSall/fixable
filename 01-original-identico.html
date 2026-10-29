@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FIXABLE — Sua casa em dia, sem complicação</title>
+<meta name="description" content="A FIXABLE diagnostica, organiza e acompanha a manutenção da sua casa com profissionais qualificados. Fixing before breaking.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --primary: 220 60% 17%;
+  --primary-variant: 220 58% 32%;
+  --background: 210 33% 98%;
+  --card: 0 0% 100%;
+  --foreground: 222 30% 12%;
+  --muted-foreground: 220 8% 46%;
+  --border: 220 20% 88%;
+  --success: 152 55% 33%;
+  --warning: 38 78% 44%;
+  --destructive: 0 62% 45%;
+  --accent: 34 62% 48%;
+  --radius: 1rem;
+}
+:root:not([data-theme="light"]){ }
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --background: 222 32% 9%;
+    --card: 222 28% 13%;
+    --foreground: 210 25% 94%;
+    --muted-foreground: 218 12% 65%;
+    --border: 220 18% 22%;
+  }
+}
+:root[data-theme="dark"]{
+  --background: 222 32% 9%;
+  --card: 222 28% 13%;
+  --foreground: 210 25% 94%;
+  --muted-foreground: 218 12% 65%;
+  --border: 220 18% 22%;
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html{scroll-behavior:smooth;}
+body{
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: 'Manrope', system-ui, sans-serif;
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+  min-height:100vh;
+  position:relative;
+  overflow-x:hidden;
+}
+h1,h2,h3,h4{ font-family:'Sora', system-ui, sans-serif; letter-spacing:-0.02em; font-weight:800; line-height:1.12; }
+a{ color:inherit; text-decoration:none; }
+img{ max-width:100%; display:block; }
+button{ font-family:inherit; cursor:pointer; }
+.wrap{ max-width:1180px; margin:0 auto; padding:0 24px; }
+.grain{
+  position:fixed; inset:0; pointer-events:none; z-index:0; opacity:.5; mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.35'/></svg>");
+}
+.glow{ position:absolute; border-radius:50%; filter:blur(90px); z-index:0; pointer-events:none; }
+
+/* ---------- NAVBAR ---------- */
+header#nav{
+  position:sticky; top:0; z-index:50;
+  background: hsla(var(--background) / .72);
+  backdrop-filter: blur(14px);
+  border-bottom:1px solid hsl(var(--border));
+}
+.nav-inner{ display:flex; align-items:center; justify-content:space-between; height:72px; }
+.nav-links{ display:flex; gap:28px; align-items:center; }
+.nav-links a{ font-size:.92rem; font-weight:600; color:hsl(var(--muted-foreground)); transition:color .15s; }
+.nav-links a:hover{ color:hsl(var(--foreground)); }
+.nav-actions{ display:flex; gap:10px; align-items:center; }
+.hamburger{ display:none; background:none; border:none; padding:8px; }
+.hamburger span{ display:block; width:22px; height:2px; background:hsl(var(--foreground)); margin:5px 0; border-radius:2px; }
+#mobile-menu{ display:none; flex-direction:column; gap:2px; padding:12px 24px 20px; border-bottom:1px solid hsl(var(--border)); background:hsl(var(--background)); }
+#mobile-menu a, #mobile-menu button{ padding:12px 4px; font-weight:600; border-bottom:1px solid hsl(var(--border)); text-align:left; background:none; border-left:none; border-right:none; border-top:none; color:hsl(var(--foreground)); }
+#mobile-menu.open{ display:flex; }
+
+/* ---------- BUTTONS ---------- */
+.btn{ display:inline-flex; align-items:center; justify-content:center; gap:8px; border-radius:.65rem; padding:12px 22px; font-weight:700; font-size:.94rem; border:1px solid transparent; transition:transform .15s, box-shadow .15s, background .15s; white-space:nowrap; }
+.btn:active{ transform:scale(.98); }
+.btn-primary{ background:hsl(var(--accent)); color:hsl(28 40% 12%); box-shadow:0 8px 20px -8px hsl(var(--accent)/.6); }
+.btn-primary:hover{ box-shadow:0 10px 26px -8px hsl(var(--accent)/.75); }
+.btn-ghost{ background:transparent; color:hsl(var(--foreground)); border-color:hsl(var(--border)); }
+.btn-ghost:hover{ background:hsl(var(--card)); }
+.btn-outline-light{ background:transparent; color:#fff; border-color:hsla(0,0%,100%,.35); }
+.btn-outline-light:hover{ background:hsla(0,0%,100%,.1); }
+.btn-block{ width:100%; }
+.btn:disabled{ opacity:.6; cursor:not-allowed; }
+
+/* ---------- SECTION SHELL ---------- */
+section{ position:relative; z-index:1; padding:96px 0; }
+.eyebrow{ font-size:.82rem; font-weight:700; color:hsl(var(--accent)); margin-bottom:14px; }
+.section-head{ max-width:620px; margin-bottom:52px; }
+.section-head h2{ font-size:clamp(1.7rem,3.4vw,2.5rem); margin-bottom:16px; }
+.section-head p{ color:hsl(var(--muted-foreground)); font-size:1.05rem; }
+.section-head.center{ margin-left:auto; margin-right:auto; text-align:center; }
+
+/* ---------- HERO ---------- */
+#hero{ padding-top:64px; padding-bottom:72px; }
+.hero-grid{ display:grid; grid-template-columns:1.05fr .95fr; gap:56px; align-items:center; }
+.hero-copy h1{ font-size:clamp(2.3rem,5vw,3.5rem); margin-bottom:20px; }
+.hero-copy p{ font-size:1.12rem; color:hsl(var(--muted-foreground)); max-width:480px; margin-bottom:32px; }
+.hero-ctas{ display:flex; gap:14px; flex-wrap:wrap; margin-bottom:40px; }
+.hero-visual{ position:relative; }
+.hero-img{ border-radius:1.4rem; overflow:hidden; aspect-ratio:4/3.1; box-shadow:0 40px 70px -30px hsl(var(--primary)/.45); position:relative; }
+.hero-img svg{ width:100%; height:100%; display:block; }
+.float-badge{ position:absolute; background:hsl(var(--card)); border:1px solid hsl(var(--border)); border-radius:.8rem; padding:12px 16px; display:flex; align-items:center; gap:10px; font-size:.82rem; font-weight:700; box-shadow:0 18px 30px -16px rgba(0,0,0,.28); animation:float 5s ease-in-out infinite; }
+.float-badge .dot{ width:9px; height:9px; border-radius:50%; background:hsl(var(--success)); flex-shrink:0; }
+.float-badge small{ display:block; font-weight:500; font-size:.7rem; opacity:.7; margin-top:2px; }
+.hero-data{ position:absolute; left:14px; right:-18px; bottom:-26px; background:hsl(var(--card)); border:1px solid hsl(var(--border)); border-radius:1rem; padding:14px 16px; box-shadow:0 18px 30px -16px rgba(0,0,0,.3); }
+.hd-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+.hd-head small{ display:block; font-size:.68rem; opacity:.65; text-transform:uppercase; letter-spacing:.06em; }
+.hd-head strong{ font-size:.9rem; }
+.hd-score{ font-size:1.6rem; font-weight:800; color:hsl(var(--warning)); }
+.hd-grid{ display:grid; grid-template-columns:1fr 1fr; gap:6px 16px; }
+.hd-row{ display:grid; grid-template-columns:1fr auto; gap:2px 8px; font-size:.72rem; align-items:center; }
+.hd-bar{ grid-column:1 / -1; grid-row:2; height:5px; border-radius:99px; background:hsl(var(--border)); overflow:hidden; }
+.hd-bar i{ display:block; height:100%; border-radius:99px; }
+.hd-bar i.ok{ background:hsl(var(--success)); } .hd-bar i.warn{ background:hsl(var(--warning)); } .hd-bar i.bad{ background:hsl(var(--destructive)); }
+@media(max-width:640px){ .hero-data{ right:0; left:0; bottom:-40px; } .hero-visual{ margin-bottom:56px; } .fb1{ left:-6px; } }
+.fb1{ top:-18px; left:-24px; animation-delay:0s; }
+.fb2{ bottom:-16px; right:-18px; animation-delay:1.4s; }
+.fb3{ top:44%; right:-30px; animation-delay:2.6s; }
+@keyframes float{ 0%,100%{ transform:translateY(0);} 50%{ transform:translateY(-9px);} }
+
+/* ---------- CARD GRIDS ---------- */
+.card{ background:hsl(var(--card)); border:1px solid hsl(var(--border)); border-radius:var(--radius); padding:28px; }
+.grid{ display:grid; gap:20px; }
+.grid-3{ grid-template-columns:repeat(3,1fr); }
+.grid-2{ grid-template-columns:repeat(2,1fr); }
+.icon-badge{ width:44px; height:44px; border-radius:.7rem; background:hsl(var(--primary)/.08); display:flex; align-items:center; justify-content:center; color:hsl(var(--primary)); margin-bottom:16px; }
+:root[data-theme="dark"] .icon-badge, @media (prefers-color-scheme:dark){ .icon-badge{ background:hsl(var(--accent)/.15); color:hsl(var(--accent)); } }
+.card h3{ font-size:1.05rem; margin-bottom:8px; }
+.card p{ color:hsl(var(--muted-foreground)); font-size:.94rem; }
+
+/* problem highlight */
+.problem-highlight{ margin-top:36px; background:linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-variant))); color:#fff; border-radius:var(--radius); padding:28px 32px; font-family:'Sora',sans-serif; font-weight:700; font-size:1.15rem; }
+
+/* how it works */
+.steps{ display:grid; grid-template-columns:repeat(4,1fr); gap:0; position:relative; }
+.steps::before{ content:""; position:absolute; top:22px; left:6%; right:6%; height:2px; background:hsl(var(--border)); z-index:0; }
+.step{ position:relative; z-index:1; padding-right:20px; }
+.step-num{ width:44px; height:44px; border-radius:50%; background:hsl(var(--primary)); color:#fff; display:flex; align-items:center; justify-content:center; font-family:'Sora'; font-weight:700; margin-bottom:18px; }
+.step h4{ font-size:1rem; margin-bottom:6px; }
+.step p{ color:hsl(var(--muted-foreground)); font-size:.9rem; }
+
+/* checkup mock */
+.checkup-wrap{ display:grid; grid-template-columns:.9fr 1.1fr; gap:48px; align-items:center; }
+.checkup-card{ background:hsl(var(--card)); border:1px solid hsl(var(--border)); border-radius:1.2rem; padding:28px; box-shadow:0 30px 60px -34px rgba(0,0,0,.35); }
+.checkup-title{ display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+.checkup-title strong{ font-family:'Sora'; font-size:1.05rem; }
+.status-pill{ font-size:.75rem; font-weight:700; padding:5px 12px; border-radius:999px; }
+.status-warning{ background:hsl(var(--warning)/.15); color:hsl(var(--warning)); }
+.status-ok{ background:hsl(var(--success)/.15); color:hsl(var(--success)); }
+.status-priority{ background:hsl(var(--destructive)/.15); color:hsl(var(--destructive)); }
+.checkup-list{ margin-top:18px; display:flex; flex-direction:column; gap:10px; }
+.checkup-row{ display:flex; justify-content:space-between; align-items:center; padding:12px 14px; border:1px solid hsl(var(--border)); border-radius:.7rem; font-size:.88rem; font-weight:600; }
+.checkup-row .pulse{ width:8px; height:8px; border-radius:50%; margin-right:8px; display:inline-block; }
+.p-ok{ background:hsl(var(--success)); }
+.p-warn{ background:hsl(var(--warning)); animation:pulse-status 1.8s ease-in-out infinite; }
+.p-priority{ background:hsl(var(--destructive)); animation:pulse-status 1.8s ease-in-out infinite; }
+@keyframes pulse-status{ 0%,100%{ box-shadow:0 0 0 0 currentColor22;} 50%{ box-shadow:0 0 0 6px transparent;} }
+.safety-note{ margin-top:16px; font-size:.78rem; color:hsl(var(--muted-foreground)); background:hsl(var(--warning)/.08); border-left:3px solid hsl(var(--warning)); padding:10px 12px; border-radius:.4rem; }
+
+/* fixable id */
+.fixid-wrap{ display:grid; grid-template-columns:1.1fr .9fr; gap:48px; align-items:center; }
+.fixid-card{ background:hsl(var(--card)); border:1px solid hsl(var(--border)); border-radius:1.2rem; padding:24px; box-shadow:0 30px 60px -34px rgba(0,0,0,.35); }
+.fixid-tag{ display:inline-block; font-size:.72rem; font-weight:700; color:hsl(var(--accent)); background:hsl(var(--accent)/.12); padding:4px 10px; border-radius:999px; margin-bottom:14px; }
+.fixid-item{ display:flex; gap:12px; padding:12px 0; border-bottom:1px solid hsl(var(--border)); font-size:.88rem; }
+.fixid-item:last-child{ border-bottom:none; }
+.fixid-item .ic{ width:34px; height:34px; border-radius:.5rem; background:hsl(var(--primary)/.08); display:flex; align-items:center; justify-content:center; flex-shrink:0; color:hsl(var(--primary)); }
+
+/* services */
+.svc-legal{ margin-top:34px; font-size:.82rem; color:hsl(var(--muted-foreground)); border-top:1px solid hsl(var(--border)); padding-top:20px; }
+.grid-4{ grid-template-columns:repeat(4,1fr); }
+
+/* packages */
+.pkg-card{ display:flex; flex-direction:column; }
+.pkg-card h3{ font-size:1.2rem; }
+.pkg-price{ font-family:'Sora'; font-weight:700; color:hsl(var(--muted-foreground)); font-size:.95rem; margin:10px 0 16px; }
+.pkg-list{ list-style:none; display:flex; flex-direction:column; gap:8px; margin-bottom:22px; flex:1; font-size:.88rem; color:hsl(var(--muted-foreground)); }
+.pkg-list li::before{ content:"✓ "; color:hsl(var(--success)); font-weight:700; }
+.pkg-featured{ border-color:hsl(var(--primary)); box-shadow:0 20px 40px -24px hsl(var(--primary)/.35); }
+
+/* professionals */
+.pros-wrap{ display:grid; grid-template-columns:1fr .85fr; gap:52px; align-items:center; }
+.pros-list{ display:flex; flex-direction:column; gap:14px; margin:24px 0 30px; }
+.pros-list li{ display:flex; gap:12px; font-size:.92rem; }
+.pros-list li .ic{ color:hsl(var(--success)); flex-shrink:0; }
+.seal{ display:flex; align-items:center; gap:14px; background:hsl(var(--card)); border:1px solid hsl(var(--border)); border-radius:1rem; padding:20px; }
+
+/* guarantee */
+.guarantee-grid{ grid-template-columns:repeat(3,1fr); }
+
+/* for business */
+#for-business{ background:linear-gradient(150deg, hsl(var(--primary)), hsl(var(--primary-variant))); color:#fff; border-radius:0; }
+#for-business .section-head p{ color:hsla(0,0%,100%,.75); }
+#for-business .eyebrow{ color:hsl(var(--accent)); }
+.biz-grid{ display:grid; grid-template-columns:1fr 1fr; gap:48px; align-items:center; }
+.biz-feats{ display:flex; flex-direction:column; gap:16px; margin:26px 0 30px; }
+.biz-feats div{ display:flex; gap:12px; font-size:.92rem; color:hsla(0,0%,100%,.9); }
+.biz-panel{ background:hsla(0,0%,100%,.06); border:1px solid hsla(0,0%,100%,.16); border-radius:1.2rem; padding:26px; }
+.biz-panel .row{ display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid hsla(0,0%,100%,.14); font-size:.9rem; }
+.biz-panel .row:last-child{ border-bottom:none; }
+
+/* cta */
+#cta{ text-align:center; }
+#cta h2{ font-size:clamp(1.8rem,4vw,2.6rem); margin-bottom:16px; }
+#cta p{ color:hsl(var(--muted-foreground)); margin-bottom:30px; }
+
+/* diagnostic form */
+#solicitar{ background:hsl(var(--card)); border-top:1px solid hsl(var(--border)); border-bottom:1px solid hsl(var(--border)); }
+.form-wrap{ max-width:640px; margin:0 auto; background:hsl(var(--background)); border:1px solid hsl(var(--border)); border-radius:1.2rem; padding:36px; }
+.form-grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.field{ display:flex; flex-direction:column; gap:6px; margin-bottom:16px; }
+.field.full{ grid-column:1/-1; }
+.field label{ font-size:.82rem; font-weight:700; }
+.field input, .field select, .field textarea{ font-family:inherit; font-size:.94rem; padding:11px 13px; border-radius:.6rem; border:1px solid hsl(var(--border)); background:hsl(var(--card)); color:hsl(var(--foreground)); }
+.field input:focus, .field select:focus, .field textarea:focus{ outline:2px solid hsl(var(--primary)/.4); outline-offset:1px; }
+.field textarea{ resize:vertical; min-height:90px; }
+.field .err{ font-size:.76rem; color:hsl(var(--destructive)); min-height:14px; }
+.checkbox-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.chk{ display:flex; align-items:center; gap:8px; font-size:.86rem; border:1px solid hsl(var(--border)); border-radius:.5rem; padding:9px 10px; }
+.form-success{ display:none; text-align:center; padding:30px 10px; }
+.form-success .ic{ width:56px; height:56px; border-radius:50%; background:hsl(var(--success)/.15); color:hsl(var(--success)); display:flex; align-items:center; justify-content:center; margin:0 auto 16px; }
+
+/* faq */
+.faq-item{ border-bottom:1px solid hsl(var(--border)); }
+.faq-q{ width:100%; text-align:left; background:none; border:none; padding:20px 4px; display:flex; justify-content:space-between; align-items:center; font-family:'Sora'; font-weight:700; font-size:.98rem; color:hsl(var(--foreground)); }
+.faq-q .plus{ transition:transform .2s; font-size:1.3rem; color:hsl(var(--accent)); }
+.faq-item.open .plus{ transform:rotate(45deg); }
+.faq-a{ max-height:0; overflow:hidden; transition:max-height .25s ease; font-size:.92rem; color:hsl(var(--muted-foreground)); }
+.faq-a-inner{ padding:0 4px 20px; }
+
+/* footer */
+footer{ background:hsl(var(--primary)); color:hsla(0,0%,100%,.85); padding:64px 0 28px; }
+.footer-grid{ display:grid; grid-template-columns:1.4fr 1fr 1fr 1fr; gap:36px; margin-bottom:44px; }
+.footer-grid h5{ font-family:'Sora'; font-size:.85rem; color:#fff; margin-bottom:16px; }
+.footer-grid a{ display:block; font-size:.86rem; color:hsla(0,0%,100%,.7); margin-bottom:10px; }
+.footer-grid a:hover{ color:#fff; }
+.social-row{ display:flex; gap:10px; margin-top:16px; }
+.social-row a{ width:36px; height:36px; border-radius:50%; background:hsla(0,0%,100%,.1); display:flex; align-items:center; justify-content:center; }
+.footer-bottom{ border-top:1px solid hsla(0,0%,100%,.15); padding-top:24px; font-size:.78rem; color:hsla(0,0%,100%,.55); display:flex; justify-content:space-between; flex-wrap:wrap; gap:12px; }
+
+/* profissionais page */
+.pf-hero{ background:linear-gradient(150deg, hsl(var(--primary)), hsl(var(--primary-variant))); color:#fff; text-align:center; padding:100px 0 80px; }
+.pf-hero h1{ font-size:clamp(2rem,4.4vw,3rem); margin-bottom:18px; }
+.pf-hero p{ max-width:560px; margin:0 auto 30px; color:hsla(0,0%,100%,.8); }
+
+/* painel */
+.demo-banner{ background:hsl(var(--warning)/.12); border:1px solid hsl(var(--warning)/.4); color:hsl(var(--warning)); font-weight:700; font-size:.82rem; padding:10px 16px; border-radius:.6rem; display:inline-flex; align-items:center; gap:8px; margin-bottom:22px; }
+.login-shell{ max-width:400px; margin:70px auto; background:hsl(var(--card)); border:1px solid hsl(var(--border)); border-radius:1.2rem; padding:36px; }
+.tabs{ display:flex; gap:6px; overflow-x:auto; margin-bottom:28px; border-bottom:1px solid hsl(var(--border)); padding-bottom:0; }
+.tab-btn{ background:none; border:none; padding:12px 16px; font-weight:700; font-size:.86rem; color:hsl(var(--muted-foreground)); border-bottom:2px solid transparent; white-space:nowrap; }
+.tab-btn.active{ color:hsl(var(--primary)); border-color:hsl(var(--accent)); }
+.panel-view{ display:none; }
+.panel-view.active{ display:block; }
+.data-row{ display:flex; justify-content:space-between; align-items:center; padding:14px 16px; border:1px solid hsl(var(--border)); border-radius:.7rem; margin-bottom:10px; font-size:.9rem; }
+
+/* virtual floor plan (servicos em andamento) */
+.floorplan-wrap{ margin-bottom:28px; }
+.floorplan-stage{ position:relative; width:100%; max-width:480px; aspect-ratio:4/3; background:hsl(var(--card)); border:1px solid hsl(var(--border)); border-radius:1rem; overflow:hidden; margin:0 auto 14px; box-shadow:0 20px 40px -28px rgba(0,0,0,.3); }
+.floorplan-stage svg{ width:100%; height:100%; display:block; }
+.fp-room-label{ fill:hsl(var(--muted-foreground)); font-size:13px; font-family:'Manrope',sans-serif; font-weight:600; }
+.fp-marker{ position:absolute; transform:translate(-50%,-50%); width:22px; height:22px; border-radius:50%; border:2px solid hsl(var(--card)); cursor:pointer; padding:0; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(0,0,0,.25); }
+.fp-marker.dot-prioridade{ background:hsl(var(--destructive)); }
+.fp-marker.dot-atencao{ background:hsl(var(--warning)); }
+.fp-marker.dot-execucao{ background:hsl(var(--accent)); }
+.fp-marker.selected{ outline:3px solid hsl(var(--primary)); outline-offset:2px; }
+.fp-marker-pulse{ position:absolute; inset:-6px; border-radius:50%; border:2px solid currentColor; opacity:.5; animation:fp-pulse 1.8s ease-out infinite; }
+.fp-marker.dot-prioridade .fp-marker-pulse{ color:hsl(var(--destructive)); }
+.fp-marker.dot-atencao .fp-marker-pulse{ color:hsl(var(--warning)); }
+.fp-marker.dot-execucao .fp-marker-pulse{ color:hsl(var(--accent)); }
+@keyframes fp-pulse{ 0%{ transform:scale(.6); opacity:.6;} 100%{ transform:scale(1.6); opacity:0;} }
+.fp-legend{ display:flex; gap:18px; flex-wrap:wrap; justify-content:center; font-size:.8rem; color:hsl(var(--muted-foreground)); margin-bottom:24px; }
+.fp-legend span{ display:flex; align-items:center; gap:6px; }
+.fp-dot{ width:9px; height:9px; border-radius:50%; display:inline-block; }
+.fp-dot.dot-prioridade{ background:hsl(var(--destructive)); }
+.fp-dot.dot-atencao{ background:hsl(var(--warning)); }
+.fp-dot.dot-execucao{ background:hsl(var(--accent)); }
+.fp-detail{ display:none; background:hsl(var(--card)); border:1px solid hsl(var(--border)); border-radius:1rem; padding:20px; margin-bottom:24px; }
+.fp-detail.show{ display:block; }
+.fp-detail-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:10px; }
+.status-progress{ background:hsl(var(--accent)/.15); color:hsl(var(--accent)); }
+.service-list{ display:flex; flex-direction:column; gap:14px; }
+.service-card{ background:hsl(var(--card)); border:1px solid hsl(var(--border)); border-radius:.9rem; padding:16px 18px; cursor:pointer; transition:border-color .15s; }
+.service-card:hover, .service-card.selected{ border-color:hsl(var(--accent)); }
+.service-card-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:12px; }
+.progress-track{ width:100%; height:8px; border-radius:999px; background:hsl(var(--border)); overflow:hidden; margin-bottom:8px; }
+.progress-fill{ height:100%; border-radius:999px; transition:width .4s ease; }
+.fill-prioridade{ background:hsl(var(--destructive)); }
+.fill-atencao{ background:hsl(var(--warning)); }
+.fill-execucao{ background:hsl(var(--accent)); }
+.service-card-foot{ display:flex; justify-content:space-between; font-size:.8rem; color:hsl(var(--muted-foreground)); font-weight:600; }
+
+/* views (SPA-like) */
+.view{ display:none; }
+.view.active{ display:block; }
+
+/* utility */
+.muted{ color:hsl(var(--muted-foreground)); }
+.mt-8{ margin-top:8px;} .mt-16{ margin-top:16px;} .mt-24{ margin-top:24px;}
+.center-text{ text-align:center; }
+
+/* responsive */
+@media (max-width:960px){
+  .hero-grid, .checkup-wrap, .fixid-wrap, .pros-wrap, .biz-grid{ grid-template-columns:1fr; }
+  .grid-3, .grid-4{ grid-template-columns:repeat(2,1fr); }
+  .steps{ grid-template-columns:1fr; gap:26px; }
+  .steps::before{ display:none; }
+  .footer-grid{ grid-template-columns:1fr 1fr; }
+  .guarantee-grid{ grid-template-columns:1fr; }
+}
+@media (max-width:680px){
+  .nav-links{ display:none; }
+  .hamburger{ display:block; }
+  .grid-3, .grid-4, .grid-2{ grid-template-columns:1fr; }
+  .form-grid{ grid-template-columns:1fr; }
+  .checkbox-grid{ grid-template-columns:1fr 1fr; }
+  section{ padding:64px 0; }
+  .footer-grid{ grid-template-columns:1fr; }
+  .footer-bottom{ flex-direction:column; }
+}
+@media (prefers-reduced-motion:reduce){
+  *{ animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important; scroll-behavior:auto !important; }
+}
+.reveal{ opacity:0; transform:translateY(18px); transition:opacity .6s ease, transform .6s ease; }
+.reveal.in{ opacity:1; transform:translateY(0); }
+</style>
+</head>
+<body>
+<div class="grain"></div>
+
+<!-- ============ NAVBAR ============ -->
+<header id="nav">
+  <div class="wrap nav-inner">
+    <a href="#/" onclick="go('home');" style="display:flex;align-items:center;gap:10px;">
+      <svg width="30" height="30" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="24" cy="24" r="24" fill="hsl(210,33%,94%)"/>
+        <path d="M24 10c1 0 1.9.6 2.2 1.6l.7 2.2c.9.2 1.8.6 2.6 1l2-1.2c.9-.5 2-.4 2.7.3l1.9 1.9c.7.7.8 1.8.3 2.7l-1.2 2c.4.8.8 1.7 1 2.6l2.2.7c1 .3 1.6 1.2 1.6 2.2v2.7c0 1-.6 1.9-1.6 2.2l-2.2.7c-.2.9-.6 1.8-1 2.6l1.2 2c.5.9.4 2-.3 2.7l-1.9 1.9c-.7.7-1.8.8-2.7.3l-2-1.2c-.8.4-1.7.8-2.6 1l-.7 2.2c-.3 1-1.2 1.6-2.2 1.6h-2.7c-1 0-1.9-.6-2.2-1.6l-.7-2.2c-.9-.2-1.8-.6-2.6-1l-2 1.2c-.9.5-2 .4-2.7-.3l-1.9-1.9c-.7-.7-.8-1.8-.3-2.7l1.2-2c-.4-.8-.8-1.7-1-2.6l-2.2-.7c-1-.3-1.6-1.2-1.6-2.2v-2.7c0-1 .6-1.9 1.6-2.2l2.2-.7c.2-.9.6-1.8 1-2.6l-1.2-2c-.5-.9-.4-2 .3-2.7l1.9-1.9c.7-.7 1.8-.8 2.7-.3l2 1.2c.8-.4 1.7-.8 2.6-1l.7-2.2c.3-1 1.2-1.6 2.2-1.6H24z" fill="hsl(220,60%,17%)"/>
+        <circle cx="24" cy="24" r="6.4" fill="hsl(210,33%,94%)"/>
+        <path d="M24 20.5l4.2 3.4v6.1h-2.9v-3.9h-2.6v3.9h-2.9v-6.1L24 20.5z" fill="hsl(220,60%,17%)"/>
+      </svg>
+      <span style="font-family:'Sora'; font-weight:800; font-size:1.15rem; letter-spacing:-0.01em;">fixable</span>
+    </a>
+    <nav class="nav-links">
+      <a href="#/" onclick="go('home','#how');">Como funciona</a>
+      <a href="#/" onclick="go('home','#services');">Serviços</a>
+      <a href="#/" onclick="go('home','#guarantee');">Diferenciais</a>
+      <a href="#/" onclick="go('profissionais');">Para profissionais</a>
+      <a href="#/" onclick="go('home','#for-business');">Para empresas</a>
+      <a href="#/" onclick="go('home','#faq');">FAQ</a>
+    </nav>
+    <div class="nav-actions">
+      <button class="btn btn-ghost" onclick="go('painel')" style="padding:10px 18px;">Entrar</button>
+      <button class="btn btn-primary" onclick="go('home','#solicitar')" style="padding:10px 18px;">Solicitar diagnóstico</button>
+      <button class="hamburger" onclick="toggleMobileMenu()" aria-label="Menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+  <div id="mobile-menu">
+    <a href="#/" onclick="go('home','#how');closeMobileMenu();">Como funciona</a>
+    <a href="#/" onclick="go('home','#services');closeMobileMenu();">Serviços</a>
+    <a href="#/" onclick="go('home','#guarantee');closeMobileMenu();">Diferenciais</a>
+    <a href="#/" onclick="go('profissionais');closeMobileMenu();">Para profissionais</a>
+    <a href="#/" onclick="go('home','#for-business');closeMobileMenu();">Para empresas</a>
+    <a href="#/" onclick="go('home','#faq');closeMobileMenu();">FAQ</a>
+    <button onclick="go('painel');closeMobileMenu();">Entrar</button>
+  </div>
+</header>
+
+<!-- ============ HOME VIEW ============ -->
+<main id="view-home" class="view active">
+
+<section id="hero">
+  <div class="wrap hero-grid">
+    <div class="hero-copy reveal">
+      <div class="eyebrow">Gestão e manutenção residencial</div>
+      <h1>Sua casa em dia. Sem complicação.</h1>
+      <p>A FIXABLE envia um especialista até você, diagnostica o que sua casa realmente precisa e coordena profissionais qualificados para resolver — do começo ao fim.</p>
+      <div class="hero-ctas">
+        <button class="btn btn-primary" onclick="go('home','#solicitar')">Solicitar diagnóstico</button>
+        <button class="btn btn-ghost" onclick="go('home','#problem')">Conhecer a Fixable</button>
+      </div>
+    </div>
+    <div class="hero-visual reveal">
+      <div class="hero-img">
+        <svg viewBox="0 0 480 380" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#dfe8f2"/><stop offset="1" stop-color="#c3d3e6"/>
+            </linearGradient>
+            <linearGradient id="wallGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#f4f1ea"/><stop offset="1" stop-color="#e7e1d4"/>
+            </linearGradient>
+          </defs>
+          <rect width="480" height="380" fill="url(#skyGrad)"/>
+          <rect x="0" y="260" width="480" height="120" fill="#9fb6a8"/>
+          <g>
+            <rect x="90" y="150" width="300" height="150" fill="url(#wallGrad)"/>
+            <polygon points="70,150 240,60 410,150" fill="#16294a"/>
+            <rect x="200" y="210" width="70" height="90" fill="#2c3e5c"/>
+            <rect x="130" y="185" width="46" height="46" fill="#a9c6da" stroke="#16294a" stroke-width="4"/>
+            <rect x="304" y="185" width="46" height="46" fill="#a9c6da" stroke="#16294a" stroke-width="4"/>
+            <rect x="90" y="150" width="300" height="10" fill="#16294a"/>
+          </g>
+          <circle cx="405" cy="70" r="26" fill="#f2c14e" opacity="0.85"/>
+        </svg>
+      </div>
+      <div class="float-badge fb1"><span class="dot"></span><span>Casa Jardim Europa · 142 m²<small>Sobrado · 2 pavimentos · construída em 2009</small></span></div>
+      <div class="hero-data">
+        <div class="hd-head"><div><small>Exemplo de relatório</small><strong>Saúde geral da casa</strong></div><div class="hd-score">71%</div></div>
+        <div class="hd-grid"><div class="hd-row"><span>Hidráulica</span><div class="hd-bar"><i class="ok" style="width:92%"></i></div><b>92%</b></div><div class="hd-row"><span>Elétrica</span><div class="hd-bar"><i class="warn" style="width:58%"></i></div><b>58%</b></div><div class="hd-row"><span>Pintura e acabamento</span><div class="hd-bar"><i class="ok" style="width:88%"></i></div><b>88%</b></div><div class="hd-row"><span>Gás</span><div class="hd-bar"><i class="bad" style="width:34%"></i></div><b>34%</b></div><div class="hd-row"><span>Climatização</span><div class="hd-bar"><i class="warn" style="width:61%"></i></div><b>61%</b></div><div class="hd-row"><span>Estrutura e vedação</span><div class="hd-bar"><i class="ok" style="width:90%"></i></div><b>90%</b></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="problem">
+  <div class="wrap">
+    <div class="section-head center reveal">
+      <div class="eyebrow">O problema</div>
+      <h2>Manter uma casa não deveria ser tão complicado.</h2>
+      <p>Entre orçamentos que não fecham, profissionais que não aparecem e problemas que voltam, cuidar da própria casa vira mais um trabalho.</p>
+    </div>
+    <div class="grid grid-3 reveal">
+      <div class="card"><div class="icon-badge">⏱</div><h3>Tempo perdido</h3><p>Buscar, comparar e negociar com prestadores diferentes para cada problema.</p></div>
+      <div class="card"><div class="icon-badge">❓</div><h3>Falta de confiança</h3><p>Sem saber se o profissional é qualificado ou se o preço é justo.</p></div>
+      <div class="card"><div class="icon-badge">📋</div><h3>Zero histórico</h3><p>Nenhum registro do que já foi feito, quando e por quem.</p></div>
+      <div class="card"><div class="icon-badge">🔁</div><h3>Problemas que voltam</h3><p>Manutenção reativa em vez de prevenção — o mesmo problema se repete.</p></div>
+      <div class="card"><div class="icon-badge">📞</div><h3>Comunicação fragmentada</h3><p>Whatsapp de um, ligação de outro, sem acompanhamento centralizado.</p></div>
+      <div class="card"><div class="icon-badge">💸</div><h3>Orçamento às cegas</h3><p>Sem clareza do que realmente precisa ser feito antes de gastar.</p></div>
+    </div>
+    <div class="problem-highlight reveal">A Fixable centraliza tudo para você.</div>
+  </div>
+</section>
+
+<section id="how">
+  <div class="wrap">
+    <div class="section-head center reveal">
+      <div class="eyebrow">Como funciona</div>
+      <h2>Do diagnóstico à casa resolvida, em 4 etapas.</h2>
+    </div>
+    <div class="steps reveal">
+      <div class="step"><div class="step-num">1</div><h4>Você solicita</h4><p>Preenche o formulário com os dados da sua residência.</p></div>
+      <div class="step"><div class="step-num">2</div><h4>Diagnóstico no local</h4><p>Um especialista visita sua casa e avalia cada área.</p></div>
+      <div class="step"><div class="step-num">3</div><h4>Plano personalizado</h4><p>Você recebe um relatório claro e um orçamento sob medida.</p></div>
+      <div class="step"><div class="step-num">4</div><h4>Execução acompanhada</h4><p>Profissionais qualificados executam, com acompanhamento até o fim.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="checkup">
+  <div class="wrap checkup-wrap">
+    <div class="reveal">
+      <div class="eyebrow">Diagnóstico</div>
+      <h2>Conheça a saúde da sua casa.</h2>
+      <p class="muted mt-16">Nosso relatório FIXABLE HOME CHECK-UP avalia as principais áreas da residência e mostra exatamente onde agir primeiro.</p>
+    </div>
+    <div class="checkup-card reveal">
+      <div class="checkup-title"><strong>FIXABLE HOME CHECK-UP</strong><span class="status-pill status-warning">Atenção recomendada</span></div>
+      <p class="muted" style="font-size:.82rem;">Residência avaliada em 6 frentes</p>
+      <div class="checkup-list">
+        <div class="checkup-row"><span><span class="pulse p-ok"></span>Hidráulica</span><span class="muted">Tudo certo</span></div>
+        <div class="checkup-row"><span><span class="pulse p-warn"></span>Elétrica</span><span class="muted">Precisa de atenção</span></div>
+        <div class="checkup-row"><span><span class="pulse p-ok"></span>Pintura e acabamento</span><span class="muted">Tudo certo</span></div>
+        <div class="checkup-row"><span><span class="pulse p-priority"></span>Gás</span><span class="muted">Prioridade de avaliação</span></div>
+        <div class="checkup-row"><span><span class="pulse p-warn"></span>Climatização</span><span class="muted">Precisa de atenção</span></div>
+        <div class="checkup-row"><span><span class="pulse p-ok"></span>Estrutura e vedação</span><span class="muted">Tudo certo</span></div>
+      </div>
+      <div class="safety-note">Este diagnóstico é orientativo e não substitui vistorias técnicas obrigatórias. Itens de gás, elétrica e estrutura exigem sempre avaliação de profissional habilitado.</div>
+    </div>
+  </div>
+</section>
+
+<section id="fixable-id">
+  <div class="wrap fixid-wrap">
+    <div class="fixid-card reveal">
+      <span class="fixid-tag">Recurso em implementação</span>
+      <div class="fixid-item"><div class="ic">🧾</div><div><strong>Orçamentos e notas fiscais</strong><br><span class="muted">Centralizados por serviço</span></div></div>
+      <div class="fixid-item"><div class="ic">📷</div><div><strong>Fotos antes/depois</strong><br><span class="muted">Registro visual de cada intervenção</span></div></div>
+      <div class="fixid-item"><div class="ic">🛡</div><div><strong>Garantias</strong><br><span class="muted">Prazo e cobertura de cada serviço</span></div></div>
+      <div class="fixid-item"><div class="ic">👷</div><div><strong>Histórico de profissionais</strong><br><span class="muted">Quem esteve na sua casa e quando</span></div></div>
+      <div class="fixid-item"><div class="ic">🔔</div><div><strong>Recomendações preventivas</strong><br><span class="muted">Manutenções futuras sugeridas</span></div></div>
+    </div>
+    <div class="reveal">
+      <div class="eyebrow">Fixable ID</div>
+      <h2>Uma história completa da sua casa.</h2>
+      <p class="muted mt-16">Estamos construindo um painel digital que reúne todo o histórico da sua residência em um só lugar. Este recurso está planejado e em desenvolvimento — ainda não está disponível de forma operacional.</p>
+    </div>
+  </div>
+</section>
+
+<section id="services">
+  <div class="wrap">
+    <div class="section-head center reveal">
+      <div class="eyebrow">Especialidades</div>
+      <h2>Um time completo para qualquer manutenção.</h2>
+    </div>
+    <div class="grid grid-4 reveal" id="services-grid"></div>
+    <p class="svc-legal">Serviços regulamentados — como instalações elétricas e de gás — são sempre executados por profissionais habilitados, conforme normas técnicas e legislação vigente.</p>
+  </div>
+</section>
+
+<section id="packages">
+  <div class="wrap">
+    <div class="section-head center reveal">
+      <div class="eyebrow">Pacotes</div>
+      <h2>Pacotes personalizados para cada momento da casa.</h2>
+    </div>
+    <div class="grid grid-4 reveal">
+      <div class="card pkg-card"><h3>Casa em Dia</h3><div class="pkg-price">Orçamento personalizado</div><ul class="pkg-list"><li>Diagnóstico completo</li><li>Priorização de reparos</li><li>Acompanhamento básico</li></ul><button class="btn btn-ghost btn-block" onclick="go('home','#solicitar')">Solicitar orçamento</button></div>
+      <div class="card pkg-card pkg-featured"><h3>Casa Segura</h3><div class="pkg-price">Orçamento personalizado</div><ul class="pkg-list"><li>Foco em elétrica e gás</li><li>Checagem de itens críticos</li><li>Relatório de conformidade</li></ul><button class="btn btn-primary btn-block" onclick="go('home','#solicitar')">Solicitar orçamento</button></div>
+      <div class="card pkg-card"><h3>Casa Confortável</h3><div class="pkg-price">Orçamento personalizado</div><ul class="pkg-list"><li>Climatização e acabamento</li><li>Pintura e marcenaria</li><li>Melhoria de ambientes</li></ul><button class="btn btn-ghost btn-block" onclick="go('home','#solicitar')">Solicitar orçamento</button></div>
+      <div class="card pkg-card"><h3>Casa Completa</h3><div class="pkg-price">Orçamento personalizado</div><ul class="pkg-list"><li>Diagnóstico 360°</li><li>Plano de manutenção anual</li><li>Acompanhamento dedicado</li></ul><button class="btn btn-ghost btn-block" onclick="go('home','#solicitar')">Solicitar orçamento</button></div>
+    </div>
+  </div>
+</section>
+
+<section id="professionals">
+  <div class="wrap pros-wrap">
+    <div class="reveal">
+      <div class="eyebrow">Nossa equipe</div>
+      <h2>Profissionais preparados para fazer a diferença.</h2>
+      <p class="muted mt-16">Todo profissional passa por um programa de treinamento e avaliação antes de atender pela Fixable.</p>
+      <ul class="pros-list">
+        <li><span class="ic">✓</span>Verificação de documentação e experiência</li>
+        <li><span class="ic">✓</span>Entrevista técnica por especialidade</li>
+        <li><span class="ic">✓</span>Treinamento em atendimento Fixable</li>
+        <li><span class="ic">✓</span>Avaliação prática de serviços anteriores</li>
+        <li><span class="ic">✓</span>Acompanhamento contínuo de qualidade</li>
+        <li><span class="ic">✓</span>Avaliação pós-serviço pelo cliente</li>
+        <li><span class="ic">✓</span>Renovação periódica de certificação</li>
+      </ul>
+      <button class="btn btn-primary" onclick="go('profissionais')">Faça parte da Fixable</button>
+    </div>
+    <div class="seal reveal">
+      <svg width="70" height="70" viewBox="0 0 70 70"><circle cx="35" cy="35" r="33" fill="none" stroke="hsl(34,62%,48%)" stroke-width="3"/><circle cx="35" cy="35" r="25" fill="hsl(34,62%,48%,.12)"/><path d="M25 35l7 7 14-14" stroke="hsl(220,60%,17%)" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div><strong style="font-family:'Sora';">FIXABLE CERTIFIED</strong><p class="muted" style="font-size:.85rem;margin-top:4px;">Selo concedido a profissionais aprovados no programa de certificação Fixable.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="guarantee">
+  <div class="wrap">
+    <div class="section-head center reveal">
+      <div class="eyebrow">Como cuidamos de cada etapa</div>
+      <h2>Do primeiro contato ao serviço concluído.</h2>
+    </div>
+    <div class="grid guarantee-grid reveal">
+      <div class="card"><h3>Transparência</h3><p>Orçamentos claros, sem letras miúdas, antes de qualquer execução.</p></div>
+      <div class="card"><h3>Comunicação</h3><p>Um canal único para acompanhar tudo, do início ao fim.</p></div>
+      <div class="card"><h3>Acompanhamento</h3><p>Alguém da Fixable acompanha o andamento de cada serviço.</p></div>
+      <div class="card"><h3>Registro</h3><p>Histórico documentado de cada intervenção na sua casa.</p></div>
+      <div class="card"><h3>Avaliação</h3><p>Você avalia o serviço prestado ao final de cada atendimento.</p></div>
+      <div class="card"><h3>Garantia</h3><p>Cobertura conforme definido em contrato para cada serviço.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="for-business">
+  <div class="wrap biz-grid">
+    <div class="reveal">
+      <div class="eyebrow">Para empresas</div>
+      <h2>Manutenção residencial em escala.</h2>
+      <p>Para imobiliárias, administradoras e condomínios que gerenciam múltiplos imóveis.</p>
+      <div class="biz-feats">
+        <div><span>✓</span>Gestão centralizada de múltiplos imóveis</div>
+        <div><span>✓</span>Relatórios consolidados de manutenção</div>
+        <div><span>✓</span>SLA e priorização por carteira</div>
+        <div><span>✓</span>Atendimento comercial dedicado</div>
+      </div>
+      <button class="btn btn-outline-light" onclick="go('home','#solicitar')">Falar com o time comercial</button>
+    </div>
+    <div class="biz-panel reveal">
+      <div class="row"><span>Imóveis ativos</span><span>—</span></div>
+      <div class="row"><span>Solicitações em aberto</span><span>—</span></div>
+      <div class="row"><span>Serviços em andamento</span><span>—</span></div>
+      <div class="row"><span>Relatório mensal</span><span>Disponível</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="cta">
+  <div class="wrap reveal">
+    <h2>Pronto para cuidar melhor da sua casa?</h2>
+    <p>Solicite um diagnóstico e receba um plano feito sob medida para a sua residência.</p>
+    <button class="btn btn-primary" onclick="go('home','#solicitar')">Solicitar diagnóstico</button>
+  </div>
+</section>
+
+<section id="solicitar">
+  <div class="wrap">
+    <div class="section-head center reveal">
+      <div class="eyebrow">Vamos começar</div>
+      <h2>Solicite seu diagnóstico</h2>
+      <p>Leva menos de 2 minutos. Nossa equipe entra em contato para agendar a visita.</p>
+    </div>
+    <div class="form-wrap reveal">
+      <form id="diagnostic-form" novalidate>
+        <div class="form-grid">
+          <div class="field"><label for="d-nome">Nome completo</label><input id="d-nome" name="nome" type="text" placeholder="Seu nome"><span class="err" data-for="nome"></span></div>
+          <div class="field"><label for="d-email">E-mail</label><input id="d-email" name="email" type="email" placeholder="voce@email.com"><span class="err" data-for="email"></span></div>
+          <div class="field"><label for="d-telefone">Telefone</label><input id="d-telefone" name="telefone" type="tel" placeholder="(11) 90000-0000"><span class="err" data-for="telefone"></span></div>
+          <div class="field"><label for="d-cidade">Cidade</label><input id="d-cidade" name="cidade" type="text" placeholder="Sua cidade"><span class="err" data-for="cidade"></span></div>
+          <div class="field"><label for="d-tipo">Tipo de imóvel</label>
+            <select id="d-tipo" name="tipo_imovel"><option value="">Selecione</option><option>Casa</option><option>Apartamento</option><option>Sobrado</option><option>Comercial</option></select>
+            <span class="err" data-for="tipo_imovel"></span>
+          </div>
+          <div class="field"><label for="d-quartos">Número de quartos</label><input id="d-quartos" name="quartos" type="number" min="0" placeholder="Ex: 3"><span class="err" data-for="quartos"></span></div>
+        </div>
+        <div class="field full">
+          <label>Áreas com necessidade de manutenção</label>
+          <div class="checkbox-grid">
+            <label class="chk"><input type="checkbox" value="Elétrica">Elétrica</label>
+            <label class="chk"><input type="checkbox" value="Hidráulica">Hidráulica</label>
+            <label class="chk"><input type="checkbox" value="Gás">Gás</label>
+            <label class="chk"><input type="checkbox" value="Climatização">Climatização</label>
+            <label class="chk"><input type="checkbox" value="Pintura">Pintura</label>
+            <label class="chk"><input type="checkbox" value="Outro">Outro</label>
+          </div>
+          <span class="err" data-for="areas"></span>
+        </div>
+        <div class="field full"><label for="d-desc">Descrição do problema</label><textarea id="d-desc" name="descricao" placeholder="Conte um pouco sobre o que sua casa precisa"></textarea><span class="err" data-for="descricao"></span></div>
+        <div class="field full"><label for="d-pref">Preferência de contato</label>
+          <select id="d-pref" name="preferencia_contato"><option value="">Selecione</option><option>WhatsApp</option><option>Telefone</option><option>E-mail</option></select>
+          <span class="err" data-for="preferencia_contato"></span>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block" id="d-submit">Solicitar diagnóstico</button>
+        <p class="muted mt-16" style="font-size:.76rem; text-align:center;">Modo demonstração: sem banco de dados real conectado nesta prévia, sua solicitação é salva apenas neste navegador.</p>
+      </form>
+      <div class="form-success" id="d-success">
+        <div class="ic">✓</div>
+        <h3>Recebemos sua solicitação.</h3>
+        <p class="muted mt-8">A equipe Fixable entrará em contato para os próximos passos.</p>
+        <button class="btn btn-ghost mt-24" onclick="resetDiagForm()">Enviar outra solicitação</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="faq">
+  <div class="wrap">
+    <div class="section-head center reveal">
+      <div class="eyebrow">Dúvidas frequentes</div>
+      <h2>Perguntas frequentes</h2>
+    </div>
+    <div id="faq-list" style="max-width:760px;margin:0 auto;"></div>
+  </div>
+</section>
+
+</main>
+
+<!-- ============ PROFISSIONAIS VIEW ============ -->
+<main id="view-profissionais" class="view">
+  <section class="pf-hero">
+    <div class="wrap">
+      <h1>Faça parte da Fixable.</h1>
+      <p>Trabalhe com previsibilidade, receba solicitações qualificadas e faça parte de um time de profissionais certificados.</p>
+      <div class="seal" style="max-width:360px;margin:0 auto;background:hsla(0,0%,100%,.08);border-color:hsla(0,0%,100%,.2);">
+        <svg width="54" height="54" viewBox="0 0 70 70"><circle cx="35" cy="35" r="33" fill="none" stroke="hsl(34,62%,48%)" stroke-width="3"/><circle cx="35" cy="35" r="25" fill="hsl(34,62%,48%,.15)"/><path d="M25 35l7 7 14-14" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <div style="text-align:left;"><strong>FIXABLE CERTIFIED</strong><p style="font-size:.8rem;color:hsla(0,0%,100%,.75);margin-top:4px;">Seu selo de qualidade dentro da plataforma.</p></div>
+      </div>
+    </div>
+  </section>
+  <section>
+    <div class="wrap">
+      <div class="form-wrap">
+        <h2 style="margin-bottom:6px;">Formulário de candidatura</h2>
+        <p class="muted" style="font-size:.9rem;margin-bottom:24px;">Sua candidatura passa por análise da equipe Fixable antes da aprovação.</p>
+        <form id="pro-form" novalidate>
+          <div class="form-grid">
+            <div class="field"><label for="p-nome">Nome completo</label><input id="p-nome" name="nome_completo" type="text"><span class="err" data-for="nome_completo"></span></div>
+            <div class="field"><label for="p-tel">Telefone</label><input id="p-tel" name="telefone" type="tel"><span class="err" data-for="telefone"></span></div>
+            <div class="field"><label for="p-cidade">Cidade</label><input id="p-cidade" name="cidade" type="text"><span class="err" data-for="cidade"></span></div>
+            <div class="field"><label for="p-disp">Disponibilidade</label>
+              <select id="p-disp" name="disponibilidade"><option value="">Selecione</option><option>Período integral</option><option>Meio período</option><option>Fins de semana</option><option>Sob demanda</option></select>
+              <span class="err" data-for="disponibilidade"></span>
+            </div>
+          </div>
+          <div class="field full">
+            <label>Especialidades</label>
+            <div class="checkbox-grid">
+              <label class="chk"><input type="checkbox" value="Elétrica">Elétrica</label>
+              <label class="chk"><input type="checkbox" value="Hidráulica">Hidráulica</label>
+              <label class="chk"><input type="checkbox" value="Gás">Gás</label>
+              <label class="chk"><input type="checkbox" value="Pintura">Pintura</label>
+              <label class="chk"><input type="checkbox" value="Marcenaria">Marcenaria</label>
+              <label class="chk"><input type="checkbox" value="Climatização">Climatização</label>
+            </div>
+            <span class="err" data-for="especialidades"></span>
+          </div>
+          <div class="form-grid">
+            <div class="field"><label for="p-anos">Anos de experiência</label><input id="p-anos" name="anos_experiencia" type="number" min="0"><span class="err" data-for="anos_experiencia"></span></div>
+            <div class="field"><label for="p-doc">Upload de documentos</label><input id="p-doc" name="documentos" type="file"></div>
+          </div>
+          <div class="field full"><label for="p-exp">Experiência profissional</label><textarea id="p-exp" name="experiencia" placeholder="Conte sobre sua experiência"></textarea><span class="err" data-for="experiencia"></span></div>
+          <button type="submit" class="btn btn-primary btn-block">Enviar candidatura</button>
+          <p class="muted mt-16" style="font-size:.76rem; text-align:center;">Modo demonstração: candidatura salva localmente nesta prévia, sem aprovação automática.</p>
+        </form>
+        <div class="form-success" id="p-success">
+          <div class="ic">✓</div>
+          <h3>Candidatura recebida.</h3>
+          <p class="muted mt-8">Sua candidatura está com status <strong>pendente</strong> e passará por análise da equipe Fixable.</p>
+          <button class="btn btn-ghost mt-24" onclick="resetProForm()">Enviar outra candidatura</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- ============ PAINEL VIEW ============ -->
+<main id="view-painel" class="view">
+  <section>
+    <div class="wrap" id="painel-login-wrap">
+      <div class="login-shell">
+        <div class="demo-banner">⚠ Demonstração</div>
+        <h2 style="margin-bottom:6px;">Entrar no painel</h2>
+        <p class="muted" style="font-size:.88rem;margin-bottom:24px;">Estrutura inicial de autenticação. Neste MVP, o acesso é simulado.</p>
+        <div class="field"><label for="l-email">E-mail</label><input id="l-email" type="email" placeholder="voce@email.com" value="cliente@demo.fixable.com.br"></div>
+        <div class="field"><label for="l-senha">Senha</label><input id="l-senha" type="password" placeholder="••••••••" value="demo1234"></div>
+        <button class="btn btn-primary btn-block mt-16" onclick="enterPanel()">Entrar (demonstração)</button>
+      </div>
+    </div>
+
+    <div class="wrap" id="painel-dashboard-wrap" style="display:none;">
+      <div class="demo-banner">⚠ Todos os dados abaixo são demonstrativos</div>
+      <h2 style="margin-bottom:22px;">Painel do cliente</h2>
+      <div class="tabs" id="painel-tabs"></div>
+      <div id="painel-content"></div>
+    </div>
+  </div>
+  </section>
+</main>
+
+<!-- ============ FOOTER ============ -->
+<footer>
+  <div class="wrap">
+    <div class="footer-grid">
+      <div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+          <svg width="26" height="26" viewBox="0 0 48 48"><circle cx="24" cy="24" r="24" fill="hsla(0,0%,100%,.1)"/><path d="M24 10c1 0 1.9.6 2.2 1.6l.7 2.2c.9.2 1.8.6 2.6 1l2-1.2c.9-.5 2-.4 2.7.3l1.9 1.9c.7.7.8 1.8.3 2.7l-1.2 2c.4.8.8 1.7 1 2.6l2.2.7c1 .3 1.6 1.2 1.6 2.2v2.7c0 1-.6 1.9-1.6 2.2l-2.2.7c-.2.9-.6 1.8-1 2.6l1.2 2c.5.9.4 2-.3 2.7l-1.9 1.9c-.7.7-1.8.8-2.7.3l-2-1.2c-.8.4-1.7.8-2.6 1l-.7 2.2c-.3 1-1.2 1.6-2.2 1.6h-2.7c-1 0-1.9-.6-2.2-1.6l-.7-2.2c-.9-.2-1.8-.6-2.6-1l-2 1.2c-.9.5-2 .4-2.7-.3l-1.9-1.9c-.7-.7-.8-1.8-.3-2.7l1.2-2c-.4-.8-.8-1.7-1-2.6l-2.2-.7c-1-.3-1.6-1.2-1.6-2.2v-2.7c0-1 .6-1.9 1.6-2.2l2.2-.7c.2-.9.6-1.8 1-2.6l-1.2-2c-.5-.9-.4-2 .3-2.7l1.9-1.9c.7-.7 1.8-.8 2.7-.3l2 1.2c.8-.4 1.7-.8 2.6-1l.7-2.2c.3-1 1.2-1.6 2.2-1.6H24z" fill="#fff"/></svg>
+          <span style="font-family:'Sora'; font-weight:800; font-size:1.1rem; color:#fff;">fixable</span>
+        </div>
+        <p style="font-size:.86rem;max-width:260px;color:hsla(0,0%,100%,.65);">Fixing before breaking. Gestão e manutenção residencial de ponta a ponta.</p>
+        <div class="social-row">
+          <a href="#" aria-label="Instagram">📷</a>
+          <a href="#" aria-label="LinkedIn">in</a>
+          <a href="#" aria-label="WhatsApp">💬</a>
+        </div>
+      </div>
+      <div>
+        <h5>Empresa</h5>
+        <a href="#/" onclick="go('home','#problem')">Sobre a Fixable</a>
+        <a href="#/" onclick="go('home','#services')">Serviços</a>
+        <a href="#/" onclick="go('profissionais')">Trabalhe conosco</a>
+      </div>
+      <div>
+        <h5>Suporte</h5>
+        <a href="#/" onclick="go('home','#faq')">Perguntas frequentes</a>
+        <a href="#/" onclick="go('home','#solicitar')">Solicitar diagnóstico</a>
+        <a href="#/" onclick="go('painel')">Painel do cliente</a>
+      </div>
+      <div>
+        <h5>Contato</h5>
+        <a href="mailto:contato@fixable.com.br">contato@fixable.com.br</a>
+        <a href="tel:+5511900000000">(11) 90000-0000</a>
+        <a href="#">São Paulo, SP</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Fixable Tecnologia e Serviços Ltda. Todos os direitos reservados.</span>
+      <span style="display:flex;gap:16px;">
+        <a href="#">Termos de uso</a><a href="#">Privacidade</a><a href="#">LGPD</a>
+      </span>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ---------------- SERVICES DATA ---------------- */
+const services = [
+  ["⚡","Elétrica","Instalações, reparos e troca de quadros e pontos."],
+  ["🚿","Hidráulica","Vazamentos, tubulações, registros e caixas d'água."],
+  ["🔥","Gás","Instalação e manutenção de rede e equipamentos a gás."],
+  ["❄️","Ar-condicionado","Instalação, limpeza e manutenção de climatização."],
+  ["🎨","Pintura","Pintura interna, externa e tratamento de superfícies."],
+  ["🪚","Marcenaria","Móveis planejados, reparos e ajustes sob medida."],
+  ["🧱","Alvenaria","Reformas estruturais, reboco e acabamento."],
+  ["🚪","Portas e janelas","Instalação, ajuste e troca de esquadrias."],
+  ["💧","Impermeabilização","Proteção contra infiltrações e umidade."],
+  ["🔒","Segurança residencial","Fechaduras, câmeras e sistemas de alarme."],
+  ["🌿","Área externa","Jardim, quintal, calçadas e áreas de lazer."],
+  ["🔧","Pequenos reparos","Ajustes gerais do dia a dia da casa."],
+];
+document.getElementById('services-grid').innerHTML = services.map(s => `
+  <div class="card"><div class="icon-badge">${s[0]}</div><h3>${s[1]}</h3><p>${s[2]}</p><a href="#/" onclick="go('home','#solicitar')" style="display:inline-block;margin-top:10px;font-weight:700;font-size:.85rem;color:hsl(var(--primary));">Saiba mais</a></div>
+`).join('');
+
+/* ---------------- FAQ DATA ---------------- */
+const faqs = [
+  ["Como funciona o diagnóstico inicial?","Um profissional Fixable visita sua casa, avalia as principais áreas e entrega um relatório com prioridades e recomendações."],
+  ["O diagnóstico tem custo?","Isso depende do pacote e da região. As condições são apresentadas antes da confirmação da visita."],
+  ["Os profissionais são funcionários da Fixable?","Os profissionais fazem parte da rede Fixable e passam por um processo de verificação e treinamento antes de atender."],
+  ["Como funciona a garantia dos serviços?","Cada serviço possui garantia conforme definido em contrato no momento da contratação."],
+  ["A Fixable atende toda a cidade?","A cobertura varia por região. Informe sua cidade no formulário para confirmarmos disponibilidade."],
+  ["Posso solicitar apenas um serviço específico?","Sim. Você pode solicitar um diagnóstico completo ou indicar diretamente a área de interesse."],
+  ["Como funciona para imobiliárias e condomínios?","Oferecemos atendimento B2B com gestão centralizada — veja a seção 'Para empresas'."],
+  ["O que é o Fixable ID?","É um painel digital com o histórico completo da casa, atualmente em desenvolvimento."],
+  ["Como me torno um profissional Fixable?","Preencha o formulário de candidatura na página 'Para profissionais'. Sua candidatura passa por análise."],
+  ["Como entro em contato com o suporte?","Pelo e-mail contato@fixable.com.br ou telefone informado no rodapé do site."],
+];
+document.getElementById('faq-list').innerHTML = faqs.map((f,i) => `
+  <div class="faq-item" id="faq-${i}">
+    <button class="faq-q" onclick="toggleFaq(${i})">${f[0]}<span class="plus">+</span></button>
+    <div class="faq-a" id="faq-a-${i}"><div class="faq-a-inner">${f[1]}</div></div>
+  </div>
+`).join('');
+function toggleFaq(i){
+  const item = document.getElementById('faq-'+i);
+  const body = document.getElementById('faq-a-'+i);
+  const isOpen = item.classList.contains('open');
+  document.querySelectorAll('.faq-item').forEach(el=>{el.classList.remove('open'); el.querySelector('.faq-a').style.maxHeight=null;});
+  if(!isOpen){ item.classList.add('open'); body.style.maxHeight = body.scrollHeight+'px'; }
+}
+
+/* ---------------- ROUTING (SPA-like) ---------------- */
+function go(view, anchor){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+view).classList.add('active');
+  window.scrollTo({top:0});
+  if(anchor){
+    setTimeout(()=>{
+      const el = document.querySelector(anchor);
+      if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+    }, 60);
+  }
+}
+function toggleMobileMenu(){ document.getElementById('mobile-menu').classList.toggle('open'); }
+function closeMobileMenu(){ document.getElementById('mobile-menu').classList.remove('open'); }
+
+/* ---------------- REVEAL ON SCROLL ---------------- */
+const io = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
+}, {threshold:.15});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+/* ---------------- LOCAL "DB" HELPERS (demo persistence only) ---------------- */
+function saveDemo(key, record){
+  try{
+    const list = JSON.parse(localStorage.getItem(key) || '[]');
+    list.push(record);
+    localStorage.setItem(key, JSON.stringify(list));
+    return true;
+  }catch(e){ console.error('Demo storage error', e); return false; }
+}
+
+/* ---------------- DIAGNOSTIC FORM ---------------- */
+const diagForm = document.getElementById('diagnostic-form');
+diagForm.addEventListener('submit', function(e){
+  e.preventDefault();
+  document.querySelectorAll('#diagnostic-form .err').forEach(el=>el.textContent='');
+  const fd = new FormData(diagForm);
+  const nome = fd.get('nome')?.trim();
+  const email = fd.get('email')?.trim();
+  const telefone = fd.get('telefone')?.trim();
+  const cidade = fd.get('cidade')?.trim();
+  const tipo_imovel = fd.get('tipo_imovel');
+  const quartos = fd.get('quartos');
+  const descricao = fd.get('descricao')?.trim();
+  const preferencia_contato = fd.get('preferencia_contato');
+  const areas = Array.from(document.querySelectorAll('#diagnostic-form .checkbox-grid input:checked')).map(i=>i.value);
+
+  let ok = true;
+  const setErr = (f,msg)=>{ const el=document.querySelector(`#diagnostic-form .err[data-for="${f}"]`); if(el){el.textContent=msg;} ok=false; };
+  if(!nome || nome.length<3) setErr('nome','Informe seu nome completo.');
+  if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) setErr('email','Informe um e-mail válido.');
+  if(!telefone || telefone.replace(/\D/g,'').length<10) setErr('telefone','Informe um telefone válido.');
+  if(!cidade) setErr('cidade','Informe sua cidade.');
+  if(!tipo_imovel) setErr('tipo_imovel','Selecione o tipo de imóvel.');
+  if(quartos==='' || quartos===null || Number(quartos)<0) setErr('quartos','Informe o número de quartos.');
+  if(areas.length===0) setErr('areas','Selecione ao menos uma área.');
+  if(!descricao || descricao.length<10) setErr('descricao','Descreva com um pouco mais de detalhe (mín. 10 caracteres).');
+  if(!preferencia_contato) setErr('preferencia_contato','Selecione a preferência de contato.');
+  if(!ok) return;
+
+  const submitBtn = document.getElementById('d-submit');
+  submitBtn.disabled = true; submitBtn.textContent = 'Enviando...';
+  setTimeout(()=>{
+    saveDemo('fixable_diagnostic_requests', {
+      nome, email, telefone, cidade, tipo_imovel, quartos, areas, descricao, preferencia_contato,
+      status:'nova', created_at: new Date().toISOString()
+    });
+    diagForm.style.display='none';
+    document.getElementById('d-success').style.display='block';
+    submitBtn.disabled=false; submitBtn.textContent='Solicitar diagnóstico';
+  }, 500);
+});
+function resetDiagForm(){
+  diagForm.reset();
+  diagForm.style.display='block';
+  document.getElementById('d-success').style.display='none';
+}
+
+/* ---------------- PROFESSIONAL FORM ---------------- */
+const proForm = document.getElementById('pro-form');
+proForm.addEventListener('submit', function(e){
+  e.preventDefault();
+  document.querySelectorAll('#pro-form .err').forEach(el=>el.textContent='');
+  const fd = new FormData(proForm);
+  const nome_completo = fd.get('nome_completo')?.trim();
+  const telefone = fd.get('telefone')?.trim();
+  const cidade = fd.get('cidade')?.trim();
+  const disponibilidade = fd.get('disponibilidade');
+  const anos_experiencia = fd.get('anos_experiencia');
+  const experiencia = fd.get('experiencia')?.trim();
+  const especialidades = Array.from(document.querySelectorAll('#pro-form .checkbox-grid input:checked')).map(i=>i.value);
+
+  let ok = true;
+  const setErr = (f,msg)=>{ const el=document.querySelector(`#pro-form .err[data-for="${f}"]`); if(el){el.textContent=msg;} ok=false; };
+  if(!nome_completo || nome_completo.length<3) setErr('nome_completo','Informe seu nome completo.');
+  if(!telefone || telefone.replace(/\D/g,'').length<10) setErr('telefone','Informe um telefone válido.');
+  if(!cidade) setErr('cidade','Informe sua cidade.');
+  if(!disponibilidade) setErr('disponibilidade','Selecione sua disponibilidade.');
+  if(especialidades.length===0) setErr('especialidades','Selecione ao menos uma especialidade.');
+  if(anos_experiencia==='' || anos_experiencia===null || Number(anos_experiencia)<0) setErr('anos_experiencia','Informe seus anos de experiência.');
+  if(!experiencia || experiencia.length<10) setErr('experiencia','Conte um pouco mais sobre sua experiência.');
+  if(!ok) return;
+
+  saveDemo('fixable_professional_applications', {
+    nome_completo, telefone, cidade, especialidades, anos_experiencia, disponibilidade, experiencia,
+    status:'pendente', created_at: new Date().toISOString()
+  });
+  proForm.style.display='none';
+  document.getElementById('p-success').style.display='block';
+});
+function resetProForm(){
+  proForm.reset();
+  proForm.style.display='block';
+  document.getElementById('p-success').style.display='none';
+}
+
+/* ---------------- PAINEL (DEMO DASHBOARD) ---------------- */
+function enterPanel(){
+  document.getElementById('painel-login-wrap').style.display='none';
+  document.getElementById('painel-dashboard-wrap').style.display='block';
+  renderPanel();
+}
+const panelTabs = [
+  {id:'solicitacoes', label:'Solicitações', rows:[
+    ['Diagnóstico geral — Casa','Em análise'],
+    ['Vazamento na cozinha','Agendado'],
+  ]},
+  {id:'agendamentos', label:'Agendamentos', rows:[
+    ['Visita técnica — 24/09, 14h','Confirmado'],
+    ['Manutenção elétrica — 30/09, 10h','Pendente'],
+  ]},
+  {id:'orcamentos', label:'Orçamentos', rows:[
+    ['Pacote Casa Segura','Aguardando aprovação'],
+    ['Reparo hidráulico banheiro','Aprovado'],
+  ]},
+  {id:'servicos', label:'Serviços em andamento'},
+  {id:'historico', label:'Histórico de manutenção', rows:[
+    ['Troca de disjuntor — Mar/2026','Concluído'],
+    ['Desentupimento — Jan/2026','Concluído'],
+  ]},
+  {id:'residencia', label:'Dados da residência', rows:[
+    ['Tipo de imóvel','Apartamento'],
+    ['Quartos','3'],
+    ['Cidade','São Paulo, SP'],
+  ]},
+];
+
+/* Maquete virtual — pontos identificados no diagnóstico, por cômodo (genérico) */
+const activeServices = [
+  {id:'s1', room:'cozinha', roomLabel:'Cozinha', title:'Vazamento na pia', status:'prioridade', percent:20, deadline:'25/09/2026', desc:'Troca de sifão e vedação identificados no diagnóstico inicial. Aguardando peça de reposição.'},
+  {id:'s2', room:'banheiro', roomLabel:'Banheiro', title:'Infiltração no box', status:'atencao', percent:45, deadline:'02/10/2026', desc:'Impermeabilização em andamento — aguardando tempo de secagem entre camadas.'},
+  {id:'s3', room:'sala', roomLabel:'Sala de estar', title:'Pintura sala e corredor', status:'execucao', percent:60, deadline:'28/09/2026', desc:'Pintura em execução — última demão agendada com o profissional.'},
+];
+const roomMarkerPos = {
+  sala:{left:'30%', top:'30%'},
+  cozinha:{left:'75%', top:'20%'},
+  areaservico:{left:'75%', top:'43%'},
+  quarto1:{left:'20%', top:'73%'},
+  quarto2:{left:'50%', top:'73%'},
+  banheiro:{left:'80%', top:'73%'},
+};
+function renderServicosHTML(){
+  const markers = activeServices.map(s=>{
+    const pos = roomMarkerPos[s.room];
+    return `<button type="button" class="fp-marker dot-${s.status}" style="left:${pos.left};top:${pos.top};" data-service="${s.id}" aria-label="${s.title}"><span class="fp-marker-pulse"></span></button>`;
+  }).join('');
+  const cards = activeServices.map(s=>{
+    const pillClass = s.status==='prioridade' ? 'status-priority' : s.status==='atencao' ? 'status-warning' : 'status-progress';
+    const label = s.status==='prioridade' ? 'Prioridade' : s.status==='atencao' ? 'Atenção' : 'Em execução';
+    return `<div class="service-card" data-service="${s.id}">
+      <div class="service-card-head">
+        <div><strong>${s.title}</strong><div class="muted" style="font-size:.78rem;">${s.roomLabel}</div></div>
+        <span class="status-pill ${pillClass}">${label}</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill fill-${s.status}" style="width:${s.percent}%;"></div></div>
+      <div class="service-card-foot"><span>${s.percent}% concluído</span><span>Prazo: ${s.deadline}</span></div>
+    </div>`;
+  }).join('');
+  return `
+    <p class="muted" style="font-size:.88rem;margin-bottom:18px;">Maquete virtual da residência (modelo genérico) com os pontos identificados no diagnóstico. Toque em um marcador ou em um serviço para ver os detalhes.</p>
+    <div class="floorplan-wrap">
+      <div class="floorplan-stage">
+        <svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+          <rect x="20" y="20" width="360" height="260" fill="none" stroke="hsl(var(--border))" stroke-width="3"/>
+          <line x1="220" y1="20" x2="220" y2="160" stroke="hsl(var(--border))" stroke-width="2"/>
+          <line x1="220" y1="100" x2="380" y2="100" stroke="hsl(var(--border))" stroke-width="2"/>
+          <line x1="20" y1="160" x2="380" y2="160" stroke="hsl(var(--border))" stroke-width="2"/>
+          <line x1="140" y1="160" x2="140" y2="280" stroke="hsl(var(--border))" stroke-width="2"/>
+          <line x1="260" y1="160" x2="260" y2="280" stroke="hsl(var(--border))" stroke-width="2"/>
+          <text x="120" y="95" text-anchor="middle" class="fp-room-label">Sala</text>
+          <text x="300" y="65" text-anchor="middle" class="fp-room-label">Cozinha</text>
+          <text x="300" y="135" text-anchor="middle" class="fp-room-label">Área de serviço</text>
+          <text x="80" y="225" text-anchor="middle" class="fp-room-label">Quarto 1</text>
+          <text x="200" y="225" text-anchor="middle" class="fp-room-label">Quarto 2</text>
+          <text x="320" y="225" text-anchor="middle" class="fp-room-label">Banheiro</text>
+        </svg>
+        ${markers}
+      </div>
+      <div class="fp-legend">
+        <span><i class="fp-dot dot-prioridade"></i>Prioridade</span>
+        <span><i class="fp-dot dot-atencao"></i>Precisa de atenção</span>
+        <span><i class="fp-dot dot-execucao"></i>Em execução</span>
+      </div>
+    </div>
+    <div id="fp-detail" class="fp-detail"></div>
+    <div class="service-list">${cards}</div>
+  `;
+}
+function showServiceDetail(id){
+  const s = activeServices.find(x=>x.id===id);
+  if(!s) return;
+  const pillClass = s.status==='prioridade' ? 'status-priority' : s.status==='atencao' ? 'status-warning' : 'status-progress';
+  const label = s.status==='prioridade' ? 'Prioridade' : s.status==='atencao' ? 'Precisa de atenção' : 'Em execução';
+  const detail = document.getElementById('fp-detail');
+  if(!detail) return;
+  detail.innerHTML = `
+    <div class="fp-detail-head">
+      <div><strong style="font-family:'Sora'; font-size:1.02rem;">${s.title}</strong><div class="muted" style="font-size:.82rem; margin-top:2px;">${s.roomLabel}</div></div>
+      <span class="status-pill ${pillClass}">${label}</span>
+    </div>
+    <p class="muted" style="font-size:.88rem; margin-bottom:14px;">${s.desc}</p>
+    <div class="progress-track"><div class="progress-fill fill-${s.status}" style="width:${s.percent}%;"></div></div>
+    <div class="service-card-foot"><span>${s.percent}% concluído</span><span>Prazo estimado: ${s.deadline}</span></div>
+  `;
+  detail.classList.add('show');
+  document.querySelectorAll('.fp-marker').forEach(m=>m.classList.toggle('selected', m.dataset.service===id));
+  document.querySelectorAll('.service-card').forEach(c=>c.classList.toggle('selected', c.dataset.service===id));
+}
+function renderPanel(){
+  document.getElementById('painel-tabs').innerHTML = panelTabs.map((t,i)=>
+    `<button class="tab-btn ${i===0?'active':''}" onclick="switchTab('${t.id}')">${t.label}</button>`
+  ).join('');
+  document.getElementById('painel-content').innerHTML = panelTabs.map((t,i)=>
+    `<div class="panel-view ${i===0?'active':''}" id="pv-${t.id}">` +
+    (t.id === 'servicos' ? renderServicosHTML() : t.rows.map(r=>`<div class="data-row"><span>${r[0]}</span><span class="muted">${r[1]}</span></div>`).join('')) +
+    `</div>`
+  ).join('');
+  document.getElementById('painel-content').addEventListener('click', function(e){
+    const el = e.target.closest('[data-service]');
+    if(el) showServiceDetail(el.dataset.service);
+  });
+  showServiceDetail(activeServices[0].id);
+}
+function switchTab(id){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.panel-view').forEach(p=>p.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('pv-'+id).classList.add('active');
+}
+</script>
+</body>
+</html>
