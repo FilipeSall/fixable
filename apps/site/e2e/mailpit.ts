@@ -3,6 +3,7 @@ import { mailpitUrl } from './env.ts';
 
 type MessageSummary = { ID: string; To: { Address: string }[] };
 
+/** Apaga todas as mensagens do Mailpit para isolar a execução. */
 export async function clearMailbox(): Promise<void> {
   const res = await fetch(`${mailpitUrl}/api/v1/messages`, { method: 'DELETE' });
   expect(res.ok).toBe(true);
@@ -14,6 +15,7 @@ async function findMessageId(email: string): Promise<string | undefined> {
   return body.messages.find((message) => message.To.some((to) => to.Address === email))?.ID;
 }
 
+/** Espera o e-mail enviado ao endereço e devolve o link de convite com o token no fragmento. */
 export async function readInviteLink(email: string): Promise<string> {
   let id: string | undefined;
   await expect

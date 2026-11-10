@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { aguardarHidratacao } from './hydration.ts';
 import { clearMailbox, readInviteLink } from './mailpit.ts';
 
 const senha = 'senha123';
@@ -14,7 +15,7 @@ test('visitante solicita diagnóstico com plano e cria a senha pelo convite', as
 
   const pacote = page.locator('.pkg-card', { has: page.getByRole('heading', { name: 'Plano para 3 meses' }) });
   await pacote.getByRole('link', { name: 'Solicitar orçamento' }).click();
-  await expect(page.locator('astro-island:has(#diagnostic-form)')).not.toHaveAttribute('ssr', /.*/);
+  await aguardarHidratacao(page, '#diagnostic-form');
   await expect(page.getByText('Plano de interesse:')).toBeVisible();
   await expect(page.locator('.plan-chip')).toContainText('Plano para 3 meses');
 
@@ -40,8 +41,7 @@ test('visitante solicita diagnóstico com plano e cria a senha pelo convite', as
 test('candidato envia o cadastro e vê "Cadastro recebido."', async ({ page }) => {
   await page.goto('/');
   const form = page.locator('#team-form');
-  await form.scrollIntoViewIfNeeded();
-  await expect(page.locator('astro-island:has(#team-form)')).not.toHaveAttribute('ssr', /.*/);
+  await aguardarHidratacao(page, '#team-form');
   await form.getByLabel('Nome completo', { exact: true }).fill('Carlos Engenheiro');
   await form.getByLabel('E-mail', { exact: true }).fill(`candidato-${Date.now()}@fixable.local`);
   await form.getByLabel('Telefone', { exact: true }).fill('(11) 98765-4321');
@@ -60,14 +60,15 @@ test('página Eletricista em Santo André tem a cidade pré-preenchida', async (
 
 test('home abre sem login e sem chamar /api/auth/me', async ({ page }) => {
   const chamadas: string[] = [];
-  page.on('request', (request) => {
-    if (request.url().includes('/api/auth/me')) chamadas.push(request.url());
+  await page.route('**/api/auth/me', async (route) => {
+    chamadas.push(route.request().url());
+    await route.continue();
   });
   await page.goto('/');
+  await aguardarHidratacao(page, '#diagnostic-form');
+  await aguardarHidratacao(page, '#team-form');
   await expect(page).toHaveURL(/\/$/);
-  await expect(page.getByRole('heading', { name: 'Solicite seu diagnóstico' })).toBeVisible();
-  await page.locator('#diagnostic-form').scrollIntoViewIfNeeded();
-  await expect(page.getByRole('button', { name: 'Solicitar diagnóstico' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Solicitar diagnóstico' }).last()).toBeVisible();
   await page.waitForLoadState('networkidle');
   expect(chamadas).toEqual([]);
 });
