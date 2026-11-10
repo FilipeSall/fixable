@@ -1,5 +1,6 @@
 ---
 import CertBadge from '../CertBadge.astro';
+import { ApplicationForm } from '../../forms/ApplicationForm.tsx';
 ---
 
 <section id="time-fixable">
@@ -14,7 +15,10 @@ import CertBadge from '../CertBadge.astro';
       </div>
     </div>
     <div class="form-wrap" id="application-form-root">
-      <slot />
+      <ApplicationForm client:visible />
+      <noscript>
+        <p class="muted">Para enviar sem JavaScript, escreva para contato@fixable.com.br.</p>
+      </noscript>
     </div>
   </div>
 </section>

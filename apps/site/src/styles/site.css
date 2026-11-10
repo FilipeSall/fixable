@@ -87,6 +87,7 @@ section{position:relative;z-index:1;padding:96px 0}
 .field [aria-invalid="true"]{border-color:hsl(var(--destructive))}
 .checkbox-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .chk{display:flex;align-items:center;gap:8px;font-size:.86rem;border:1px solid hsl(var(--border));border-radius:.5rem;padding:9px 10px}
+.form-success.show{display:block}
 .form-success{display:none;text-align:center;padding:30px 10px}
 .form-success .ic{width:56px;height:56px;border-radius:50%;background:hsl(var(--success)/.15);color:hsl(var(--success));display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
 

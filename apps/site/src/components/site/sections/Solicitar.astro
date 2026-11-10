@@ -1,3 +1,7 @@
+---
+import { DiagnosticForm } from '../../forms/DiagnosticForm.tsx';
+---
+
 <section id="solicitar">
   <div class="wrap">
     <div class="section-head center">
@@ -5,7 +9,10 @@
       <p>Leva menos de 2 minutos. Nossa equipe entra em contato para agendar a visita.</p>
     </div>
     <div class="form-wrap" id="diagnostic-form-root">
-      <slot />
+      <DiagnosticForm client:visible />
+      <noscript>
+        <p class="muted">Para enviar sem JavaScript, escreva para contato@fixable.com.br.</p>
+      </noscript>
     </div>
   </div>
 </section>
