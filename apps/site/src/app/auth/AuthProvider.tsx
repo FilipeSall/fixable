@@ -3,7 +3,7 @@ import type { Me } from '@fixable/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createContext, useContext, useMemo } from 'react';
 import { ApiRequestError, apiFetch } from '../api.ts';
-import type { AuthContextValue, AuthProviderProps } from '../../types/auth-screens.types.ts';
+import type { AuthContextValue, AuthProviderProps, AuthStatus } from '../../types/auth-screens.types.ts';
 
 const HTTP_UNAUTHORIZED = 401;
 const ME_KEY = ['me'];
@@ -20,10 +20,17 @@ async function fetchMe(): Promise<Me | null> {
   }
 }
 
+/** Traduz o estado da consulta de sessão: 401 vira anônimo, outra falha vira erro e nova tentativa volta a carregar. */
+function statusOf(me: Me | null | undefined, isError: boolean, isFetching: boolean): AuthStatus {
+  if (me) return 'authenticated';
+  if (me === null) return 'anonymous';
+  return isError && !isFetching ? 'error' : 'loading';
+}
+
 /** Provê o usuário atual e as ações de login e logout para o app. */
 export function AuthProvider({ children }: Readonly<AuthProviderProps>) {
   const queryClient = useQueryClient();
-  const query = useQuery({ queryKey: ME_KEY, queryFn: fetchMe });
+  const { data, isError, isFetching, refetch } = useQuery({ queryKey: ME_KEY, queryFn: fetchMe });
 
   const value = useMemo<AuthContextValue>(() => {
     /** Atualiza o usuário em cache, cancelando consultas em andamento. */
@@ -42,8 +49,12 @@ export function AuthProvider({ children }: Readonly<AuthProviderProps>) {
       await apiFetch<void>(API.logout, { method: 'POST' });
       await setMe(null);
     }
-    return { me: query.data ?? null, isLoading: query.isPending, login, logout, setMe };
-  }, [queryClient, query.data, query.isPending]);
+    /** Consulta a sessão de novo depois de uma falha que não foi 401. */
+    function retry() {
+      void refetch();
+    }
+    return { me: data ?? null, status: statusOf(data, isError, isFetching), retry, login, logout, setMe };
+  }, [queryClient, data, isError, isFetching, refetch]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

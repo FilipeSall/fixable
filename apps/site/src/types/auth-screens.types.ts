@@ -1,9 +1,12 @@
 import type { Me, Role } from '@fixable/shared';
 import type { ReactNode } from 'react';
 
+export type AuthStatus = 'loading' | 'authenticated' | 'anonymous' | 'error';
+
 export type AuthContextValue = {
   me: Me | null;
-  isLoading: boolean;
+  status: AuthStatus;
+  retry: () => void;
   login: (email: string, senha: string) => Promise<Me>;
   logout: () => Promise<void>;
   setMe: (me: Me | null) => Promise<void>;

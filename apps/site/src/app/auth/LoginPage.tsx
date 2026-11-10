@@ -10,7 +10,7 @@ import { destinationAfterLogin } from './paths.ts';
 
 /** Tela de login com validação do formulário e redirecionamento de quem já está autenticado. */
 export function LoginPage() {
-  const { me, isLoading, login } = useAuth();
+  const { me, login } = useAuth();
   const [params] = useSearchParams();
   const location = useLocation();
   const notice = (location.state as LocationState | null)?.notice;
@@ -20,7 +20,7 @@ export function LoginPage() {
   const [formError, setFormError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  if (!isLoading && me) {
+  if (me) {
     return <Navigate to={destinationAfterLogin(me.role, params.get('next'))} replace />;
   }
 
