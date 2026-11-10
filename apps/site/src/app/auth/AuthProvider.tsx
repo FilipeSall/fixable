@@ -43,6 +43,8 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
     async function logout() {
       try {
         await apiFetch<void>(API.logout, { method: 'POST' });
+      } catch {
+        return;
       } finally {
         setMe(null);
       }

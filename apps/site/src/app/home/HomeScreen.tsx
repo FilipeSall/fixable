@@ -12,11 +12,8 @@ export function HomeScreen() {
   }
 
   async function leave() {
-    try {
-      await logout();
-    } finally {
-      await navigate('/login', { replace: true });
-    }
+    await logout();
+    await navigate('/login', { replace: true });
   }
 
   return <RoleHome me={me} onLogout={handleLogout} />;
