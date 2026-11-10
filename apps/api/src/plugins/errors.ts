@@ -5,6 +5,8 @@ import { ERROR_CODES, type ApiError, type ErrorCode } from '@fixable/shared';
 
 const INTERNAL_MESSAGE = 'Algo deu errado. Tente de novo.';
 const VALIDATION_MESSAGE = 'Dados inválidos.';
+export const FORBIDDEN_MESSAGE = 'Você não tem permissão para acessar este recurso.';
+const NOT_FOUND_MESSAGE = 'Recurso não encontrado.';
 
 export class AppError extends Error {
   readonly statusCode: number;
@@ -32,8 +34,8 @@ const CLIENT_ERROR_CODES: Partial<Record<number, ErrorCode>> = {
 const CLIENT_ERROR_MESSAGES: Partial<Record<ErrorCode, string>> = {
   validation: VALIDATION_MESSAGE,
   unauthorized: 'Faça login para continuar.',
-  forbidden: 'Você não tem permissão para isso.',
-  not_found: 'Não encontramos o que você procura.',
+  forbidden: FORBIDDEN_MESSAGE,
+  not_found: NOT_FOUND_MESSAGE,
   rate_limited: 'Muitas tentativas. Aguarde alguns minutos e tente de novo.',
 };
 
@@ -59,6 +61,9 @@ function clientStatusOf(error: unknown): number | undefined {
 }
 
 export function registerErrorHandler(app: FastifyInstance): void {
+  app.setNotFoundHandler(() => {
+    throw new AppError(404, 'not_found', NOT_FOUND_MESSAGE);
+  });
   app.setErrorHandler((error, request, reply) => {
     if (error instanceof AppError) {
       const body: ApiError = { error: { code: error.code, message: error.message } };

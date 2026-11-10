@@ -18,6 +18,9 @@ beforeAll(async () => {
   ctx.app.get('/api/_test/boom', () => {
     throw new Error('segredo');
   });
+  ctx.app.get('/api/_test/forbidden', () => {
+    throw Object.assign(new Error('negado'), { statusCode: 403 });
+  });
   await ctx.app.ready();
   await resetDb(ctx.db);
 });
@@ -81,6 +84,20 @@ describe('erros padronizados', () => {
     });
     expect(res.statusCode).toBe(400);
     expect(res.json<{ error: { code: string } }>().error.code).toBe('validation');
+  });
+
+  it('rota inexistente vira 404 not_found no formato padrão', async () => {
+    const res = await ctx.app.inject({ method: 'GET', url: '/api/nao-existe' });
+    expect(res.statusCode).toBe(404);
+    expect(res.json()).toEqual({ error: { code: 'not_found', message: 'Recurso não encontrado.' } });
+  });
+
+  it('403 genérico usa a mesma mensagem de permissão das demais rotas', async () => {
+    const res = await ctx.app.inject({ method: 'GET', url: '/api/_test/forbidden' });
+    expect(res.statusCode).toBe(403);
+    expect(res.json()).toEqual({
+      error: { code: 'forbidden', message: 'Você não tem permissão para acessar este recurso.' },
+    });
   });
 
   it('erro desconhecido vira 500 internal sem vazar detalhes', async () => {

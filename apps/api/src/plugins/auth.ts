@@ -3,12 +3,12 @@ import type { Role } from '@fixable/shared';
 import type { Config } from '../config.ts';
 import type { Db } from '../db/client.ts';
 import { findSessionUser, SESSION_COOKIE, setSessionCookie, type SessionUser } from '../modules/auth/sessions.ts';
-import { AppError } from './errors.ts';
+import { AppError, FORBIDDEN_MESSAGE } from './errors.ts';
 
 type PreHandler = (request: FastifyRequest, reply: FastifyReply, done: (error?: Error) => void) => void;
 
 const UNAUTHENTICATED = () => new AppError(401, 'unauthorized', 'Faça login para continuar.');
-const FORBIDDEN = () => new AppError(403, 'forbidden', 'Você não tem permissão para acessar este recurso.');
+const FORBIDDEN = () => new AppError(403, 'forbidden', FORBIDDEN_MESSAGE);
 
 declare module 'fastify' {
   interface FastifyRequest {
