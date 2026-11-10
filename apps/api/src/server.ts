@@ -1,9 +1,9 @@
 import { buildApp } from './app.ts';
-import { loadConfig } from './config.ts';
+import { loadConfig } from './config/env.ts';
 import { createDb } from './db/client.ts';
-import { createMemoryMailer } from './modules/mail/memory-mailer.ts';
-import { startOutboxWorker } from './modules/mail/outbox.ts';
-import { createSmtpMailer } from './modules/mail/smtp-mailer.ts';
+import { createMemoryMailer } from './mailers/memory.mailer.ts';
+import { createSmtpMailer } from './mailers/smtp.mailer.ts';
+import { startOutboxWorker } from './workers/outbox.worker.ts';
 
 const config = loadConfig();
 const { db, close } = createDb(config.DATABASE_URL);

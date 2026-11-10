@@ -1,16 +1,15 @@
 import cookie from '@fastify/cookie';
 import rateLimit from '@fastify/rate-limit';
-import { sql } from 'drizzle-orm';
 import Fastify, { type FastifyInstance } from 'fastify';
 import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
-import type { Config } from './config.ts';
+import type { Config } from './config/env.ts';
 import type { Db } from './db/client.ts';
-import type { Mailer } from './modules/mail/mailer.ts';
-import { authRoutes } from './modules/auth/routes.ts';
-import { registerAuth } from './plugins/auth.ts';
-import { registerErrorHandler } from './plugins/errors.ts';
-import { serializeError, serializeRequest } from './plugins/log-redaction.ts';
-import { registerOriginCheck } from './plugins/origin-check.ts';
+import { registerAuth } from './middlewares/auth.middleware.ts';
+import { registerErrorHandler } from './middlewares/error-handler.middleware.ts';
+import { registerOriginCheck } from './middlewares/origin-check.middleware.ts';
+import { routes } from './routes/index.ts';
+import type { Mailer } from './types/mail.types.ts';
+import { serializeError, serializeRequest } from './utils/log-redaction.ts';
 
 export type AppDeps = { config: Config; db: Db; mailer: Mailer };
 
@@ -26,20 +25,7 @@ export async function buildApp({ config, db }: AppDeps): Promise<FastifyInstance
   registerOriginCheck(app, config);
   registerAuth(app, { db, config });
 
-  await app.register(
-    (api) => {
-      void api.register(authRoutes({ db, config }));
-      api.get('/health', async (_request, reply) => {
-        try {
-          await db.execute(sql`select 1`);
-          return { status: 'ok', db: 'ok' };
-        } catch {
-          return reply.status(503).send({ status: 'degraded', db: 'down' });
-        }
-      });
-    },
-    { prefix: '/api' },
-  );
+  await app.register(routes({ db, config }), { prefix: '/api' });
 
   return app;
 }

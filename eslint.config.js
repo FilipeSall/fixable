@@ -20,7 +20,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['apps/api/src/modules/mail/smtp-mailer.ts'],
+    files: ['apps/api/src/mailers/smtp.mailer.ts'],
     rules: { 'sonarjs/no-clear-text-protocols': 'off' },
   },
   {
