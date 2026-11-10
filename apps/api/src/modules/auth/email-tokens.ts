@@ -17,20 +17,23 @@ export async function issueEmailToken(
   userId: string,
   purpose: EmailTokenPurpose,
   now: Date = new Date(),
-): Promise<string> {
+): Promise<{ id: string; token: string }> {
   await db
     .update(emailTokens)
     .set({ usedAt: now })
     .where(and(eq(emailTokens.userId, userId), eq(emailTokens.purpose, purpose), isNull(emailTokens.usedAt)));
 
-  const raw = randomBytes(32).toString('base64url');
-  await db.insert(emailTokens).values({
-    userId,
-    purpose,
-    tokenHash: hashToken(raw),
-    expiresAt: new Date(now.getTime() + TOKEN_TTL_MS[purpose]),
-  });
-  return raw;
+  const token = randomBytes(32).toString('base64url');
+  const [row] = await db
+    .insert(emailTokens)
+    .values({
+      userId,
+      purpose,
+      tokenHash: hashToken(token),
+      expiresAt: new Date(now.getTime() + TOKEN_TTL_MS[purpose]),
+    })
+    .returning({ id: emailTokens.id });
+  return { id: row!.id, token };
 }
 
 export async function peekEmailToken(

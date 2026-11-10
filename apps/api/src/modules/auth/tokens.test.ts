@@ -1,4 +1,4 @@
-import { and, eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { emailOutbox, emailTokens, users } from '../../db/schema/index.ts';
 import { createUser, loginAs, resetDb, testApp, type TestApp } from '../../../test/helpers.ts';
@@ -99,7 +99,7 @@ describe('convite', () => {
   it('convite com 48h + 1min devolve 410', async () => {
     const user = await createUser(t.db, { role: 'cliente', status: 'convidado' });
     const issuedAt = new Date(Date.now() - 48 * HOUR_MS - MINUTE_MS);
-    const token = await issueEmailToken(t.db, user.id, 'convite', issuedAt);
+    const { token } = await issueEmailToken(t.db, user.id, 'convite', issuedAt);
     const response = await accept(token);
     expect(response.statusCode).toBe(410);
     expect(response.json()).toEqual(TOKEN_INVALIDO);
@@ -108,7 +108,7 @@ describe('convite', () => {
   it('convite com 47h59 ainda é aceito', async () => {
     const user = await createUser(t.db, { role: 'cliente', status: 'convidado' });
     const issuedAt = new Date(Date.now() - 48 * HOUR_MS + MINUTE_MS);
-    const token = await issueEmailToken(t.db, user.id, 'convite', issuedAt);
+    const { token } = await issueEmailToken(t.db, user.id, 'convite', issuedAt);
     expect((await accept(token)).statusCode).toBe(200);
   });
 
@@ -125,7 +125,7 @@ describe('convite', () => {
 
   it('guarda apenas o hash SHA-256 do token', async () => {
     const user = await createUser(t.db, { role: 'cliente', status: 'convidado' });
-    const token = await issueEmailToken(t.db, user.id, 'convite');
+    const { token } = await issueEmailToken(t.db, user.id, 'convite');
     const [stored] = await t.db.select().from(emailTokens).where(eq(emailTokens.userId, user.id));
     expect(stored!.tokenHash).not.toBe(token);
     expect(stored!.tokenHash).toMatch(/^[0-9a-f]{64}$/);
@@ -240,6 +240,31 @@ describe('redefinição de senha', () => {
     expect(t.mailer.sent).toHaveLength(1);
   });
 
+  it('dois pedidos antes do processamento entregam só o link mais recente', async () => {
+    await createUser(t.db, { role: 'cliente', email: 'ana@fixable.com', senha: 'antiga1234' });
+    await forgot('ana@fixable.com');
+    await forgot('ana@fixable.com');
+    const latest = await lastLinkToken('redefinicao');
+
+    expect(await processOutbox(t.db, t.mailer)).toEqual({ sent: 1, failed: 0 });
+
+    expect(t.mailer.sent).toHaveLength(1);
+    expect(t.mailer.sent[0]!.text).toContain(latest);
+    const rows = await t.db.select().from(emailOutbox).orderBy(emailOutbox.createdAt);
+    expect(rows.map((row) => row.status)).toEqual(['descartado', 'enviado']);
+    expect(rows[0]!.data).not.toHaveProperty('link');
+  });
+
+  it('pedidos simultâneos deixam um único link válido', async () => {
+    const user = await createUser(t.db, { role: 'cliente', senha: 'antiga1234' });
+    await Promise.all(Array.from({ length: 5 }, () => sendPasswordReset(t.db, t.config, user.id)));
+    const open = await t.db
+      .select()
+      .from(emailTokens)
+      .where(and(eq(emailTokens.userId, user.id), eq(emailTokens.purpose, 'redefinicao'), isNull(emailTokens.usedAt)));
+    expect(open).toHaveLength(1);
+  });
+
   it('a 6ª solicitação de forgot em 1h devolve 429', async () => {
     const statuses: number[] = [];
     for (let attempt = 0; attempt < 6; attempt += 1) {
@@ -285,7 +310,7 @@ describe('redefinição de senha', () => {
 
   it('redefinição com 1h + 1min devolve 410', async () => {
     const user = await createUser(t.db, { role: 'cliente', senha: 'antiga1234' });
-    const token = await issueEmailToken(t.db, user.id, 'redefinicao', new Date(Date.now() - HOUR_MS - MINUTE_MS));
+    const { token } = await issueEmailToken(t.db, user.id, 'redefinicao', new Date(Date.now() - HOUR_MS - MINUTE_MS));
     const response = await reset(token);
     expect(response.statusCode).toBe(410);
     expect(response.json()).toEqual(TOKEN_INVALIDO);
@@ -293,7 +318,7 @@ describe('redefinição de senha', () => {
 
   it('novo pedido invalida o link anterior do mesmo propósito sem afetar outro propósito', async () => {
     const user = await createUser(t.db, { role: 'cliente', senha: 'antiga1234' });
-    const invite = await issueEmailToken(t.db, user.id, 'convite');
+    const { token: invite } = await issueEmailToken(t.db, user.id, 'convite');
     await issueEmailToken(t.db, user.id, 'redefinicao');
     await issueEmailToken(t.db, user.id, 'redefinicao');
     const rows = await t.db

@@ -13,7 +13,7 @@ interface AuthContextValue {
   isLoading: boolean;
   login: (email: string, senha: string) => Promise<Me>;
   logout: () => Promise<void>;
-  setMe: (me: Me | null) => void;
+  setMe: (me: Me | null) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -32,22 +32,18 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
   const query = useQuery({ queryKey: ME_KEY, queryFn: fetchMe });
 
   const value = useMemo<AuthContextValue>(() => {
-    function setMe(me: Me | null) {
+    async function setMe(me: Me | null) {
+      await queryClient.cancelQueries({ queryKey: ME_KEY });
       queryClient.setQueryData(ME_KEY, me);
     }
     async function login(email: string, senha: string) {
       const me = await apiFetch<Me>(API.login, { method: 'POST', body: { email, senha } });
-      setMe(me);
+      await setMe(me);
       return me;
     }
     async function logout() {
-      try {
-        await apiFetch<void>(API.logout, { method: 'POST' });
-      } catch {
-        return;
-      } finally {
-        setMe(null);
-      }
+      await apiFetch<void>(API.logout, { method: 'POST' });
+      await setMe(null);
     }
     return { me: query.data ?? null, isLoading: query.isPending, login, logout, setMe };
   }, [queryClient, query.data, query.isPending]);

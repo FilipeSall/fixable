@@ -1,8 +1,10 @@
 import { setTimeout as sleep } from 'node:timers/promises';
+import { sql } from 'drizzle-orm';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { createDb } from '../../db/client.ts';
 import { emailOutbox } from '../../db/schema/index.ts';
-import { resetDb } from '../../../test/helpers.ts';
+import { createUser, resetDb } from '../../../test/helpers.ts';
+import { issueEmailToken } from '../auth/email-tokens.ts';
 import type { Mailer } from './mailer.ts';
 import { createMemoryMailer } from './memory-mailer.ts';
 import { enqueueEmail, processOutbox, startOutboxWorker } from './outbox.ts';
@@ -23,6 +25,18 @@ function deferred(): { promise: Promise<void>; resolve: () => void } {
     resolve = done;
   });
   return { promise, resolve };
+}
+
+function gatedMailer() {
+  const started = deferred();
+  const gate = deferred();
+  const mailer: Mailer = {
+    async send() {
+      started.resolve();
+      await gate.promise;
+    },
+  };
+  return { mailer, started: started.promise, release: gate.resolve };
 }
 
 async function onlyRow() {
@@ -137,5 +151,50 @@ describe('fila de e-mail', () => {
     releaseSend();
     await stopping;
     expect((await onlyRow()).status).toBe('enviado');
+  });
+
+  it('não segura bloqueio no banco durante o envio e não entrega de novo a linha reservada', async () => {
+    const slow = gatedMailer();
+    const other = createMemoryMailer();
+    await enqueueEmail(db, message);
+    const now = new Date();
+    const first = processOutbox(db, slow.mailer, now);
+    await slow.started;
+
+    await expect(db.execute(sql`SELECT id FROM email_outbox FOR UPDATE NOWAIT`)).resolves.toHaveLength(1);
+    expect(await processOutbox(db, other, now)).toEqual({ sent: 0, failed: 0 });
+    expect(other.sent).toHaveLength(0);
+
+    slow.release();
+    expect(await first).toEqual({ sent: 1, failed: 0 });
+    expect((await onlyRow()).status).toBe('enviado');
+  });
+
+  it('volta a enviar depois do prazo de reserva quando o processo cai durante o envio', async () => {
+    const stuck = gatedMailer();
+    await enqueueEmail(db, message);
+    const now = new Date();
+    void processOutbox(db, stuck.mailer, now);
+    await stuck.started;
+
+    const mailer = createMemoryMailer();
+    expect(await processOutbox(db, mailer, new Date(now.getTime() + minutes(4)))).toEqual({ sent: 0, failed: 0 });
+    expect(await processOutbox(db, mailer, new Date(now.getTime() + minutes(6)))).toEqual({ sent: 1, failed: 0 });
+    expect(mailer.sent).toHaveLength(1);
+  });
+
+  it('descarta sem enviar o e-mail cujo link expirou antes da entrega', async () => {
+    const user = await createUser(db, { role: 'cliente' });
+    const issuedAt = new Date();
+    const { id } = await issueEmailToken(db, user.id, 'redefinicao', issuedAt);
+    await enqueueEmail(db, { ...message, template: 'redefinicao', emailTokenId: id });
+    const mailer = createMemoryMailer();
+
+    expect(await processOutbox(db, mailer, new Date(issuedAt.getTime() + minutes(61)))).toEqual({ sent: 0, failed: 0 });
+
+    expect(mailer.sent).toHaveLength(0);
+    const row = await onlyRow();
+    expect(row.status).toBe('descartado');
+    expect(row.data).toEqual({ nome: 'Ana' });
   });
 });

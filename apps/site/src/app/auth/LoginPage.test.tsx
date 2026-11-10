@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiRequestError } from '../api.ts';
+import { useAuth } from './AuthProvider.tsx';
 import { LoginPage } from './LoginPage.tsx';
 import { ana, mockedFetch, renderApp, unauthenticated } from './test-utils.tsx';
 
@@ -12,11 +13,16 @@ vi.mock('../api.ts', async (importOriginal) => ({
   apiFetch: vi.fn(),
 }));
 
+function SessionProbe() {
+  const { me } = useAuth();
+  return <p>{me ? `sessão de ${me.nome}` : 'sem sessão'}</p>;
+}
+
 function renderLogin(route = '/login') {
   return renderApp(
     <Routes>
       <Route path="/login" element={<LoginPage />} />
-      <Route path="*" element={<p>destino</p>} />
+      <Route path="*" element={<SessionProbe />} />
     </Routes>,
     route,
   );
@@ -96,6 +102,25 @@ describe('LoginPage', () => {
     await fillAndSubmit('ana@fixable.com', 'segredo123');
     const button = await screen.findByRole('button', { name: 'Entrando...' });
     expect(button).toBeDisabled();
+  });
+
+  it('mantém a sessão do login quando um /me sem cookie iniciado antes responde depois', async () => {
+    const rejecters: ((error: unknown) => void)[] = [];
+    mockedFetch.mockImplementation((path: string) => {
+      if (path === API.me) {
+        return new Promise((_resolve, reject) => {
+          rejecters.push(reject);
+        });
+      }
+      if (path === API.login) return Promise.resolve(ana);
+      return Promise.reject(new Error(`inesperado: ${path}`));
+    });
+    renderLogin();
+    await fillAndSubmit('ana@fixable.com', 'segredo123');
+    expect(await screen.findByText('sessão de Ana Souza')).toBeInTheDocument();
+    for (const reject of rejecters) reject(unauthenticated());
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(screen.getByText('sessão de Ana Souza')).toBeInTheDocument();
   });
 
   it('redireciona para a home quando já há sessão', async () => {

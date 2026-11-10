@@ -1,6 +1,7 @@
 import { index, integer, jsonb, pgEnum, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { emailTokens } from './identity.ts';
 
-export const outboxStatusEnum = pgEnum('outbox_status', ['pendente', 'enviado', 'falhou']);
+export const outboxStatusEnum = pgEnum('outbox_status', ['pendente', 'enviado', 'falhou', 'descartado']);
 
 export const emailOutbox = pgTable(
   'email_outbox',
@@ -9,6 +10,7 @@ export const emailOutbox = pgTable(
     to: text('to').notNull(),
     template: text('template').notNull(),
     data: jsonb('data').notNull(),
+    emailTokenId: uuid('email_token_id').references(() => emailTokens.id, { onDelete: 'cascade' }),
     status: outboxStatusEnum('status').notNull().default('pendente'),
     attempts: integer('attempts').notNull().default(0),
     nextAttemptAt: timestamp('next_attempt_at', { withTimezone: true }).notNull().defaultNow(),

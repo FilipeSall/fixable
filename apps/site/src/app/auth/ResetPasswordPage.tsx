@@ -24,7 +24,7 @@ export function ResetPasswordPage() {
           {(token) => {
             async function reset(senha: string) {
               await apiFetch<void>(API.reset, { method: 'POST', body: { token, senha } });
-              setMe(null);
+              await setMe(null);
               setPasswordReset(true);
             }
             return <SetPasswordForm submitLabel="Redefinir senha" busyLabel="Salvando..." onSubmit={reset} />;

@@ -25,5 +25,5 @@ Itens apontados nas revisões do plano 1 que ficaram para depois, com o plano em
 
 - Testes unitários de `shouldRewrite` (spa-fallback) e `shouldRetry` (App).
 - O worker do outbox usa `console.error` em vez do logger do Fastify.
-- Corrida em `issueEmailToken`: duas emissões simultâneas podem deixar dois tokens válidos. Um índice parcial único resolveria.
+- A fila de e-mail entrega pelo menos uma vez: se o processo cair depois de o SMTP aceitar a mensagem e antes de a linha ser marcada como `enviado`, ela volta a ser enviada quando a reserva de 5 minutos vence. Idempotência no provedor (ex.: `Message-ID` estável) fica para quando houver um provedor transacional.
 - O store do rate limit é em memória. Trocar antes de rodar mais de uma instância da API.

@@ -24,13 +24,18 @@ async function sendTokenEmail(
   userId: string,
   purpose: EmailTokenPurpose,
 ): Promise<void> {
-  const [user] = await db.select({ nome: users.nome, email: users.email }).from(users).where(eq(users.id, userId));
+  const [user] = await db
+    .select({ nome: users.nome, email: users.email })
+    .from(users)
+    .where(eq(users.id, userId))
+    .for('update');
   if (!user) throw new Error('Usuário não encontrado.');
-  const token = await issueEmailToken(db, userId, purpose);
+  const { id, token } = await issueEmailToken(db, userId, purpose);
   await enqueueEmail(db, {
     to: user.email,
     template: purpose,
     data: { nome: user.nome, link: buildLink(config, purpose, token) },
+    emailTokenId: id,
   });
 }
 

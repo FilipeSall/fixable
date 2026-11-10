@@ -16,14 +16,16 @@ function stub(logout: () => Promise<unknown>) {
   mockedFetch.mockImplementation((path: string) => {
     if (path === API.me) return loggedOut ? Promise.reject(unauthenticated()) : Promise.resolve(ana);
     if (path === API.logout) {
-      loggedOut = true;
-      return logout();
+      return logout().then((result) => {
+        loggedOut = true;
+        return result;
+      });
     }
     return Promise.reject(new Error(`inesperado: ${path}`));
   });
 }
 
-async function logoutFromHome() {
+function renderHome() {
   renderApp(
     <Routes>
       <Route path="/cliente" element={<HomeScreen />} />
@@ -31,9 +33,10 @@ async function logoutFromHome() {
     </Routes>,
     '/cliente',
   );
-  const user = userEvent.setup();
-  await user.click(await screen.findByRole('button', { name: 'Sair' }));
-  await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent(/^\/login$/));
+}
+
+async function clickLeave() {
+  await userEvent.setup().click(await screen.findByRole('button', { name: 'Sair' }));
 }
 
 describe('HomeScreen logout', () => {
@@ -43,18 +46,38 @@ describe('HomeScreen logout', () => {
 
   it('limpa a sessão e navega para /login', async () => {
     stub(() => Promise.resolve(undefined));
-    await logoutFromHome();
+    renderHome();
+    await clickLeave();
+    await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent(/^\/login$/));
     expect(screen.getByText('tela de login')).toBeInTheDocument();
   });
 
-  it('limpa a sessão e navega para /login mesmo se a API falhar, sem rejeição não tratada', async () => {
+  it('não sai e mostra o erro quando a API não revoga a sessão, sem rejeição não tratada', async () => {
     const unhandled = vi.fn();
     process.on('unhandledRejection', unhandled);
     stub(() => Promise.reject(new TypeError('Failed to fetch')));
-    await logoutFromHome();
+    renderHome();
+    await clickLeave();
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Não foi possível sair. Verifique a conexão e tente de novo.',
+    );
     await new Promise((resolve) => setTimeout(resolve, 20));
     process.off('unhandledRejection', unhandled);
     expect(unhandled).not.toHaveBeenCalled();
-    expect(screen.getByText('tela de login')).toBeInTheDocument();
+    expect(screen.getByTestId('location')).toHaveTextContent(/^\/cliente$/);
+    expect(screen.getByText('Olá, Ana.')).toBeInTheDocument();
+  });
+
+  it('sai na nova tentativa depois de uma falha', async () => {
+    let calls = 0;
+    stub(() => {
+      calls += 1;
+      return calls === 1 ? Promise.reject(new TypeError('Failed to fetch')) : Promise.resolve(undefined);
+    });
+    renderHome();
+    await clickLeave();
+    await screen.findByRole('alert');
+    await clickLeave();
+    await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent(/^\/login$/));
   });
 });

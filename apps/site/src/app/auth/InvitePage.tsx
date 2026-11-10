@@ -19,7 +19,7 @@ export function InvitePage() {
           {(token, info) => {
             async function accept(senha: string) {
               const me = await apiFetch<Me>(API.acceptInvite, { method: 'POST', body: { token, senha } });
-              setMe(me);
+              await setMe(me);
               await navigate(homeFor(me.role), { replace: true });
             }
             return (

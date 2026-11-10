@@ -1,0 +1,5 @@
+ALTER TYPE "public"."outbox_status" ADD VALUE 'descartado';--> statement-breakpoint
+ALTER TABLE "email_outbox" ADD COLUMN "email_token_id" uuid;--> statement-breakpoint
+ALTER TABLE "email_outbox" ADD CONSTRAINT "email_outbox_email_token_id_email_tokens_id_fk" FOREIGN KEY ("email_token_id") REFERENCES "public"."email_tokens"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+UPDATE "email_tokens" AS "stale" SET "used_at" = now() WHERE "stale"."used_at" IS NULL AND EXISTS (SELECT 1 FROM "email_tokens" AS "newer" WHERE "newer"."user_id" = "stale"."user_id" AND "newer"."purpose" = "stale"."purpose" AND "newer"."used_at" IS NULL AND ("newer"."created_at", "newer"."id") > ("stale"."created_at", "stale"."id"));--> statement-breakpoint
+CREATE UNIQUE INDEX "email_tokens_one_open_per_purpose" ON "email_tokens" USING btree ("user_id","purpose") WHERE "email_tokens"."used_at" IS NULL;

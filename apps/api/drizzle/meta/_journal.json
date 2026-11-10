@@ -15,6 +15,13 @@
       "when": 1794280066803,
       "tag": "0001_loose_toad",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794312022919,
+      "tag": "0002_outbox_token_e_token_unico",
+      "breakpoints": true
     }
   ]
 }
