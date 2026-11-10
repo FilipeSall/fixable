@@ -1,6 +1,7 @@
 import { and, eq, lte, sql } from 'drizzle-orm';
 import type { Db, Tx } from '../../db/client.ts';
 import { emailOutbox } from '../../db/schema/index.ts';
+import { serializeError } from '../../plugins/log-redaction.ts';
 import type { Mailer } from './mailer.ts';
 import { renderTemplate, type TemplateData, type TemplateName } from './templates.ts';
 
@@ -68,7 +69,7 @@ export function startOutboxWorker(db: Db, mailer: Mailer, intervalMs = 5000): ()
     inFlight = processOutbox(db, mailer)
       .then(() => undefined)
       .catch((error: unknown) => {
-        console.error('Falha ao processar a fila de e-mail', error);
+        console.error('Falha ao processar a fila de e-mail', error instanceof Error ? serializeError(error) : error);
       })
       .finally(() => {
         inFlight = null;
