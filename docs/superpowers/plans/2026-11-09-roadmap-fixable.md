@@ -15,3 +15,23 @@ anterior termina, para partir das interfaces reais e não das imaginadas.
 | 5 | Comunicação e admin | Conversas com polling e não lidas, contadores, painel admin completo, E2E finais e deploy no servidor da empresa | 21, 33, 43–49 |
 
 Pendências de infraestrutura do PRD bloqueiam só a tarefa de deploy do plano 5.
+
+## Revisão de escopo (2026-11-10)
+
+O projeto é um trabalho de faculdade de uma cliente, e o objetivo é deixá-lo **minimamente funcional**. Por isso:
+
+- O plano 2 foi enxugado: saíram a checagem de SEO, o Lighthouse, o smoke no nginx e as pendências de produção.
+- Os planos 3 a 5 viram **um único Plano 3 — Plataforma núcleo**:
+  - o admin vê os leads e aprova ou recusa candidaturas (aprovar envia o convite);
+  - o engenheiro vê os clientes dele, edita a maquete, cria serviços nos cômodos, atualiza o status das solicitações e agenda visitas;
+  - o cliente vê os imóveis, a maquete com os serviços, as solicitações e os agendamentos.
+- O sistema **vai ser hospedado num servidor real**, então o Plano 3 termina com uma tarefa de **deploy mínimo**:
+  - `compose` de produção com `api`, `db` e `web` (nginx servindo o `dist` do site e fazendo proxy de `/api`);
+  - HTTPS;
+  - SMTP real e `TEAM_EMAIL`;
+  - `pg_dump` diário;
+  - `Cache-Control` do nginx (`index.html` sem cache e assets imutáveis);
+  - `stop_grace_period`;
+  - smoke E2E atrás do nginx.
+  - Essa tarefa depende das pendências de infraestrutura do PRD (servidor, domínio, SMTP).
+- Ficam fora do escopo: upload de arquivos, orçamentos, chat, a ficha do profissional, o calendário anual e o hardening avançado (observabilidade, CI/CD e homologação).

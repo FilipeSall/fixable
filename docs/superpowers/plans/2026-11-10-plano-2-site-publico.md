@@ -444,7 +444,9 @@ Refatoração **sem mudança de comportamento**. Todos os testes existentes cont
 - [ ] **Step 4:** `pnpm --filter site test` e `pnpm --filter site build` → PASS.
 - [ ] **Step 5:** Commit `feat(site): formulários de diagnóstico e candidatura ligados à API`.
 
-### Task 10: Páginas serviço × cidade, páginas legais e checagem de SEO
+### Task 10: Páginas serviço × cidade, páginas legais, sitemap e robots
+
+> Escopo enxuto (decisão do usuário em 2026-11-10: trabalho de faculdade, "minimamente funcional"). Sem script de checagem de SEO e sem Lighthouse.
 
 **Files:**
 - Create:
@@ -452,8 +454,8 @@ Refatoração **sem mudança de comportamento**. Todos os testes existentes cont
   - `apps/site/src/pages/servicos/[servico]/[cidade].astro`
   - `apps/site/src/pages/termos-de-uso.astro` e `apps/site/src/pages/privacidade.astro`
   - `apps/site/src/pages/404.astro` e `apps/site/src/pages/robots.txt.ts`
-  - `apps/site/scripts/seo-check.ts` e `apps/site/scripts/seo-check.test.ts`
-- Modify: `apps/site/package.json` (script `seo:check`), `package.json` da raiz (script `seo:check`), `infra/nginx/fixable.conf`
+  - Se os passos de "Como funciona" forem reaproveitados, extraí-los de `HowItWorks.astro` para um componente ou para dados compartilhados.
+- Modify: `infra/nginx/fixable.conf`
 
 **Interfaces:**
 - `/servicos/{servico}`:
@@ -472,79 +474,53 @@ Refatoração **sem mudança de comportamento**. Todos os testes existentes cont
 - nginx:
   - `location / { try_files $uri $uri/index.html =404; }`;
   - `error_page 404 /404.html;`.
-- `seo-check.ts` (`checkSeo(distDir: string): string[]`, que devolve a lista de problemas) lê os HTML de `dist/` e confere:
-  - cada página indexável tem `<title>`, description e canonical, todos únicos;
-  - o JSON-LD faz `JSON.parse` sem erro;
-  - todas as páginas `servicos/*/*` e a home estão no sitemap;
-  - nenhuma página `noindex` nem `/app` está no sitemap;
-  - a home tem um `<h1>` só.
-  - `pnpm seo:check` roda o build e sai com código 1 se houver problema.
 
-- [ ] **Step 1:** Testes de `checkSeo` com uma `dist` de fixture em diretório temporário:
-  - título duplicado é apontado;
-  - JSON-LD inválido é apontado;
-  - página de serviço fora do sitemap é apontada;
-  - fixture correta devolve `[]`.
-- [ ] **Step 2:** `pnpm --filter site test -- seo-check` → FAIL.
-- [ ] **Step 3:** Implementar as páginas e o script.
-- [ ] **Step 4:** `pnpm seo:check` → sem problemas, com 12 páginas de serviço e 72 de serviço × cidade. Lighthouse mobile na home pelo `pnpm --filter site preview` (`npx lighthouse http://localhost:4321 --form-factor=mobile --only-categories=performance,seo,accessibility`) deve dar ≥ 90 nas três categorias. Registrar as notas no relatório.
-- [ ] **Step 5:** Commit `feat(site): páginas serviço × cidade, sitemap, robots e checagem de SEO`.
+- [ ] **Step 1: Escrever os testes unitários dos helpers de dados das páginas** (o que monta título, description e JSON-LD a partir de serviço e cidade):
+  - título e description de `eletrica` × `santo-andre`;
+  - o JSON-LD `Service` com `areaServed` igual a Santo André.
+- [ ] **Step 2:** Rodar os testes → FAIL.
+- [ ] **Step 3:** Implementar as páginas.
+- [ ] **Step 4:** `pnpm --filter site build` → PASS, com 12 páginas de serviço e 72 de serviço × cidade. O `dist/sitemap-0.xml` deve listar a home e as 84 páginas, sem `/app` e sem as páginas legais. `dist/robots.txt` deve estar correto.
+- [ ] **Step 5:** Commit `feat(site): páginas serviço × cidade, páginas legais, sitemap e robots`.
 
-### Task 11: Pendências do plano 1
+### Task 11: Pendências do plano 1 (enxuta)
 
 **Files:**
-- Modify:
-  - `apps/site/src/app/App.tsx` e `apps/site/src/app/api.ts`
-  - `apps/site/src/app/auth/ForgotPasswordPage.tsx` e o teste dela
-  - `apps/api/src/utils/log-redaction.ts` e `apps/api/tests/utils/log-redaction.test.ts`
-- Create: `apps/site/src/app/NotFoundPage.tsx`, `apps/site/src/app/App.test.tsx`
+- Modify: `apps/site/src/app/App.tsx` e `apps/site/src/app/auth/ForgotPasswordPage.tsx` (com o teste dela)
+- Create: `apps/site/src/app/NotFoundPage.tsx` e `apps/site/src/app/App.test.tsx`
 - Todo arquivo novo ou alterado segue as Convenções de arquitetura (JSDoc e tipos em `types/`).
 
-**Interfaces e regras:**
-- 401 global: `QueryCache({ onError })` e `MutationCache({ onError })`. Quando o erro é `ApiError` com status 401 e a query não é `['me']`, fazem `queryClient.setQueryData(['me'], null)`, e o `RequireAuth` leva ao login com `?next`.
-- Rota `*` em `/app` renderiza `NotFoundPage`, com o texto `Página não encontrada.` e um link `Voltar ao início` para `/app`.
-- `serializeError(value)` devolve o valor intacto quando ele não é `Error`.
-- Erros do Postgres: `cause.detail` e `detail` são trocados por `[redacted]`.
+**Regras:**
+- A rota `*` em `/app` renderiza `NotFoundPage`, com o texto `Página não encontrada.` e um link `Voltar ao início` para `/app`.
 - Copy do "esqueci a senha": `Se houver uma conta com este e-mail, enviamos um link para você criar ou redefinir sua senha.`
+- Ficam fora (e seguem no doc de pendências): o 401 global, o guarda de não-Error no `serializeError` e a redação de `cause.detail` do Postgres.
 
 - [ ] **Step 1: Escrever os testes**
-  - uma query que recebe 401 limpa `me` e leva a `/login?next=...`;
   - `/app/qualquer-coisa` mostra `Página não encontrada.`;
-  - `serializeError('texto') === 'texto'`;
-  - um erro com `cause.detail` sai com `[redacted]`;
   - a nova copy do "esqueci a senha".
 - [ ] **Step 2:** Rodar os testes → FAIL.
 - [ ] **Step 3:** Implementar.
 - [ ] **Step 4:** `pnpm test` → PASS.
-- [ ] **Step 5:** Commit `fix: pendências do plano 1 (401 global, rota 404, redação de logs e texto do esqueci a senha)`.
+- [ ] **Step 5:** Commit `fix(site): rota 404 da plataforma e texto do esqueci a senha`.
 
-### Task 12: E2E do site público e smoke atrás do nginx
+### Task 12: E2E do site público
 
 **Files:**
-- Create: `apps/site/e2e/public.spec.ts`, `apps/site/e2e/nginx-smoke.spec.ts`, `apps/site/playwright.nginx.config.ts`
-- Modify: `compose.yml` (serviço `web` no profile `smoke`), `package.json` da raiz (script `e2e:nginx`), `README.md`
+- Create: `apps/site/e2e/public.spec.ts`
+- Modify: `README.md`
 
-**Interfaces:**
-- `public.spec.ts`, contra o dev (mesmo `playwright.config.ts` do plano 1):
-  1. `visitante solicita diagnóstico com plano e cria a senha pelo convite`:
-     - abre `/`, clica em "Solicitar orçamento" do Plano para 3 meses e vê o chip;
-     - preenche, aceita os termos, envia e vê `Solicitação registrada.`;
-     - lê o convite no Mailpit, cria a senha e cai em `/app/cliente`.
-  2. `candidato envia o cadastro e vê "Cadastro recebido."`.
-  3. `página Eletricista em Santo André tem a cidade pré-preenchida`.
-  4. `home abre sem login e sem chamar /api/auth/me` (verificado pelo `page.on('request')`).
-- `web` no compose:
-  - `nginx:1.27-alpine`, porta `8080:80`;
-  - monta `apps/site/dist` em `/usr/share/nginx/html` e `infra/nginx/fixable.conf` em `/etc/nginx/conf.d/default.conf`;
-  - depende de `api`; `profiles: [smoke]`.
-- `pnpm e2e:nginx` faz, em ordem:
-  1. `pnpm --filter site build`;
-  2. `docker compose --profile smoke up -d web`;
-  3. Playwright com `playwright.nginx.config.ts` (`baseURL http://localhost:8080`, projetos `chromium` e `webkit`).
-- `nginx-smoke.spec.ts`: o admin criado pelo CLI faz login em `http://localhost:8080/app/login` e chega a `/app/admin`, o que prova que `Referrer-Policy` e a checagem de Origin convivem. Também abre `/servicos/eletrica/santo-andre` com status 200 e `/nao-existe` com 404.
+**Interfaces** (`public.spec.ts`, contra o dev, com o mesmo `playwright.config.ts` do plano 1):
+1. `visitante solicita diagnóstico com plano e cria a senha pelo convite`:
+   - abre `/`, clica em "Solicitar orçamento" do Plano para 3 meses e vê o chip;
+   - preenche, aceita os termos, envia e vê `Solicitação registrada.`;
+   - lê o convite no Mailpit, cria a senha e cai em `/app/cliente`.
+2. `candidato envia o cadastro e vê "Cadastro recebido."`.
+3. `página Eletricista em Santo André tem a cidade pré-preenchida`.
+4. `home abre sem login e sem chamar /api/auth/me`, verificado pelo `page.on('request')`.
 
-- [ ] **Step 1:** Escrever os specs.
-- [ ] **Step 2:** `pnpm e2e` → PASS (3 do plano 1 e 4 novos).
-- [ ] **Step 3:** `pnpm --filter site exec playwright install webkit` e `pnpm e2e:nginx` → PASS nos dois navegadores.
-- [ ] **Step 4:** Atualizar o README com `pnpm seo:check` e `pnpm e2e:nginx`.
-- [ ] **Step 5:** Commit `test(e2e): fluxo público de diagnóstico e candidatura, e smoke atrás do nginx`.
+Fora do escopo: o smoke atrás do nginx e o WebKit.
+
+- [ ] **Step 1:** Escrever o spec.
+- [ ] **Step 2:** `pnpm e2e` → PASS, com os 3 testes do plano 1 e os 4 novos.
+- [ ] **Step 3:** Atualizar o README com o fluxo de teste manual: site → diagnóstico → Mailpit → convite → painel.
+- [ ] **Step 4:** Commit `test(e2e): fluxo público de diagnóstico e candidatura`.
