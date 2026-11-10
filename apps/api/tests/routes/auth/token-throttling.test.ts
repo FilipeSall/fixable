@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createUser, resetDb, testApp, type TestApp } from '../../helpers.ts';
+import { createUser, resetDb, testApp, tokenFromLink, type TestApp } from '../../helpers.ts';
 import { emailOutbox } from '../../../src/models/index.ts';
 import { sendInvite } from '../../../src/services/invite.service.ts';
 
@@ -46,7 +46,7 @@ describe('proteção dos endpoints de token', () => {
     const user = await createUser(t.db, { role: 'cliente', status: 'convidado' });
     await sendInvite(t.db, t.config, user.id);
     const [row] = await t.db.select().from(emailOutbox);
-    const token = new URL((row!.data as { link: string }).link).searchParams.get('token')!;
+    const token = tokenFromLink((row!.data as { link: string }).link);
     expect((await post('/api/auth/password/reset', token)).statusCode).toBe(410);
     expect(hashCalls.count).toBe(0);
     expect((await post('/api/auth/invite/accept', token)).statusCode).toBe(200);

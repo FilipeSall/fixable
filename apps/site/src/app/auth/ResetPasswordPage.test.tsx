@@ -33,7 +33,7 @@ describe('ResetPasswordPage', () => {
         <Route path="/login" element={<LoginPage />} />
         <Route path="*" element={<p>destino</p>} />
       </Routes>,
-      '/redefinir-senha?token=abc',
+      '/redefinir-senha#token=abc',
     );
     const user = userEvent.setup();
     await user.type(await screen.findByLabelText('Senha'), 'segredo123');

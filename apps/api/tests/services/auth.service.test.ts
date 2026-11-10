@@ -13,7 +13,7 @@ import { sendInvite, sendPasswordReset } from '../../src/services/invite.service
 import { revokeUserSessions } from '../../src/services/session.service.ts';
 import { hashPassword } from '../../src/utils/password.ts';
 import { hashToken } from '../../src/utils/token.ts';
-import { createUser, resetDb, testApp, type TestApp } from '../helpers.ts';
+import { createUser, resetDb, testApp, tokenFromLink, type TestApp } from '../helpers.ts';
 
 const SENHA_ANTIGA = 'antiga1234';
 const SENHA_NOVA = 'novasenha123';
@@ -31,7 +31,7 @@ afterEach(async () => {
 
 async function lastResetToken(): Promise<string> {
   const rows = await t.db.select().from(emailOutbox).where(eq(emailOutbox.template, 'redefinicao'));
-  return new URL((rows.at(-1)!.data as { link: string }).link).searchParams.get('token')!;
+  return tokenFromLink((rows.at(-1)!.data as { link: string }).link);
 }
 
 describe('login concorrente com redefinição de senha', () => {
@@ -95,7 +95,7 @@ async function waitForLockWait(): Promise<void> {
 
 async function lastToken(template: EmailTokenPurpose): Promise<string> {
   const rows = await t.db.select().from(emailOutbox).where(eq(emailOutbox.template, template));
-  return new URL((rows.at(-1)!.data as { link: string }).link).searchParams.get('token')!;
+  return tokenFromLink((rows.at(-1)!.data as { link: string }).link);
 }
 
 describe('consumo de token concorrente com reemissão para a mesma conta', () => {

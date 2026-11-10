@@ -1,10 +1,11 @@
 import { API } from '@fixable/shared';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router';
+import { Link, useLocation } from 'react-router';
 import { ApiRequestError, apiFetch } from '../api.ts';
 import type { TokenGateProps, TokenInfo, TokenLookupProps } from '../../types/auth-screens.types.ts';
 import { messageOf } from './form-errors.ts';
+import { clearTokenFromUrl, tokenFromHash } from './token-url.ts';
 
 export const EXPIRED_MESSAGE = 'Este link expirou ou já foi usado.';
 
@@ -38,9 +39,13 @@ function TokenLookup({ token, purpose, children }: Readonly<TokenLookupProps>) {
     staleTime: Infinity,
     refetchOnWindowFocus: false,
   });
+  const gone = query.isError && isGone(query.error);
+  useEffect(() => {
+    if (gone) clearTokenFromUrl();
+  }, [gone]);
   if (query.isPending) return <p role="status">Carregando...</p>;
   if (query.isError) {
-    if (isGone(query.error)) return <Expired />;
+    if (gone) return <Expired />;
     return (
       <>
         <p role="alert" className="err">
@@ -61,18 +66,10 @@ function TokenLookup({ token, purpose, children }: Readonly<TokenLookupProps>) {
   return <>{children(token, query.data)}</>;
 }
 
-const TOKEN_PARAM = 'token';
-
-/** Lê o token do link uma única vez e o tira da URL, para não vazar no Referer nem ficar no histórico. */
+/** Lê o token do fragmento do link uma única vez, mantendo-o mesmo depois que a URL for limpa. */
 function useTokenFromUrl(): string | null {
-  const [params, setParams] = useSearchParams();
-  const [token] = useState(() => params.get(TOKEN_PARAM));
-  useEffect(() => {
-    if (!params.has(TOKEN_PARAM)) return;
-    const next = new URLSearchParams(params);
-    next.delete(TOKEN_PARAM);
-    setParams(next, { replace: true });
-  }, [params, setParams]);
+  const { hash } = useLocation();
+  const [token] = useState(() => tokenFromHash(hash));
   return token;
 }
 

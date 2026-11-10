@@ -10,10 +10,10 @@ const LINK_PATHS: Record<EmailTokenPurpose, string> = {
   redefinicao: '/app/redefinir-senha',
 };
 
-/** Monta o link absoluto do app com o token na query string. */
+/** Monta o link absoluto do app com o token no fragmento, que não vai ao servidor nem ao Referer e sobrevive ao reload. */
 function buildLink(config: LinkConfig, purpose: EmailTokenPurpose, token: string): string {
   const url = new URL(LINK_PATHS[purpose], config.APP_ORIGIN);
-  url.searchParams.set('token', token);
+  url.hash = new URLSearchParams({ token }).toString();
   return url.toString();
 }
 

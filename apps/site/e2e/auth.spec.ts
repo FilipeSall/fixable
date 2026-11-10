@@ -27,7 +27,7 @@ async function readInviteLink(email: string): Promise<string> {
     .toBeDefined();
   const res = await fetch(`${mailpitUrl}/api/v1/message/${id}`);
   const { Text } = (await res.json()) as { Text: string };
-  const link = /https?:\/\/\S+\/app\/convite\?token=\S+/.exec(Text)?.[0];
+  const link = /https?:\/\/\S+\/app\/convite#token=\S+/.exec(Text)?.[0];
   if (!link) throw new Error('Link de convite não encontrado no e-mail.');
   return link;
 }
@@ -65,7 +65,7 @@ test('admin recebe convite, cria senha, entra, sai e entra de novo', async ({ pa
 });
 
 test('deep link de redefinição carrega a SPA', async ({ page }) => {
-  await page.goto('/app/redefinir-senha?token=invalido');
+  await page.goto('/app/redefinir-senha#token=invalido');
   await expect(page.getByText('Este link expirou ou já foi usado.')).toBeVisible();
 });
 

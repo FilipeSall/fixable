@@ -18,7 +18,7 @@ vi.mock('../api.ts', async (importOriginal) => ({
 
 const tokenInfo = { purpose: 'convite', nome: 'Ana', email: 'ana@fixable.com' };
 
-function renderInvite(route = '/convite?token=abc') {
+function renderInvite(route = '/convite#token=abc') {
   return renderApp(
     <Routes>
       <Route path="/convite" element={<InvitePage />} />
@@ -99,6 +99,13 @@ describe('InvitePage', () => {
     expect(await screen.findByText(/Olá, Ana\./)).toBeInTheDocument();
   });
 
+  it('token na query string, fora do fragmento, não é aceito', async () => {
+    stub(() => Promise.resolve(tokenInfo));
+    renderInvite('/convite?token=abc');
+    expect(await screen.findByText('Este link expirou ou já foi usado.')).toBeInTheDocument();
+    expect(lookupCalls()).toHaveLength(0);
+  });
+
   it('sem token na URL mostra a mensagem de link expirado', async () => {
     stub(() => Promise.resolve(tokenInfo));
     renderInvite('/convite');
@@ -113,7 +120,7 @@ describe('InvitePage', () => {
 
   it('token de convite na página de redefinição é rejeitado', async () => {
     stub(() => Promise.resolve(tokenInfo));
-    renderInvite('/redefinir-senha?token=abc');
+    renderInvite('/redefinir-senha#token=abc');
     expect(await screen.findByText('Este link expirou ou já foi usado.')).toBeInTheDocument();
   });
 
@@ -182,31 +189,65 @@ describe('TokenGate', () => {
     expect(lookupCalls()).toHaveLength(1);
   });
 
-  it('tira o token da URL da página e ainda envia o formulário com ele', async () => {
-    window.history.replaceState(null, '', '/app/convite?token=abc&origem=email');
-    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    render(
-      <QueryClientProvider client={queryClient}>
-        <BrowserRouter basename="/app">
-          <AuthProvider>
-            <Routes>
-              <Route path="/convite" element={<InvitePage />} />
-              <Route path="*" element={<p>destino</p>} />
-            </Routes>
-          </AuthProvider>
-        </BrowserRouter>
-      </QueryClientProvider>,
-    );
-
+  it('recarregar a página antes de enviar mantém o formulário e envia o token do fragmento', async () => {
+    window.history.replaceState(null, '', '/app/convite#token=abc');
+    const first = renderInBrowser();
     expect(await screen.findByText(/Olá, Ana\./)).toBeInTheDocument();
-    await waitFor(() => expect(window.location.search).toBe('?origem=email'));
-    expect(window.location.pathname).toBe('/app/convite');
+    expect(window.location.hash).toBe('#token=abc');
+    first.unmount();
 
+    renderInBrowser();
+    expect(await screen.findByText(/Olá, Ana\./)).toBeInTheDocument();
     await fillPasswords('segredo123', 'segredo123');
     await waitFor(() => expect(window.location.pathname).toBe('/app/cliente'));
+    expect(window.location.hash).toBe('');
     expect(mockedFetch).toHaveBeenCalledWith(API.acceptInvite, {
       method: 'POST',
       body: { token: 'abc', senha: 'segredo123' },
     });
   });
+
+  it('link expirado (410) tira o token do fragmento da URL', async () => {
+    stub(() => Promise.reject(new ApiRequestError(410, 'token_invalid', 'Este link expirou ou já foi usado.')));
+    window.history.replaceState(null, '', '/app/convite?origem=email#token=abc');
+    renderInBrowser();
+    expect(await screen.findByText('Este link expirou ou já foi usado.')).toBeInTheDocument();
+    await waitFor(() => expect(window.location.hash).toBe(''));
+    expect(window.location.pathname + window.location.search).toBe('/app/convite?origem=email');
+  });
+
+  it('senha redefinida tira o token do fragmento da URL', async () => {
+    mockedFetch.mockImplementation((path: string) => {
+      if (path === API.me) return Promise.reject(unauthenticated());
+      if (path === API.tokenLookup) return Promise.resolve({ ...tokenInfo, purpose: 'redefinicao' });
+      if (path === API.reset) return Promise.resolve(undefined);
+      return Promise.reject(new Error(`inesperado: ${path}`));
+    });
+    window.history.replaceState(null, '', '/app/redefinir-senha#token=abc');
+    renderInBrowser();
+    const user = userEvent.setup();
+    await user.type(await screen.findByLabelText('Senha'), 'segredo123');
+    await user.type(screen.getByLabelText('Confirmar senha'), 'segredo123');
+    await user.click(screen.getByRole('button', { name: 'Redefinir senha' }));
+    await waitFor(() => expect(screen.getByText('destino')).toBeInTheDocument());
+    expect(window.location.hash).toBe('');
+    expect(mockedFetch).toHaveBeenCalledWith(API.reset, { method: 'POST', body: { token: 'abc', senha: 'segredo123' } });
+  });
 });
+
+function renderInBrowser() {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter basename="/app">
+        <AuthProvider>
+          <Routes>
+            <Route path="/convite" element={<InvitePage />} />
+            <Route path="/redefinir-senha" element={<ResetPasswordPage />} />
+            <Route path="*" element={<p>destino</p>} />
+          </Routes>
+        </AuthProvider>
+      </BrowserRouter>
+    </QueryClientProvider>,
+  );
+}

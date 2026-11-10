@@ -1,7 +1,7 @@
 import { and, eq, isNull } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { emailOutbox, emailTokens, users } from '../../../src/models/index.ts';
-import { createUser, loginAs, resetDb, testApp, type TestApp } from '../../helpers.ts';
+import { createUser, loginAs, resetDb, testApp, tokenFromLink, type TestApp } from '../../helpers.ts';
 import { processOutbox } from '../../../src/services/outbox.service.ts';
 import { issueEmailToken } from '../../../src/services/email-token.service.ts';
 import { sendInvite, sendPasswordReset } from '../../../src/services/invite.service.ts';
@@ -25,9 +25,7 @@ afterEach(async () => {
 
 async function lastLinkToken(template: string): Promise<string> {
   const rows = await t.db.select().from(emailOutbox).where(eq(emailOutbox.template, template));
-  const row = rows.at(-1)!;
-  const link = new URL((row.data as { link: string }).link);
-  return link.searchParams.get('token')!;
+  return tokenFromLink((rows.at(-1)!.data as { link: string }).link);
 }
 
 function accept(token: string, senha: string = SENHA_NOVA) {
@@ -74,7 +72,7 @@ describe('convite', () => {
     const [row] = await t.db.select().from(emailOutbox);
     expect(row!.template).toBe('convite');
     expect(row!.to).toBe('ana@fixable.com');
-    expect((row!.data as { link: string }).link).toMatch(/^http:\/\/localhost:4321\/app\/convite\?token=[\w-]{43}$/);
+    expect((row!.data as { link: string }).link).toMatch(/^http:\/\/localhost:4321\/app\/convite#token=[\w-]{43}$/);
 
     const response = await accept(await lastLinkToken('convite'));
     expect(response.statusCode).toBe(200);
@@ -240,7 +238,7 @@ describe('redefinição de senha', () => {
 
     const queued = await t.db.select().from(emailOutbox);
     expect(queued.map((row) => row.template)).toEqual(['convite', 'convite']);
-    expect((queued[1]!.data as { link: string }).link).toMatch(/^http:\/\/localhost:4321\/app\/convite\?token=/);
+    expect((queued[1]!.data as { link: string }).link).toMatch(/^http:\/\/localhost:4321\/app\/convite#token=/);
     expect((await accept(previous)).statusCode).toBe(410);
     expect((await accept(await lastLinkToken('convite'))).statusCode).toBe(200);
   });
@@ -259,7 +257,7 @@ describe('redefinição de senha', () => {
 
     const [queued] = await t.db.select().from(emailOutbox);
     expect(queued!.template).toBe('redefinicao');
-    expect((queued!.data as { link: string }).link).toMatch(/^http:\/\/localhost:4321\/app\/redefinir-senha\?token=/);
+    expect((queued!.data as { link: string }).link).toMatch(/^http:\/\/localhost:4321\/app\/redefinir-senha#token=[\w-]{43}$/);
 
     expect(await processOutbox(t.db, t.mailer)).toEqual({ sent: 0, failed: 1 });
     expect(await processOutbox(t.db, t.mailer, () => new Date(Date.now() + 10 * MINUTE_MS))).toEqual({ sent: 1, failed: 0 });

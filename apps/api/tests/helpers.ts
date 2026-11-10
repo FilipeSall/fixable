@@ -93,3 +93,11 @@ export async function loginAs(app: FastifyInstance, email: string, senha: string
   if (!cookie) throw new Error('loginAs: cookie fx_session ausente');
   return `fx_session=${cookie.value}`;
 }
+
+export function tokenFromLink(link: string): string {
+  const url = new URL(link);
+  if (url.search) throw new Error(`o link não deveria ter query string: ${link}`);
+  const token = new URLSearchParams(url.hash.slice(1)).get('token');
+  if (!token) throw new Error(`token ausente no fragmento do link: ${link}`);
+  return token;
+}

@@ -5,6 +5,7 @@ import { apiFetch } from '../api.ts';
 import { useAuth } from './AuthProvider.tsx';
 import { SetPasswordForm } from './SetPasswordForm.tsx';
 import { TokenGate } from './TokenGate.tsx';
+import { clearTokenFromUrl } from './token-url.ts';
 
 const RESET_NOTICE = 'Senha redefinida. Entre com a nova senha.';
 
@@ -23,9 +24,10 @@ export function ResetPasswordPage() {
         <h1 className="app-h">Redefinir senha</h1>
         <TokenGate purpose="redefinicao">
           {(token) => {
-            /** Redefine a senha com o token, encerra a sessão local e leva ao login com aviso. */
+            /** Redefine a senha com o token, limpa o link da URL, encerra a sessão local e leva ao login com aviso. */
             async function reset(senha: string) {
               await apiFetch<void>(API.reset, { method: 'POST', body: { token, senha } });
+              clearTokenFromUrl();
               await setMe(null);
               setPasswordReset(true);
             }
