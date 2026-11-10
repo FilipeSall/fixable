@@ -20,6 +20,32 @@ services:
     ports:
       - "1025:1025"
       - "8025:8025"
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+    ports:
+      - "3333:3333"
+    environment:
+      NODE_ENV: development
+      PORT: "3333"
+      DATABASE_URL: postgres://fixable:fixable@db:5432/fixable
+      APP_ORIGIN: http://localhost:4321
+      COOKIE_SECURE: "false"
+      TRUST_PROXY: "false"
+      MAIL_DRIVER: smtp
+      SMTP_URL: smtp://mailpit:1025
+      MAIL_FROM: Fixable <nao-responda@fixable.local>
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3333/api/health').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
 
 volumes:
   db-data:

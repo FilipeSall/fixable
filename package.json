@@ -7,6 +7,8 @@
     "node": ">=24.2"
   },
   "scripts": {
+    "dev": "pnpm --filter site dev",
+    "dev:api": "pnpm --filter api db:migrate && pnpm --filter api dev",
     "lint": "eslint .",
     "typecheck": "pnpm -r typecheck",
     "e2e": "pnpm --filter site exec playwright test",
