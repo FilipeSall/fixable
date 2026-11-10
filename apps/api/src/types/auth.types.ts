@@ -1,6 +1,16 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import type { Role } from '@fixable/shared';
+import type {
+  forgotPasswordInput,
+  loginInput,
+  Me,
+  Role,
+  setPasswordInput,
+  tokenLookupInput,
+} from '@fixable/shared';
+import type { z } from 'zod';
 import type { users } from '../models/index.ts';
+import type { Config } from './config.types.ts';
+import type { Db } from './db.types.ts';
 
 export type SessionUser = {
   id: string;
@@ -17,3 +27,11 @@ export type PreHandler = (request: FastifyRequest, reply: FastifyReply, done: (e
 export type UserRow = typeof users.$inferSelect;
 
 export type VerifiedLogin = { user: UserRow; passwordHash: string };
+
+export type SessionGrant = { user: Me; session: { token: string; expiresAt: Date } };
+
+export type AuthDeps = { db: Db; config: Pick<Config, 'COOKIE_SECURE' | 'APP_ORIGIN'> };
+export type LoginRequest = FastifyRequest<{ Body: z.infer<typeof loginInput> }>;
+export type SetPasswordRequest = FastifyRequest<{ Body: z.infer<typeof setPasswordInput> }>;
+export type ForgotPasswordRequest = FastifyRequest<{ Body: z.infer<typeof forgotPasswordInput> }>;
+export type TokenLookupRequest = FastifyRequest<{ Body: z.infer<typeof tokenLookupInput> }>;

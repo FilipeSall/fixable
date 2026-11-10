@@ -3,11 +3,14 @@ import { randomUUID } from 'node:crypto';
 import { sql } from 'drizzle-orm';
 import type { Role, UserStatus } from '@fixable/shared';
 import { buildApp } from '../src/app.ts';
-import { loadConfig, type Config } from '../src/config/env.ts';
-import { createDb, type Db } from '../src/db/client.ts';
+import { loadConfig } from '../src/config/env.ts';
+import { createDb } from '../src/db/client.ts';
 import { users } from '../src/models/index.ts';
 import { hashPassword } from '../src/utils/password.ts';
-import { createMemoryMailer, type MemoryMailer } from '../src/mailers/memory.mailer.ts';
+import { createMemoryMailer } from '../src/mailers/memory.mailer.ts';
+import type { Config } from '../src/types/config.types.ts';
+import type { Db } from '../src/types/db.types.ts';
+import type { MemoryMailer } from '../src/types/mail.types.ts';
 
 const DEFAULT_DATABASE_URL_TEST = 'postgres://fixable:fixable@localhost:5432/fixable_test';
 

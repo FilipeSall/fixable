@@ -8,6 +8,7 @@ import { fieldErrorsOf, messageOf } from './form-errors.ts';
 
 const CONFIRMATION = 'Se este e-mail estiver cadastrado, você receberá um link para redefinir a senha.';
 
+/** Tela de pedido de link para redefinir a senha. */
 export function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -15,11 +16,13 @@ export function ForgotPasswordPage() {
   const [submitting, setSubmitting] = useState(false);
   const [sent, setSent] = useState(false);
 
+  /** Evita o envio nativo do formulário e dispara a validação e o envio. */
   function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     void submit();
   }
 
+  /** Valida o e-mail e pede o link de redefinição, mostrando erros do formulário. */
   async function submit() {
     setFormError('');
     const parsed = forgotPasswordInput.safeParse({ email });

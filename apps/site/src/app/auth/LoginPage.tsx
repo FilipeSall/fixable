@@ -2,15 +2,13 @@ import { loginInput } from '@fixable/shared';
 import { useState } from 'react';
 import type { SubmitEvent } from 'react';
 import { Link, Navigate, useLocation, useSearchParams } from 'react-router';
+import type { LocationState } from '../../types/auth-screens.types.ts';
 import { useAuth } from './AuthProvider.tsx';
 import { Field } from './Field.tsx';
 import { fieldErrorsOf, messageOf, serverFieldErrors } from './form-errors.ts';
 import { destinationAfterLogin } from './paths.ts';
 
-interface LocationState {
-  notice?: string;
-}
-
+/** Tela de login com validação do formulário e redirecionamento de quem já está autenticado. */
 export function LoginPage() {
   const { me, isLoading, login } = useAuth();
   const [params] = useSearchParams();
@@ -26,11 +24,13 @@ export function LoginPage() {
     return <Navigate to={destinationAfterLogin(me.role, params.get('next'))} replace />;
   }
 
+  /** Evita o envio nativo do formulário e dispara a validação e o login. */
   function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     void submit();
   }
 
+  /** Valida os campos e faz o login, mostrando erros do formulário e do servidor. */
   async function submit() {
     setFormError('');
     const parsed = loginInput.safeParse({ email, senha });

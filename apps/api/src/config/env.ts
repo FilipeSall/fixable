@@ -1,8 +1,9 @@
 import { z } from 'zod';
+import type { Config } from '../types/config.types.ts';
 
 const booleanString = z.enum(['true', 'false']).transform((value) => value === 'true');
 
-const configSchema = z
+export const configSchema = z
   .object({
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
     PORT: z.coerce.number().int().positive().default(3333),
@@ -23,8 +24,7 @@ const configSchema = z
     message: 'MAIL_DRIVER precisa ser smtp quando NODE_ENV=production',
   });
 
-export type Config = z.infer<typeof configSchema>;
-
+/** Lê o ambiente e devolve a configuração validada, ou falha listando as variáveis inválidas. */
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   const parsed = configSchema.safeParse(env);
   if (!parsed.success) {

@@ -11,7 +11,6 @@ export const ERROR_CODES = [
   'not_found',
   'internal',
 ] as const;
-export type ErrorCode = (typeof ERROR_CODES)[number];
 
 export const apiErrorSchema = z.object({
   error: z.object({
@@ -20,4 +19,3 @@ export const apiErrorSchema = z.object({
     fields: z.record(z.string(), z.string()).optional(),
   }),
 });
-export type ApiError = z.infer<typeof apiErrorSchema>;

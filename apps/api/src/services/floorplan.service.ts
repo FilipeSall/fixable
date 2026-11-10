@@ -1,10 +1,10 @@
 import type { PropertyType } from '@fixable/shared';
+import type { Andar, Comodo } from '../types/floorplan.types.ts';
 
-type Comodo = { nome: string; largura: number; altura: number };
-type Andar = { nome: string; comodos: Comodo[] };
-
+/** Cria um cômodo da planta com nome e dimensões em módulos. */
 const comodo = (nome: string, largura: number, altura: number): Comodo => ({ nome, largura, altura });
 
+/** Gera a planta de exemplo do imóvel conforme o tipo, em andares e cômodos. */
 export function floorplanFor(tipo: PropertyType): Andar[] {
   if (tipo === 'sobrado') {
     return [

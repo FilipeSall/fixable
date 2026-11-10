@@ -1,9 +1,10 @@
-import type { Role } from '@fixable/shared';
 import { Navigate, Outlet, useLocation } from 'react-router';
+import type { RequireAuthProps } from '../../types/auth-screens.types.ts';
 import { useAuth } from './AuthProvider.tsx';
 import { homeFor } from './paths.ts';
 
-export function RequireAuth({ roles }: Readonly<{ roles?: Role[] }>) {
+/** Rota protegida: exige login e, quando informado, um dos papéis permitidos. */
+export function RequireAuth({ roles }: Readonly<RequireAuthProps>) {
   const { me, isLoading } = useAuth();
   const location = useLocation();
   if (isLoading) return <p role="status">Carregando...</p>;

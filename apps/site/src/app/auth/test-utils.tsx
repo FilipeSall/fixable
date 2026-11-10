@@ -16,15 +16,18 @@ export const ana: Me = {
 
 export const mockedFetch = vi.mocked(apiFetch);
 
+/** Cria o erro 401 usado nos testes para simular a ausência de sessão. */
 export function unauthenticated() {
   return new ApiRequestError(401, 'unauthorized', 'Faça login para continuar.');
 }
 
+/** Exibe o caminho atual do roteador para os testes verificarem a navegação. */
 export function LocationProbe() {
   const location = useLocation();
   return <output data-testid="location">{location.pathname + location.search}</output>;
 }
 
+/** Renderiza a interface com React Query, roteador em memória e autenticação para os testes. */
 export function renderApp(ui: ReactNode, route = '/') {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(

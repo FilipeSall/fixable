@@ -1,7 +1,8 @@
 import { and, asc, count, eq } from 'drizzle-orm';
-import type { Db, Tx } from '../db/client.ts';
+import type { Db, Tx } from '../types/db.types.ts';
 import { clients, users } from '../models/index.ts';
 
+/** Escolhe o engenheiro ativo com menos clientes para receber um novo atendimento. */
 export async function pickEngineer(db: Db | Tx): Promise<{ id: string; nome: string } | null> {
   const [engineer] = await db
     .select({ id: users.id, nome: users.nome })

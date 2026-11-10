@@ -33,7 +33,6 @@ export const diagnosticInput = z.object({
   aceiteTermos: termosSchema,
   website: honeypotSchema,
 });
-export type DiagnosticInput = z.infer<typeof diagnosticInput>;
 
 export const applicationInput = z.object({
   nome: nomeSchema,
@@ -44,4 +43,3 @@ export const applicationInput = z.object({
   aceiteTermos: termosSchema,
   website: honeypotSchema,
 });
-export type ApplicationInput = z.infer<typeof applicationInput>;

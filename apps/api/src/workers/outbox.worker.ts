@@ -1,8 +1,9 @@
-import type { Db } from '../db/client.ts';
+import type { Db } from '../types/db.types.ts';
 import { processOutbox } from '../services/outbox.service.ts';
 import type { Mailer } from '../types/mail.types.ts';
 import { serializeError } from '../utils/log-redaction.ts';
 
+/** Inicia o processamento periódico da outbox e devolve a função que o interrompe aguardando o lote em andamento. */
 export function startOutboxWorker(db: Db, mailer: Mailer, intervalMs = 5000): () => Promise<void> {
   let inFlight: Promise<void> | null = null;
   const timer = setInterval(() => {

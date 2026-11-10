@@ -1,17 +1,16 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import type { forgotPasswordInput, loginInput, Me, setPasswordInput, tokenLookupInput } from '@fixable/shared';
-import type { z } from 'zod';
-import type { Config } from '../config/env.ts';
-import type { Db } from '../db/client.ts';
+import type { Me } from '@fixable/shared';
 import * as authService from '../services/auth.service.ts';
+import type {
+  AuthDeps,
+  ForgotPasswordRequest,
+  LoginRequest,
+  SetPasswordRequest,
+  TokenLookupRequest,
+} from '../types/auth.types.ts';
 import { clearSessionCookie, SESSION_COOKIE, setSessionCookie } from '../utils/session-cookie.ts';
 
-type AuthDeps = { db: Db; config: Pick<Config, 'COOKIE_SECURE' | 'APP_ORIGIN'> };
-type LoginRequest = FastifyRequest<{ Body: z.infer<typeof loginInput> }>;
-type SetPasswordRequest = FastifyRequest<{ Body: z.infer<typeof setPasswordInput> }>;
-type ForgotPasswordRequest = FastifyRequest<{ Body: z.infer<typeof forgotPasswordInput> }>;
-type TokenLookupRequest = FastifyRequest<{ Body: z.infer<typeof tokenLookupInput> }>;
-
+/** Cria o controller de autenticação com os handlers de login, logout, convite, redefinição e usuário atual. */
 export function createAuthController({ db, config }: AuthDeps) {
   return {
     login: async (request: LoginRequest, reply: FastifyReply): Promise<Me> => {

@@ -1,6 +1,7 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 
+/** Abre a conexão com o Postgres e devolve o cliente Drizzle e a função de fechamento. */
 export function createDb(url: string) {
   const client = postgres(url, { max: 10 });
   const db = drizzle(client);
@@ -9,6 +10,3 @@ export function createDb(url: string) {
     close: () => client.end(),
   };
 }
-
-export type Db = ReturnType<typeof createDb>['db'];
-export type Tx = Parameters<Parameters<Db['transaction']>[0]>[0];

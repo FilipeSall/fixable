@@ -1,7 +1,8 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import type { Db } from '../db/client.ts';
+import type { Db } from '../types/db.types.ts';
 import { isDatabaseUp } from '../services/health.service.ts';
 
+/** Cria o controller do health check, que informa se o banco responde. */
 export function createHealthController({ db }: { db: Db }) {
   return {
     check: async (_request: FastifyRequest, reply: FastifyReply) => {

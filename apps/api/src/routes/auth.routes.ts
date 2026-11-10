@@ -8,9 +8,9 @@ import {
   tokenInfoResponse,
   tokenLookupInput,
 } from '@fixable/shared';
-import type { Config } from '../config/env.ts';
+import type { Config } from '../types/config.types.ts';
 import { createAuthController } from '../controllers/auth.controller.ts';
-import type { Db } from '../db/client.ts';
+import type { Db } from '../types/db.types.ts';
 
 const LOGIN_WINDOW = '15 minutes';
 const LOGIN_MAX_ATTEMPTS = 10;
@@ -23,6 +23,7 @@ const tokenRateLimit = {
   rateLimit: { max: TOKEN_MAX_REQUESTS, timeWindow: TOKEN_WINDOW, keyGenerator: (request: { ip: string }) => request.ip },
 };
 
+/** Declara as rotas de autenticação com schema, rate limit e o controller correspondente. */
 export function authRoutes(deps: { db: Db; config: Pick<Config, 'COOKIE_SECURE' | 'APP_ORIGIN'> }) {
   return (instance: FastifyInstance, _options: object, done: () => void): void => {
     const app = instance.withTypeProvider<ZodTypeProvider>();

@@ -5,6 +5,7 @@ const CONNECTION_TIMEOUT_MS = 10_000;
 const GREETING_TIMEOUT_MS = 10_000;
 const SOCKET_TIMEOUT_MS = 20_000;
 
+/** Cria o mailer SMTP com timeouts de conexão, saudação e socket. */
 export function createSmtpMailer(connectionUrl: string, from: string): Mailer {
   const transport = createTransport({
     url: connectionUrl,

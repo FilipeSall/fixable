@@ -1,12 +1,7 @@
-import type { Me } from '@fixable/shared';
+import type { RoleHomeProps } from '../../types/home.types.ts';
 
-interface Props {
-  me: Me;
-  logoutError?: string;
-  onLogout: () => void;
-}
-
-export function RoleHome({ me, logoutError, onLogout }: Readonly<Props>) {
+/** Mostra a saudação ao usuário e o botão de sair. */
+export function RoleHome({ me, logoutError, onLogout }: Readonly<RoleHomeProps>) {
   const firstName = me.nome.split(' ')[0];
   return (
     <main className="app-home">

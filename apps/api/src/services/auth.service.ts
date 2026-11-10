@@ -1,27 +1,28 @@
 import { eq } from 'drizzle-orm';
-import type { Me } from '@fixable/shared';
-import type { Config } from '../config/env.ts';
-import type { Db, Tx } from '../db/client.ts';
+import type { Config } from '../types/config.types.ts';
+import type { Db, Tx } from '../types/db.types.ts';
 import { users } from '../models/index.ts';
-import type { UserRow, VerifiedLogin } from '../types/auth.types.ts';
+import type { SessionGrant, UserRow, VerifiedLogin } from '../types/auth.types.ts';
+import type { EmailTokenPurpose } from '../types/email-token.types.ts';
 import { AppError } from '../utils/app-error.ts';
 import { hashPassword, verifyPassword } from '../utils/password.ts';
-import { consumeEmailToken, peekEmailToken, type EmailTokenPurpose } from './email-token.service.ts';
+import { consumeEmailToken, peekEmailToken } from './email-token.service.ts';
 import { sendInvite, sendPasswordReset } from './invite.service.ts';
 import { createSession, revokeSession, revokeUserSessions } from './session.service.ts';
 
 const DUMMY_PASSWORD_HASH = await hashPassword('senha-inexistente-0');
 
-type SessionGrant = { user: Me; session: { token: string; expiresAt: Date } };
-
+/** Cria o erro 410 de link expirado ou já usado. */
 function tokenInvalid(): AppError {
   return new AppError(410, 'token_invalid', 'Este link expirou ou já foi usado.');
 }
 
+/** Cria o erro 401 de e-mail ou senha incorretos, sem revelar qual dos dois falhou. */
 function invalidCredentials(): AppError {
   return new AppError(401, 'invalid_credentials', 'E-mail ou senha incorretos.');
 }
 
+/** Cria o erro 403 de conta bloqueada. */
 function accountBlocked(): AppError {
   return new AppError(403, 'account_blocked', 'Sua conta está bloqueada. Fale com a Fixable.');
 }
@@ -86,10 +87,12 @@ export async function login(
   return issueLoginSession(db, verified, input.previousToken);
 }
 
+/** Encerra a sessão do token informado, se houver um. */
 export async function logout(db: Db, token: string | undefined): Promise<void> {
   if (token) await revokeSession(db, token);
 }
 
+/** Devolve a finalidade, o nome e o e-mail do dono de um link aberto, ou falha se o link não vale mais. */
 export async function getTokenInfo(
   db: Db,
   token: string,
@@ -99,6 +102,7 @@ export async function getTokenInfo(
   return { purpose: info.purpose, nome: info.nome, email: info.email };
 }
 
+/** Aceita o convite: grava a senha, ativa a conta e abre a sessão. */
 export async function acceptInvite(db: Db, input: { token: string; senha: string }): Promise<SessionGrant> {
   const { token, senha } = input;
   const userId = await requireLiveTokenOwner(db, token, 'convite');
@@ -118,12 +122,14 @@ export async function acceptInvite(db: Db, input: { token: string; senha: string
   return { user: { id, nome, email, role }, session: outcome.session };
 }
 
+/** Envia o link de redefinição ou de convite conforme a situação da conta, sem revelar se o e-mail existe. */
 export async function forgotPassword(db: Db, config: Pick<Config, 'APP_ORIGIN'>, email: string): Promise<void> {
   const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
   if (user?.status === 'ativo') await sendPasswordReset(db, config, user.id);
   if (user?.status === 'convidado') await sendInvite(db, config, user.id);
 }
 
+/** Redefine a senha com o link, consome o token e revoga as sessões do usuário. */
 export async function resetPassword(db: Db, input: { token: string; senha: string }): Promise<void> {
   const { token, senha } = input;
   const userId = await requireLiveTokenOwner(db, token, 'redefinicao');

@@ -45,7 +45,6 @@ export const meResponse = z.object({
   email: z.string(),
   role: z.enum(ROLES),
 });
-export type Me = z.infer<typeof meResponse>;
 
 export const tokenInfoResponse = z.object({
   purpose: z.enum(['convite', 'redefinicao']),

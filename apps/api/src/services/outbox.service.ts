@@ -1,7 +1,8 @@
 import { and, eq, gt, inArray, isNull, lte, sql } from 'drizzle-orm';
-import type { Db, Tx } from '../db/client.ts';
+import type { Db, Tx } from '../types/db.types.ts';
 import { emailOutbox, emailTokens } from '../models/index.ts';
 import type { Mailer, TemplateData, TemplateName } from '../types/mail.types.ts';
+import type { DeliveryOutcome, OutboxRow } from '../types/outbox.types.ts';
 import { renderTemplate } from '../views/emails/render.ts';
 
 const BATCH_SIZE = 20;
@@ -10,9 +11,7 @@ const MINUTE_MS = 60_000;
 const CLAIM_LEASE_MS = 5 * MINUTE_MS;
 const withoutLink = sql`${emailOutbox.data} - 'link'`;
 
-type OutboxRow = typeof emailOutbox.$inferSelect;
-type DeliveryOutcome = 'enviado' | 'falhou' | 'descartado';
-
+/** Grava uma mensagem na fila de e-mail para envio posterior pelo worker. */
 export async function enqueueEmail(
   db: Db | Tx,
   msg: { to: string; template: TemplateName; data: Record<string, string>; emailTokenId?: string },
@@ -25,6 +24,7 @@ export async function enqueueEmail(
   });
 }
 
+/** Reserva a próxima mensagem pendente da fila, sem disputar com outros workers, e soma uma tentativa. */
 async function claimNext(db: Db, now: Date): Promise<OutboxRow | null> {
   const next = db
     .select({ id: emailOutbox.id })
@@ -44,6 +44,7 @@ async function claimNext(db: Db, now: Date): Promise<OutboxRow | null> {
   return row ?? null;
 }
 
+/** Informa se o link de e-mail ainda está aberto, ou seja, não usado nem expirado. */
 async function isTokenOpen(db: Db, tokenId: string, now: Date): Promise<boolean> {
   const [token] = await db
     .select({ id: emailTokens.id })
@@ -53,6 +54,7 @@ async function isTokenOpen(db: Db, tokenId: string, now: Date): Promise<boolean>
   return token !== undefined;
 }
 
+/** Registra a falha de envio e agenda a próxima tentativa com espera crescente, ou marca como falha ao esgotar. */
 async function markFailed(db: Db, row: OutboxRow, error: unknown, now: Date): Promise<void> {
   const exhausted = row.attempts >= MAX_ATTEMPTS;
   await db

@@ -1,24 +1,14 @@
 import { API } from '@fixable/shared';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
-import type { ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { ApiRequestError, apiFetch } from '../api.ts';
+import type { TokenGateProps, TokenInfo, TokenLookupProps } from '../../types/auth-screens.types.ts';
 import { messageOf } from './form-errors.ts';
-
-interface TokenInfo {
-  purpose: 'convite' | 'redefinicao';
-  nome: string;
-  email: string;
-}
-
-interface Props {
-  purpose: TokenInfo['purpose'];
-  children: (token: string, info: TokenInfo) => ReactNode;
-}
 
 export const EXPIRED_MESSAGE = 'Este link expirou ou já foi usado.';
 
+/** Aviso de link expirado, com atalho para pedir outro. */
 function Expired() {
   return (
     <>
@@ -34,11 +24,13 @@ function Expired() {
 
 const HTTP_GONE = 410;
 
+/** Informa se o erro é um 410, de link expirado ou já usado. */
 function isGone(error: unknown): boolean {
   return error instanceof ApiRequestError && error.status === HTTP_GONE;
 }
 
-function TokenLookup({ token, purpose, children }: Readonly<Props & { token: string }>) {
+/** Consulta o token na API e mostra o conteúdo quando o link vale, ou o erro correspondente. */
+function TokenLookup({ token, purpose, children }: Readonly<TokenLookupProps>) {
   const query = useQuery({
     queryKey: ['token-info', token],
     queryFn: () => apiFetch<TokenInfo>(API.tokenLookup, { method: 'POST', body: { token } }),
@@ -85,7 +77,7 @@ function useTokenFromUrl(): string | null {
 }
 
 /** Valida o token do link de convite ou redefinição e só então mostra o formulário com ele. */
-export function TokenGate({ purpose, children }: Readonly<Props>) {
+export function TokenGate({ purpose, children }: Readonly<TokenGateProps>) {
   const token = useTokenFromUrl();
   if (!token) return <Expired />;
   return (

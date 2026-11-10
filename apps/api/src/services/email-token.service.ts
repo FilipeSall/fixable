@@ -1,10 +1,9 @@
 import { randomBytes } from 'node:crypto';
 import { and, eq, gt, isNull } from 'drizzle-orm';
-import type { Db, Tx } from '../db/client.ts';
+import type { Db, Tx } from '../types/db.types.ts';
 import { emailTokens, users } from '../models/index.ts';
+import type { EmailTokenPurpose } from '../types/email-token.types.ts';
 import { hashToken } from '../utils/token.ts';
-
-export type EmailTokenPurpose = 'convite' | 'redefinicao';
 
 const HOUR_MS = 60 * 60 * 1000;
 const TOKEN_TTL_MS: Record<EmailTokenPurpose, number> = {
@@ -12,6 +11,7 @@ const TOKEN_TTL_MS: Record<EmailTokenPurpose, number> = {
   redefinicao: HOUR_MS,
 };
 
+/** Emite um link novo para o usuário, invalidando os anteriores da mesma finalidade, e devolve o token em claro. */
 export async function issueEmailToken(
   db: Db | Tx,
   userId: string,
@@ -36,6 +36,7 @@ export async function issueEmailToken(
   return { id: row!.id, token };
 }
 
+/** Consulta um link sem consumi-lo e devolve o dono e a finalidade se ainda estiver aberto. */
 export async function peekEmailToken(
   db: Db | Tx,
   raw: string,

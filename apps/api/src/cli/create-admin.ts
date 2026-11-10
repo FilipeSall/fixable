@@ -4,6 +4,7 @@ import { loadConfig } from '../config/env.ts';
 import { createDb } from '../db/client.ts';
 import { createAdmin } from '../services/admin.service.ts';
 
+/** Lê e valida os argumentos de linha de comando (--nome e --email) do comando de criação de admin. */
 function parseInput(argv: string[]): { nome: string; email: string } {
   const { values } = parseArgs({
     args: argv,
@@ -16,6 +17,7 @@ function parseInput(argv: string[]): { nome: string; email: string } {
   return { nome, email: email.data };
 }
 
+/** Executa o comando de criação de admin e encerra com código de erro se algo falhar. */
 async function main(): Promise<void> {
   let close: (() => Promise<void>) | undefined;
   try {

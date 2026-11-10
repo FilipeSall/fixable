@@ -7,6 +7,7 @@ import { homeFor } from './paths.ts';
 import { SetPasswordForm } from './SetPasswordForm.tsx';
 import { TokenGate } from './TokenGate.tsx';
 
+/** Tela de convite: valida o link e deixa o usuário criar a senha e entrar. */
 export function InvitePage() {
   const { setMe } = useAuth();
   const navigate = useNavigate();
@@ -17,6 +18,7 @@ export function InvitePage() {
         <h1 className="app-h">Crie sua senha</h1>
         <TokenGate purpose="convite">
           {(token, info) => {
+            /** Cria a senha com o token do convite, guarda o usuário e vai para a página inicial do papel. */
             async function accept(senha: string) {
               const me = await apiFetch<Me>(API.acceptInvite, { method: 'POST', body: { token, senha } });
               await setMe(me);

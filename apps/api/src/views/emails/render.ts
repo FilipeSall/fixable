@@ -5,6 +5,7 @@ import { redefinicao } from './redefinicao.ts';
 
 const contents: Record<TemplateName, EmailContent> = { convite, redefinicao };
 
+/** Monta o assunto, o texto e o HTML do e-mail a partir do template e dos dados. */
 export function renderTemplate(name: TemplateName, data: TemplateData): Omit<Mail, 'to'> {
   const { subject, intro, action, outro } = contents[name];
   const text = [`Olá, ${data.nome}. ${intro}`, `${action} ${data.link}`, outro]

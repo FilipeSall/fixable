@@ -1,5 +1,6 @@
 import type { AstroIntegration } from 'astro';
 
+/** Decide se uma requisição GET a /app/ deve ser reescrita para a raiz do app de página única. */
 export function shouldRewrite(method: string | undefined, url: string | undefined): boolean {
   if (method !== 'GET' || !url) return false;
   const path = url.split('?')[0] ?? '';
@@ -8,6 +9,7 @@ export function shouldRewrite(method: string | undefined, url: string | undefine
   return !lastSegment.includes('.');
 }
 
+/** Integração do Astro que serve o app de página única em qualquer caminho de /app no servidor de desenvolvimento. */
 export function spaFallback(): AstroIntegration {
   return {
     name: 'spa-fallback',

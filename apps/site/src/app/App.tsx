@@ -15,6 +15,7 @@ const HTTP_CLIENT_ERROR_MIN = 400;
 const HTTP_SERVER_ERROR_MIN = 500;
 const MAX_RETRIES = 2;
 
+/** Decide se o React Query deve tentar de novo: nunca em erro 4xx e até o limite nos demais casos. */
 function shouldRetry(failureCount: number, error: unknown): boolean {
   if (
     error instanceof ApiRequestError &&
@@ -26,6 +27,7 @@ function shouldRetry(failureCount: number, error: unknown): boolean {
   return failureCount < MAX_RETRIES;
 }
 
+/** Cria o cliente do React Query com a política de repetição do app. */
 function createQueryClient(): QueryClient {
   return new QueryClient({ defaultOptions: { queries: { retry: shouldRetry } } });
 }
@@ -37,6 +39,7 @@ const HOME_ROUTES = [
   { path: '/admin', role: 'admin' },
 ] as const;
 
+/** Raiz do app: provê o React Query, o roteador e a autenticação e declara as rotas. */
 export function App() {
   const [queryClient] = useState(createQueryClient);
   return (

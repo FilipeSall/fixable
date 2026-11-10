@@ -1,13 +1,16 @@
 import { apiErrorSchema } from '@fixable/shared';
 import type { ErrorCode } from '@fixable/shared';
+import type { ApiInit } from '../types/api.types.ts';
 
 const GENERIC_MESSAGE = 'Algo deu errado. Tente de novo.';
 
+/** Erro de uma chamada à API, com status HTTP, código e erros por campo. */
 export class ApiRequestError extends Error {
   readonly status: number;
   readonly code: ErrorCode;
   readonly fields?: Record<string, string>;
 
+  /** Cria o erro com status, código, mensagem e erros por campo. */
   constructor(status: number, code: ErrorCode, message: string, fields?: Record<string, string>) {
     super(message);
     this.name = 'ApiRequestError';
@@ -17,11 +20,7 @@ export class ApiRequestError extends Error {
   }
 }
 
-export interface ApiInit {
-  method?: string;
-  body?: unknown;
-}
-
+/** Converte uma resposta de erro da API em ApiRequestError, com mensagem genérica se o corpo for inesperado. */
 async function toRequestError(response: Response): Promise<ApiRequestError> {
   const parsed = apiErrorSchema.safeParse(await response.json().catch(() => null));
   if (!parsed.success) {
@@ -31,6 +30,7 @@ async function toRequestError(response: Response): Promise<ApiRequestError> {
   return new ApiRequestError(response.status, code, message, fields);
 }
 
+/** Chama a API com cookies e corpo JSON e devolve o resultado, lançando ApiRequestError nas respostas de erro. */
 export async function apiFetch<T>(path: string, init: ApiInit = {}): Promise<T> {
   const hasBody = init.body !== undefined;
   const response = await fetch(path, {

@@ -1,7 +1,6 @@
-import type { Mail, Mailer } from '../types/mail.types.ts';
+import type { Mail, MemoryMailer } from '../types/mail.types.ts';
 
-export type MemoryMailer = Mailer & { sent: Mail[]; failNext(times: number): void };
-
+/** Cria um mailer em memória que guarda os e-mails enviados e permite simular falhas nos testes. */
 export function createMemoryMailer(): MemoryMailer {
   const sent: Mail[] = [];
   let failures = 0;

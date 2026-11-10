@@ -5,6 +5,7 @@ import postgres from 'postgres';
 
 const MIGRATIONS_FOLDER = fileURLToPath(new URL('../../drizzle', import.meta.url));
 
+/** Aplica as migrations pendentes no banco indicado e fecha a conexão ao terminar. */
 export async function runMigrations(url: string): Promise<void> {
   const client = postgres(url, { max: 1, onnotice: () => {} });
   try {

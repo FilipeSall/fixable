@@ -11,8 +11,7 @@ import {
   UNAUTHORIZED_MESSAGE,
   VALIDATION_MESSAGE,
 } from '../utils/app-error.ts';
-
-type FieldIssue = { path: string[]; message: string };
+import type { FieldIssue } from '../types/error.types.ts';
 
 const CLIENT_ERROR_CODES: Partial<Record<number, ErrorCode>> = {
   400: 'validation',
@@ -31,6 +30,7 @@ const CLIENT_ERROR_MESSAGES: Partial<Record<ErrorCode, string>> = {
   rate_limited: RATE_LIMITED_MESSAGE,
 };
 
+/** Monta o corpo de erro de validação com a primeira mensagem de cada campo. */
 function validationBody(issues: readonly FieldIssue[]): ApiError {
   const fields: Record<string, string> = {};
   for (const issue of issues) {
@@ -40,18 +40,21 @@ function validationBody(issues: readonly FieldIssue[]): ApiError {
   return { error: { code: 'validation', message: VALIDATION_MESSAGE, fields } };
 }
 
+/** Monta o corpo de erro para um status 4xx do Fastify, usando mensagens padrão em pt-BR. */
 function clientErrorBody(statusCode: number): ApiError {
   const code = CLIENT_ERROR_CODES[statusCode] ?? 'validation';
   const message = CLIENT_ERROR_MESSAGES[code] ?? VALIDATION_MESSAGE;
   return { error: { code: ERROR_CODES.includes(code) ? code : 'validation', message } };
 }
 
+/** Devolve o status 4xx de um erro do Fastify ou undefined quando o erro não é do cliente. */
 function clientStatusOf(error: unknown): number | undefined {
   if (typeof error !== 'object' || error === null || !('statusCode' in error)) return undefined;
   const status = error.statusCode;
   return typeof status === 'number' && status >= 400 && status < 500 ? status : undefined;
 }
 
+/** Registra o handler de 404 e o de erros, que padroniza todas as respostas de falha no formato da API. */
 export function registerErrorHandler(app: FastifyInstance): void {
   app.setNotFoundHandler(() => {
     throw new AppError(404, 'not_found', NOT_FOUND_MESSAGE);

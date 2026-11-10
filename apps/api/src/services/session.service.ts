@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import { and, eq, gt, lt } from 'drizzle-orm';
-import type { Db, Tx } from '../db/client.ts';
+import type { Db, Tx } from '../types/db.types.ts';
 import { sessions, users } from '../models/index.ts';
 import type { SessionLookup, SessionUser } from '../types/auth.types.ts';
 import { hashToken } from '../utils/token.ts';
@@ -9,6 +9,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const SESSION_TTL_MS = 30 * DAY_MS;
 const RENEW_BELOW_MS = 15 * DAY_MS;
 
+/** Cria uma sessão para o usuário e devolve o token em claro e a data de expiração. */
 export async function createSession(
   db: Db | Tx,
   userId: string,
@@ -20,6 +21,7 @@ export async function createSession(
   return { token, expiresAt };
 }
 
+/** Busca o usuário ativo da sessão pelo token e renova a validade quando ela está perto do fim. */
 export async function findSessionUser(
   db: Db,
   token: string,
@@ -52,10 +54,12 @@ export async function findSessionUser(
   return { user, renewedExpiresAt };
 }
 
+/** Apaga a sessão do token informado. */
 export async function revokeSession(db: Db | Tx, token: string): Promise<void> {
   await db.delete(sessions).where(eq(sessions.tokenHash, hashToken(token)));
 }
 
+/** Apaga todas as sessões do usuário. */
 export async function revokeUserSessions(db: Db | Tx, userId: string): Promise<void> {
   await db.delete(sessions).where(eq(sessions.userId, userId));
 }

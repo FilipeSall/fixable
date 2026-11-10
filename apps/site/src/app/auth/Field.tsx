@@ -1,18 +1,10 @@
 import type { ChangeEvent } from 'react';
+import type { FieldProps } from '../../types/auth-screens.types.ts';
 
-interface Props {
-  id: string;
-  label: string;
-  type: 'email' | 'password';
-  autoComplete: string;
-  value: string;
-  onChange: (value: string) => void;
-  error?: string;
-  placeholder?: string;
-}
-
-export function Field({ id, label, type, autoComplete, value, onChange, error, placeholder }: Readonly<Props>) {
+/** Campo de formulário com rótulo, mensagem de erro e atributos de acessibilidade. */
+export function Field({ id, label, type, autoComplete, value, onChange, error, placeholder }: Readonly<FieldProps>) {
   const errorId = `${id}-err`;
+  /** Repassa o texto digitado ao componente pai. */
   function handleChange(event: ChangeEvent<HTMLInputElement>) {
     onChange(event.target.value);
   }

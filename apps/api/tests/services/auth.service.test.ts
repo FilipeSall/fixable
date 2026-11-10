@@ -8,7 +8,7 @@ import {
   resetPassword,
   verifyLoginCredentials,
 } from '../../src/services/auth.service.ts';
-import type { EmailTokenPurpose } from '../../src/services/email-token.service.ts';
+import type { EmailTokenPurpose } from '../../src/types/email-token.types.ts';
 import { sendInvite, sendPasswordReset } from '../../src/services/invite.service.ts';
 import { revokeUserSessions } from '../../src/services/session.service.ts';
 import { hashPassword } from '../../src/utils/password.ts';
