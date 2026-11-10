@@ -4,7 +4,8 @@ import type { SubmitEvent } from 'react';
 import { Link } from 'react-router';
 import { apiFetch } from '../api.ts';
 import { Field } from './Field.tsx';
-import { fieldErrorsOf, messageOf } from './form-errors.ts';
+import { fieldErrorsOf } from '../../lib/form-errors.ts';
+import { messageOf } from './form-errors.ts';
 
 const CONFIRMATION = 'Se este e-mail estiver cadastrado, você receberá um link para redefinir a senha.';
 

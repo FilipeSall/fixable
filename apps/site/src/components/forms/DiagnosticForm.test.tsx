@@ -24,6 +24,11 @@ beforeEach(() => window.history.pushState({}, '', '/'));
 afterEach(() => vi.unstubAllGlobals());
 
 describe('DiagnosticForm', () => {
+  it('o formulário usa method="post" para não levar os dados à URL se enviado antes da hidratação', () => {
+    const { container } = render(<DiagnosticForm />);
+    expect(container.querySelector('form')).toHaveAttribute('method', 'post');
+  });
+
   it('enviar vazio mostra os erros por campo e não chama fetch', async () => {
     const fn = mockFetch(new Response(null, { status: 204 }));
     const user = userEvent.setup();
@@ -48,6 +53,7 @@ describe('DiagnosticForm', () => {
     await fillValid(user);
     await user.click(screen.getByRole('button', { name: 'Solicitar diagnóstico' }));
     expect(await screen.findByText('Solicitação registrada.')).toBeInTheDocument();
+    expect(document.querySelector('.form-success .ic svg')).toHaveAttribute('aria-hidden', 'true');
     const [url, init] = fn.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toBe('/api/public/diagnostics');
     expect(JSON.parse(init.body as string)).toMatchObject({

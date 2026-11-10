@@ -45,7 +45,7 @@ export function ApplicationForm() {
   }
 
   return (
-    <form id="team-form" noValidate onSubmit={form.submit}>
+    <form id="team-form" method="post" noValidate onSubmit={form.submit}>
       <div className="form-grid">
         <FormField id="t-nome" name="nome" label="Nome completo" placeholder="Seu nome" autoComplete="name" value={values.nome as string} error={errors.nome} onChange={handleChange} />
         <FormField id="t-email" name="email" label="E-mail" type="email" placeholder="voce@email.com" autoComplete="email" value={values.email as string} error={errors.email} onChange={handleChange} />

@@ -6,6 +6,11 @@ import { ApplicationForm } from './ApplicationForm.tsx';
 afterEach(() => vi.unstubAllGlobals());
 
 describe('ApplicationForm', () => {
+  it('o formulário usa method="post" para não levar os dados à URL se enviado antes da hidratação', () => {
+    const { container } = render(<ApplicationForm />);
+    expect(container.querySelector('form')).toHaveAttribute('method', 'post');
+  });
+
   it('enviar vazio mostra os erros e não chama fetch', async () => {
     const fn = vi.fn();
     vi.stubGlobal('fetch', fn);
@@ -30,6 +35,7 @@ describe('ApplicationForm', () => {
     await user.click(screen.getByRole('checkbox'));
     await user.click(screen.getByRole('button', { name: 'Fazer meu cadastro' }));
     expect(await screen.findByText('Cadastro recebido.')).toBeInTheDocument();
+    expect(document.querySelector('.form-success .ic svg')).toHaveAttribute('aria-hidden', 'true');
     expect(screen.getByText('A equipe Fixable vai analisar sua candidatura e entrar em contato pelo e-mail informado.')).toBeInTheDocument();
     const [url, init] = fn.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toBe('/api/public/applications');

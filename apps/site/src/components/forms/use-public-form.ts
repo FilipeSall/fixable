@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { fieldErrorsOf } from '../../app/auth/form-errors.ts';
+import { fieldErrorsOf } from '../../lib/form-errors.ts';
 import type { FormValues, PublicFormConfig, PublicFormState } from '../../types/public-forms.types.ts';
 import { submitPublicForm } from './public-submit.ts';
 

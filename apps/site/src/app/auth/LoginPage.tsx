@@ -5,7 +5,8 @@ import { Link, Navigate, useLocation, useSearchParams } from 'react-router';
 import type { LocationState } from '../../types/auth-screens.types.ts';
 import { useAuth } from './AuthProvider.tsx';
 import { Field } from './Field.tsx';
-import { fieldErrorsOf, messageOf, serverFieldErrors } from './form-errors.ts';
+import { fieldErrorsOf } from '../../lib/form-errors.ts';
+import { messageOf, serverFieldErrors } from './form-errors.ts';
 import { destinationAfterLogin } from './paths.ts';
 
 /** Tela de login com validação do formulário e redirecionamento de quem já está autenticado. */

@@ -84,7 +84,7 @@ export function DiagnosticForm({ cidadeInicial = '' }: Readonly<DiagnosticFormPr
   }
 
   return (
-    <form id="diagnostic-form" noValidate onSubmit={form.submit}>
+    <form id="diagnostic-form" method="post" noValidate onSubmit={form.submit}>
       {plano ? (
         <div className="plan-chip show">
           <span>
