@@ -1,5 +1,6 @@
 import { API } from '@fixable/shared';
 import { useQuery } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { ApiRequestError, apiFetch } from '../api.ts';
@@ -68,9 +69,24 @@ function TokenLookup({ token, purpose, children }: Readonly<Props & { token: str
   return <>{children(token, query.data)}</>;
 }
 
+const TOKEN_PARAM = 'token';
+
+/** Lê o token do link uma única vez e o tira da URL, para não vazar no Referer nem ficar no histórico. */
+function useTokenFromUrl(): string | null {
+  const [params, setParams] = useSearchParams();
+  const [token] = useState(() => params.get(TOKEN_PARAM));
+  useEffect(() => {
+    if (!params.has(TOKEN_PARAM)) return;
+    const next = new URLSearchParams(params);
+    next.delete(TOKEN_PARAM);
+    setParams(next, { replace: true });
+  }, [params, setParams]);
+  return token;
+}
+
+/** Valida o token do link de convite ou redefinição e só então mostra o formulário com ele. */
 export function TokenGate({ purpose, children }: Readonly<Props>) {
-  const [params] = useSearchParams();
-  const token = params.get('token');
+  const token = useTokenFromUrl();
   if (!token) return <Expired />;
   return (
     <TokenLookup token={token} purpose={purpose}>

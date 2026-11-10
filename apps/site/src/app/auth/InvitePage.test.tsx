@@ -1,11 +1,12 @@
 import { API } from '@fixable/shared';
-import { focusManager } from '@tanstack/react-query';
-import { act, screen, waitFor } from '@testing-library/react';
+import { focusManager, QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Route, Routes } from 'react-router';
+import { BrowserRouter, Route, Routes } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiRequestError, type ApiInit } from '../api.ts';
 import { InvitePage } from './InvitePage.tsx';
+import { AuthProvider } from './AuthProvider.tsx';
 import { ResetPasswordPage } from './ResetPasswordPage.tsx';
 import { ana, mockedFetch, renderApp, unauthenticated } from './test-utils.tsx';
 
@@ -163,6 +164,7 @@ describe('TokenGate', () => {
   });
   afterEach(() => {
     focusManager.setFocused();
+    window.history.replaceState(null, '', '/');
   });
 
   it('voltar o foco para a janela não consulta o token de novo', async () => {
@@ -177,5 +179,33 @@ describe('TokenGate', () => {
     });
 
     expect(lookupCalls()).toHaveLength(1);
+  });
+
+  it('tira o token da URL da página e ainda envia o formulário com ele', async () => {
+    window.history.replaceState(null, '', '/app/convite?token=abc&origem=email');
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter basename="/app">
+          <AuthProvider>
+            <Routes>
+              <Route path="/convite" element={<InvitePage />} />
+              <Route path="*" element={<p>destino</p>} />
+            </Routes>
+          </AuthProvider>
+        </BrowserRouter>
+      </QueryClientProvider>,
+    );
+
+    expect(await screen.findByText(/Olá, Ana\./)).toBeInTheDocument();
+    await waitFor(() => expect(window.location.search).toBe('?origem=email'));
+    expect(window.location.pathname).toBe('/app/convite');
+
+    await fillPasswords('segredo123', 'segredo123');
+    await waitFor(() => expect(window.location.pathname).toBe('/app/cliente'));
+    expect(mockedFetch).toHaveBeenCalledWith(API.acceptInvite, {
+      method: 'POST',
+      body: { token: 'abc', senha: 'segredo123' },
+    });
   });
 });
