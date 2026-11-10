@@ -1,9 +1,9 @@
 import { eq } from 'drizzle-orm';
 import type { Me } from '@fixable/shared';
 import type { Config } from '../config/env.ts';
-import type { Db } from '../db/client.ts';
+import type { Db, Tx } from '../db/client.ts';
 import { users } from '../models/index.ts';
-import type { VerifiedLogin } from '../types/auth.types.ts';
+import type { UserRow, VerifiedLogin } from '../types/auth.types.ts';
 import { AppError } from '../utils/app-error.ts';
 import { hashPassword, verifyPassword } from '../utils/password.ts';
 import { consumeEmailToken, peekEmailToken, type EmailTokenPurpose } from './email-token.service.ts';
@@ -26,9 +26,22 @@ function accountBlocked(): AppError {
   return new AppError(403, 'account_blocked', 'Sua conta está bloqueada. Fale com a Fixable.');
 }
 
-async function requireLivePurpose(db: Db, token: string, purpose: EmailTokenPurpose): Promise<void> {
+/** Confere que o link está aberto e é do propósito esperado e devolve o dono, antes de calcular o argon2. */
+async function requireLiveTokenOwner(db: Db, token: string, purpose: EmailTokenPurpose): Promise<string> {
   const info = await peekEmailToken(db, token);
   if (info?.purpose !== purpose) throw tokenInvalid();
+  return info.userId;
+}
+
+/** Trava o usuário antes de consumir o token, na mesma ordem da emissão de links, para não haver deadlock. */
+async function lockUserAndConsume(
+  tx: Tx,
+  input: { userId: string; token: string; purpose: EmailTokenPurpose },
+): Promise<UserRow | null> {
+  const [user] = await tx.select().from(users).where(eq(users.id, input.userId)).for('update');
+  if (!user) return null;
+  const consumed = await consumeEmailToken(tx, input.token, input.purpose, user.id);
+  return consumed ? user : null;
 }
 
 /** Confere e-mail, senha e situação da conta, para só então emitir a sessão. */
@@ -88,12 +101,10 @@ export async function getTokenInfo(
 
 export async function acceptInvite(db: Db, input: { token: string; senha: string }): Promise<SessionGrant> {
   const { token, senha } = input;
-  await requireLivePurpose(db, token, 'convite');
+  const userId = await requireLiveTokenOwner(db, token, 'convite');
   const passwordHash = await hashPassword(senha);
   const outcome = await db.transaction(async (tx) => {
-    const consumed = await consumeEmailToken(tx, token, 'convite');
-    if (!consumed) return null;
-    const [user] = await tx.select().from(users).where(eq(users.id, consumed.userId)).for('update');
+    const user = await lockUserAndConsume(tx, { userId, token, purpose: 'convite' });
     if (!user) return null;
     if (user.status === 'bloqueado') return { blocked: true as const };
     await tx.update(users).set({ passwordHash, status: 'ativo', updatedAt: new Date() }).where(eq(users.id, user.id));
@@ -115,13 +126,13 @@ export async function forgotPassword(db: Db, config: Pick<Config, 'APP_ORIGIN'>,
 
 export async function resetPassword(db: Db, input: { token: string; senha: string }): Promise<void> {
   const { token, senha } = input;
-  await requireLivePurpose(db, token, 'redefinicao');
+  const userId = await requireLiveTokenOwner(db, token, 'redefinicao');
   const passwordHash = await hashPassword(senha);
   const done = await db.transaction(async (tx) => {
-    const consumed = await consumeEmailToken(tx, token, 'redefinicao');
-    if (!consumed) return false;
-    await tx.update(users).set({ passwordHash, updatedAt: new Date() }).where(eq(users.id, consumed.userId));
-    await revokeUserSessions(tx, consumed.userId);
+    const user = await lockUserAndConsume(tx, { userId, token, purpose: 'redefinicao' });
+    if (!user) return false;
+    await tx.update(users).set({ passwordHash, updatedAt: new Date() }).where(eq(users.id, user.id));
+    await revokeUserSessions(tx, user.id);
     return true;
   });
   if (!done) throw tokenInvalid();

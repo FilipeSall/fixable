@@ -1,8 +1,16 @@
-import { eq } from 'drizzle-orm';
+import { setTimeout as sleep } from 'node:timers/promises';
+import { and, eq, isNull, sql } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { emailOutbox, sessions, users } from '../../src/models/index.ts';
-import { issueLoginSession, resetPassword, verifyLoginCredentials } from '../../src/services/auth.service.ts';
-import { sendPasswordReset } from '../../src/services/invite.service.ts';
+import { emailOutbox, emailTokens, sessions, users } from '../../src/models/index.ts';
+import {
+  acceptInvite,
+  issueLoginSession,
+  resetPassword,
+  verifyLoginCredentials,
+} from '../../src/services/auth.service.ts';
+import type { EmailTokenPurpose } from '../../src/services/email-token.service.ts';
+import { sendInvite, sendPasswordReset } from '../../src/services/invite.service.ts';
+import { hashToken } from '../../src/utils/token.ts';
 import { createUser, resetDb, testApp, type TestApp } from '../helpers.ts';
 
 const SENHA_ANTIGA = 'antiga1234';
@@ -49,6 +57,55 @@ describe('login concorrente com redefinição de senha', () => {
       statusCode: 403,
       code: 'account_blocked',
     });
+    expect(await t.db.select().from(sessions).where(eq(sessions.userId, user.id))).toHaveLength(0);
+  });
+});
+
+async function waitForLockWait(): Promise<void> {
+  for (let attempt = 0; attempt < 300; attempt += 1) {
+    const [row] = await t.db.execute<{ waiting: number }>(
+      sql`SELECT count(*)::int AS waiting FROM pg_stat_activity WHERE datname = current_database() AND wait_event_type = 'Lock'`,
+    );
+    if (row!.waiting > 0) return;
+    await sleep(10);
+  }
+  throw new Error('nenhuma transação ficou esperando lock');
+}
+
+async function lastToken(template: EmailTokenPurpose): Promise<string> {
+  const rows = await t.db.select().from(emailOutbox).where(eq(emailOutbox.template, template));
+  return new URL((rows.at(-1)!.data as { link: string }).link).searchParams.get('token')!;
+}
+
+describe('consumo de token concorrente com reemissão para a mesma conta', () => {
+  it.each([
+    { purpose: 'redefinicao' as const, status: 'ativo' as const, send: sendPasswordReset, consume: resetPassword },
+    { purpose: 'convite' as const, status: 'convidado' as const, send: sendInvite, consume: acceptInvite },
+  ])('$purpose: reemissão com o usuário travado não entra em deadlock e invalida o link antigo', async (scenario) => {
+    const user = await createUser(t.db, { role: 'cliente', status: scenario.status, senha: SENHA_ANTIGA });
+    await scenario.send(t.db, t.config, user.id);
+    const oldToken = await lastToken(scenario.purpose);
+
+    let consuming: Promise<unknown> | undefined;
+    const reissue = t.db.transaction(async (tx) => {
+      await tx.select({ id: users.id }).from(users).where(eq(users.id, user.id)).for('update');
+      consuming = scenario.consume(t.db, { token: oldToken, senha: SENHA_NOVA });
+      consuming.catch(() => undefined);
+      await waitForLockWait();
+      await scenario.send(tx, t.config, user.id);
+    });
+
+    const [reissued, consumed] = await Promise.allSettled([reissue, reissue.then(() => consuming)]);
+    expect(reissued).toEqual({ status: 'fulfilled', value: undefined });
+    expect(consumed.status).toBe('rejected');
+    expect((consumed as PromiseRejectedResult).reason).toMatchObject({ statusCode: 410, code: 'token_invalid' });
+
+    const open = await t.db
+      .select()
+      .from(emailTokens)
+      .where(and(eq(emailTokens.userId, user.id), eq(emailTokens.purpose, scenario.purpose), isNull(emailTokens.usedAt)));
+    expect(open).toHaveLength(1);
+    expect(open[0]!.tokenHash).toBe(hashToken(await lastToken(scenario.purpose)));
     expect(await t.db.select().from(sessions).where(eq(sessions.userId, user.id))).toHaveLength(0);
   });
 });

@@ -14,4 +14,6 @@ export type SessionLookup = { user: SessionUser; renewedExpiresAt: Date | null }
 
 export type PreHandler = (request: FastifyRequest, reply: FastifyReply, done: (error?: Error) => void) => void;
 
-export type VerifiedLogin = { user: typeof users.$inferSelect; passwordHash: string };
+export type UserRow = typeof users.$inferSelect;
+
+export type VerifiedLogin = { user: UserRow; passwordHash: string };

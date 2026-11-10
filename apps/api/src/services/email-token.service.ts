@@ -50,10 +50,12 @@ export async function peekEmailToken(
   return row ?? null;
 }
 
+/** Marca como usado o link aberto do usuário e propósito informados, de forma atômica, para que valha uma vez só. */
 export async function consumeEmailToken(
   db: Db | Tx,
   raw: string,
   purpose: EmailTokenPurpose,
+  userId: string,
   now: Date = new Date(),
 ): Promise<{ userId: string } | null> {
   const [row] = await db
@@ -63,6 +65,7 @@ export async function consumeEmailToken(
       and(
         eq(emailTokens.tokenHash, hashToken(raw)),
         eq(emailTokens.purpose, purpose),
+        eq(emailTokens.userId, userId),
         isNull(emailTokens.usedAt),
         gt(emailTokens.expiresAt, now),
       ),
