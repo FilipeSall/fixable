@@ -1,9 +1,11 @@
+import { setTimeout as sleep } from 'node:timers/promises';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { createDb } from '../../db/client.ts';
 import { emailOutbox } from '../../db/schema/index.ts';
 import { resetDb } from '../../../test/helpers.ts';
+import type { Mailer } from './mailer.ts';
 import { createMemoryMailer } from './memory-mailer.ts';
-import { enqueueEmail, processOutbox } from './outbox.ts';
+import { enqueueEmail, processOutbox, startOutboxWorker } from './outbox.ts';
 
 const { db, close } = createDb(
   process.env['DATABASE_URL_TEST'] ?? 'postgres://fixable:fixable@localhost:5432/fixable_test',
@@ -14,6 +16,14 @@ const message = {
   template: 'convite' as const,
   data: { nome: 'Ana', link: 'https://x/app/convite?token=abc' },
 };
+
+function deferred(): { promise: Promise<void>; resolve: () => void } {
+  let resolve: () => void = () => undefined;
+  const promise = new Promise<void>((done) => {
+    resolve = done;
+  });
+  return { promise, resolve };
+}
 
 async function onlyRow() {
   const rows = await db.select().from(emailOutbox);
@@ -102,5 +112,30 @@ describe('fila de e-mail', () => {
     const result = await processOutbox(db, mailer, new Date(Date.now() - minutes(10)));
     expect(result).toEqual({ sent: 0, failed: 0 });
     expect(mailer.sent).toHaveLength(0);
+  });
+
+  it('stop do worker só resolve depois que o envio em andamento termina', async () => {
+    const { promise: sendStarted, resolve: markSendStarted } = deferred();
+    const { promise: sendGate, resolve: releaseSend } = deferred();
+    const slowMailer: Mailer = {
+      async send() {
+        markSendStarted();
+        await sendGate;
+      },
+    };
+    await enqueueEmail(db, message);
+    const stop = startOutboxWorker(db, slowMailer, 10);
+    await sendStarted;
+
+    let stopped = false;
+    const stopping = stop().then(() => {
+      stopped = true;
+    });
+    await sleep(50);
+    expect(stopped).toBe(false);
+
+    releaseSend();
+    await stopping;
+    expect((await onlyRow()).status).toBe('enviado');
   });
 });

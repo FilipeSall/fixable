@@ -61,18 +61,21 @@ export async function processOutbox(
   });
 }
 
-export function startOutboxWorker(db: Db, mailer: Mailer, intervalMs = 5000): () => void {
-  let running = false;
+export function startOutboxWorker(db: Db, mailer: Mailer, intervalMs = 5000): () => Promise<void> {
+  let inFlight: Promise<void> | null = null;
   const timer = setInterval(() => {
-    if (running) return;
-    running = true;
-    processOutbox(db, mailer)
+    if (inFlight) return;
+    inFlight = processOutbox(db, mailer)
+      .then(() => undefined)
       .catch((error: unknown) => {
         console.error('Falha ao processar a fila de e-mail', error);
       })
       .finally(() => {
-        running = false;
+        inFlight = null;
       });
   }, intervalMs);
-  return () => clearInterval(timer);
+  return async () => {
+    clearInterval(timer);
+    await inFlight;
+  };
 }

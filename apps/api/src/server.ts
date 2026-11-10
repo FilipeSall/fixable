@@ -13,7 +13,7 @@ const app = await buildApp({ config, db, mailer });
 const stopWorker = startOutboxWorker(db, mailer);
 
 async function shutdown(): Promise<void> {
-  stopWorker();
+  await stopWorker();
   await app.close();
   await close();
   process.exit(0);

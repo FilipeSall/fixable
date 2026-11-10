@@ -21,4 +21,4 @@ COPY --from=build --chown=node:node /repo/packages/shared ./packages/shared
 RUN rm -rf node_modules/@fixable/shared && ln -s /app/packages/shared node_modules/@fixable/shared
 USER node
 EXPOSE 3333
-CMD ["sh", "-c", "node src/db/migrate.ts && node src/server.ts"]
+CMD ["sh", "-c", "node src/db/migrate.ts && exec node src/server.ts"]
