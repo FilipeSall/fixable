@@ -4,13 +4,13 @@ import { useAuth } from './AuthProvider.tsx';
 export function SessionError() {
   const { retry } = useAuth();
   return (
-    <>
+    <main className="app-home">
       <p role="alert" className="err">
         Não foi possível verificar sua sessão.
       </p>
       <button type="button" className="btn btn-primary btn-block" onClick={retry}>
         Tentar de novo
       </button>
-    </>
+    </main>
   );
 }

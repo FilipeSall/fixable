@@ -7,7 +7,7 @@ import { Field } from './Field.tsx';
 import { fieldErrorsOf } from '../../lib/form-errors.ts';
 import { messageOf } from './form-errors.ts';
 
-const CONFIRMATION = 'Se este e-mail estiver cadastrado, você receberá um link para redefinir a senha.';
+const CONFIRMATION = 'Se houver uma conta com este e-mail, enviamos um link para você criar ou redefinir sua senha.';
 
 /** Tela de pedido de link para redefinir a senha. */
 export function ForgotPasswordPage() {

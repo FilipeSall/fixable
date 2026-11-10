@@ -3,10 +3,10 @@ import type { Me } from '@fixable/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createContext, useContext, useMemo } from 'react';
 import { ApiRequestError, apiFetch } from '../api.ts';
+import { ME_KEY } from './me-key.ts';
 import type { AuthContextValue, AuthProviderProps, AuthStatus } from '../../types/auth-screens.types.ts';
 
 const HTTP_UNAUTHORIZED = 401;
-const ME_KEY = ['me'];
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 

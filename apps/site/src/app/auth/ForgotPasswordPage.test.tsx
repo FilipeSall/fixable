@@ -30,7 +30,7 @@ describe('ForgotPasswordPage', () => {
     await user.type(await screen.findByLabelText('E-mail'), 'ana@fixable.com');
     await user.click(screen.getByRole('button', { name: 'Enviar link' }));
     expect(
-      await screen.findByText('Se este e-mail estiver cadastrado, você receberá um link para redefinir a senha.'),
+      await screen.findByText('Se houver uma conta com este e-mail, enviamos um link para você criar ou redefinir sua senha.'),
     ).toBeInTheDocument();
   });
 

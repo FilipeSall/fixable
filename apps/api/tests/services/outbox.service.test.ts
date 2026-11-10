@@ -17,7 +17,7 @@ const minutes = (n: number) => n * 60_000;
 const message = {
   to: 'ana@fixable.test',
   template: 'convite' as const,
-  data: { nome: 'Ana', link: 'https://x/app/convite?token=abc' },
+  data: { nome: 'Ana', link: 'https://x/app/convite#token=abc' },
 };
 
 function deferred(): { promise: Promise<void>; resolve: () => void } {

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { renderTemplate } from '../../../src/views/emails/render.ts';
 
 describe('renderTemplate', () => {
-  const link = 'https://x/app/convite?token=abc';
+  const link = 'https://x/app/convite#token=abc';
 
   it('renderiza o convite com assunto fixo, nome e link em texto e html', () => {
     const mail = renderTemplate('convite', { nome: 'Ana', link });

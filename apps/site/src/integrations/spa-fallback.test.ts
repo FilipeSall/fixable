@@ -5,7 +5,7 @@ describe('shouldRewrite', () => {
   it('reescreve as rotas do app, inclusive /app/ e com query string', () => {
     expect(shouldRewrite('GET', '/app/')).toBe(true);
     expect(shouldRewrite('GET', '/app/login')).toBe(true);
-    expect(shouldRewrite('GET', '/app/convite?token=abc')).toBe(true);
+    expect(shouldRewrite('GET', '/app/convite#token=abc')).toBe(true);
   });
 
   it('não reescreve a raiz /app, arquivos, outros métodos nem o site público', () => {
