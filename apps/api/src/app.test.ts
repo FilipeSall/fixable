@@ -11,7 +11,15 @@ beforeAll(async () => {
   ctx = await testApp();
   ctx.app.withTypeProvider<ZodTypeProvider>().post(
     '/api/_test/validate',
-    { schema: { body: z.object({ email: emailSchema, endereco: z.object({ cidade: z.string().min(1, 'Informe a cidade.') }).optional() }) } },
+    {
+      schema: {
+        body: z.object({
+          email: emailSchema,
+          apelido: z.string().min(1).optional(),
+          endereco: z.object({ cidade: z.string().min(1, 'Informe a cidade.') }).optional(),
+        }),
+      },
+    },
     () => ({ ok: true }),
   );
   ctx.app.post('/api/_test/thrown', (request) => z.object({ email: emailSchema }).parse(request.body));
@@ -60,6 +68,19 @@ describe('erros padronizados', () => {
     });
     expect(res.statusCode).toBe(400);
     expect(res.json<{ error: { fields: Record<string, string> } }>().error.fields['endereco.cidade']).toBe('Informe a cidade.');
+  });
+
+  it('mensagens padrão do zod em fields saem em português', async () => {
+    const res = await ctx.app.inject({
+      method: 'POST',
+      url: '/api/_test/validate',
+      headers: { origin: ctx.config.APP_ORIGIN },
+      payload: { email: 'a@b.com', apelido: '' },
+    });
+    expect(res.statusCode).toBe(400);
+    const message = res.json<{ error: { fields: Record<string, string> } }>().error.fields['apelido'];
+    expect(message).not.toContain('Too small');
+    expect(message).toMatch(/pequeno demais/i);
   });
 
   it('ZodError lançado vira 400 validation com fields', async () => {
