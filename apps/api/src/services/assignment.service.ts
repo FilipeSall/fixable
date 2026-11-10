@@ -1,10 +1,13 @@
-import { and, asc, count, eq } from 'drizzle-orm';
-import type { Db, Tx } from '../types/db.types.ts';
+import { and, asc, count, eq, sql } from 'drizzle-orm';
+import type { Tx } from '../types/db.types.ts';
 import { clients, users } from '../models/index.ts';
 
-/** Escolhe o engenheiro ativo com menos clientes para receber um novo atendimento. */
-export async function pickEngineer(db: Db | Tx): Promise<{ id: string; nome: string } | null> {
-  const [engineer] = await db
+const ENGINEER_ASSIGNMENT_LOCK = 7_301_001;
+
+/** Escolhe o engenheiro ativo com menos clientes, serializando a escolha e o cadastro do cliente até o commit. */
+export async function pickEngineer(tx: Tx): Promise<{ id: string; nome: string } | null> {
+  await tx.execute(sql`SELECT pg_advisory_xact_lock(${ENGINEER_ASSIGNMENT_LOCK}::bigint)`);
+  const [engineer] = await tx
     .select({ id: users.id, nome: users.nome })
     .from(users)
     .leftJoin(clients, eq(clients.engineerId, users.id))
