@@ -1,0 +1,117 @@
+import { API } from '@fixable/shared';
+import { screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { Route, Routes } from 'react-router';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ApiRequestError } from '../api.ts';
+import { InvitePage } from './InvitePage.tsx';
+import { ResetPasswordPage } from './ResetPasswordPage.tsx';
+import { ana, mockedFetch, renderApp, unauthenticated } from './test-utils.tsx';
+
+vi.mock('../api.ts', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../api.ts')>()),
+  apiFetch: vi.fn(),
+}));
+
+const tokenInfo = { purpose: 'convite', nome: 'Ana', email: 'ana@fixable.com' };
+
+function renderInvite(route = '/convite?token=abc') {
+  return renderApp(
+    <Routes>
+      <Route path="/convite" element={<InvitePage />} />
+      <Route path="/redefinir-senha" element={<ResetPasswordPage />} />
+      <Route path="*" element={<p>destino</p>} />
+    </Routes>,
+    route,
+  );
+}
+
+function stub(info: () => Promise<unknown>, accept: () => Promise<unknown> = () => Promise.resolve(ana)) {
+  mockedFetch.mockImplementation((path: string) => {
+    if (path === API.me) return Promise.reject(unauthenticated());
+    if (path === API.tokenInfo('abc')) return info();
+    if (path === API.acceptInvite) return accept();
+    return Promise.reject(new Error(`inesperado: ${path}`));
+  });
+}
+
+async function fillPasswords(senha: string, confirmacao: string) {
+  const user = userEvent.setup();
+  await user.type(await screen.findByLabelText('Senha'), senha);
+  await user.type(screen.getByLabelText('Confirmar senha'), confirmacao);
+  await user.click(screen.getByRole('button', { name: 'Criar senha' }));
+}
+
+describe('InvitePage', () => {
+  beforeEach(() => {
+    mockedFetch.mockReset();
+  });
+
+  it('com token válido mostra "Olá, Ana."', async () => {
+    stub(() => Promise.resolve(tokenInfo));
+    renderInvite();
+    expect(await screen.findByText(/Olá, Ana\./)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Crie sua senha' })).toBeInTheDocument();
+  });
+
+  it('token 410 mostra "Este link expirou ou já foi usado."', async () => {
+    stub(() => Promise.reject(new ApiRequestError(410, 'token_invalid', 'Este link expirou ou já foi usado.')));
+    renderInvite();
+    expect(await screen.findByText('Este link expirou ou já foi usado.')).toBeInTheDocument();
+    expect(screen.getByRole('link')).toHaveAttribute('href', '/esqueci-senha');
+  });
+
+  it('sem token na URL mostra a mensagem de link expirado', async () => {
+    stub(() => Promise.resolve(tokenInfo));
+    renderInvite('/convite');
+    expect(await screen.findByText('Este link expirou ou já foi usado.')).toBeInTheDocument();
+  });
+
+  it('token de redefinição na página de convite é rejeitado', async () => {
+    stub(() => Promise.resolve({ ...tokenInfo, purpose: 'redefinicao' }));
+    renderInvite();
+    expect(await screen.findByText('Este link expirou ou já foi usado.')).toBeInTheDocument();
+  });
+
+  it('token de convite na página de redefinição é rejeitado', async () => {
+    stub(() => Promise.resolve(tokenInfo));
+    renderInvite('/redefinir-senha?token=abc');
+    expect(await screen.findByText('Este link expirou ou já foi usado.')).toBeInTheDocument();
+  });
+
+  it('senhas diferentes mostram "As senhas não conferem."', async () => {
+    stub(() => Promise.resolve(tokenInfo));
+    renderInvite();
+    await fillPasswords('segredo123', 'segredo124');
+    expect(await screen.findByText('As senhas não conferem.')).toBeInTheDocument();
+    expect(mockedFetch).not.toHaveBeenCalledWith(API.acceptInvite, expect.anything());
+  });
+
+  it('senha fraca mostra a mensagem do schema compartilhado', async () => {
+    stub(() => Promise.resolve(tokenInfo));
+    renderInvite();
+    await fillPasswords('curta', 'curta');
+    expect(await screen.findByText('A senha precisa ter pelo menos 8 caracteres.')).toBeInTheDocument();
+  });
+
+  it('sucesso leva à home do papel', async () => {
+    stub(() => Promise.resolve(tokenInfo));
+    renderInvite();
+    await fillPasswords('segredo123', 'segredo123');
+    await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('/cliente'));
+    expect(mockedFetch).toHaveBeenCalledWith(API.acceptInvite, {
+      method: 'POST',
+      body: { token: 'abc', senha: 'segredo123' },
+    });
+  });
+
+  it('mostra a mensagem do servidor quando o envio falha', async () => {
+    stub(
+      () => Promise.resolve(tokenInfo),
+      () => Promise.reject(new ApiRequestError(410, 'token_invalid', 'Este link expirou ou já foi usado.')),
+    );
+    renderInvite();
+    await fillPasswords('segredo123', 'segredo123');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Este link expirou ou já foi usado.');
+  });
+});
