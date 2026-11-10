@@ -132,4 +132,15 @@ describe('loadConfig', () => {
   it('lança erro citando DATABASE_URL quando faltar', () => {
     expect(() => loadConfig({})).toThrow(/DATABASE_URL/);
   });
+
+  it('em produção exige MAIL_DRIVER=smtp', () => {
+    const production = {
+      NODE_ENV: 'production',
+      DATABASE_URL: 'postgres://x',
+      APP_ORIGIN: 'https://fixable.com.br',
+      MAIL_FROM: 'Fixable <nao-responda@fixable.com.br>',
+    };
+    expect(() => loadConfig({ ...production, MAIL_DRIVER: 'memory' })).toThrow(/MAIL_DRIVER/);
+    expect(loadConfig({ ...production, MAIL_DRIVER: 'smtp', SMTP_URL: 'smtps://mail:465' }).MAIL_DRIVER).toBe('smtp');
+  });
 });

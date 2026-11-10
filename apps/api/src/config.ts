@@ -17,6 +17,10 @@ const configSchema = z
   .refine((config) => config.MAIL_DRIVER !== 'smtp' || config.SMTP_URL !== undefined, {
     path: ['SMTP_URL'],
     message: 'SMTP_URL é obrigatório quando MAIL_DRIVER=smtp',
+  })
+  .refine((config) => config.NODE_ENV !== 'production' || config.MAIL_DRIVER === 'smtp', {
+    path: ['MAIL_DRIVER'],
+    message: 'MAIL_DRIVER precisa ser smtp quando NODE_ENV=production',
   });
 
 export type Config = z.infer<typeof configSchema>;
