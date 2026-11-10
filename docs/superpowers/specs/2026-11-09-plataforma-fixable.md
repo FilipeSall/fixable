@@ -1,7 +1,7 @@
 # PRD — Plataforma Fixable (site + app)
 
 Base visual e funcional aprovada pelo cliente: **Modelo 4 — Casa editorial**
-(`04-casa-editorial.html`). O modelo é uma demonstração que grava tudo no `localStorage`;
+(`docs/referencia/modelo-4-plataforma.html`). O modelo é uma demonstração que grava tudo no `localStorage`;
 este PRD define a versão de produção.
 
 ## Suposições e pendências
