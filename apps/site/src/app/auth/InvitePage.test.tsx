@@ -1,8 +1,9 @@
 import { API } from '@fixable/shared';
-import { screen, waitFor } from '@testing-library/react';
+import { focusManager } from '@tanstack/react-query';
+import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route, Routes } from 'react-router';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiRequestError, type ApiInit } from '../api.ts';
 import { InvitePage } from './InvitePage.tsx';
 import { ResetPasswordPage } from './ResetPasswordPage.tsx';
@@ -148,5 +149,33 @@ describe('InvitePage', () => {
     renderInvite();
     await fillPasswords('segredo123', 'segredo123');
     expect(await screen.findByRole('alert')).toHaveTextContent('Este link expirou ou já foi usado.');
+  });
+});
+
+function lookupCalls() {
+  return mockedFetch.mock.calls.filter(([path]) => path === API.tokenLookup);
+}
+
+describe('TokenGate', () => {
+  beforeEach(() => {
+    mockedFetch.mockReset();
+    stub(() => Promise.resolve(tokenInfo));
+  });
+  afterEach(() => {
+    focusManager.setFocused();
+  });
+
+  it('voltar o foco para a janela não consulta o token de novo', async () => {
+    renderInvite();
+    expect(await screen.findByText(/Olá, Ana\./)).toBeInTheDocument();
+    expect(lookupCalls()).toHaveLength(1);
+
+    await act(async () => {
+      focusManager.setFocused(false);
+      focusManager.setFocused(true);
+      await Promise.resolve();
+    });
+
+    expect(lookupCalls()).toHaveLength(1);
   });
 });

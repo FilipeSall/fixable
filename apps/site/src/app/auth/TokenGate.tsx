@@ -42,6 +42,8 @@ function TokenLookup({ token, purpose, children }: Readonly<Props & { token: str
     queryKey: ['token-info', token],
     queryFn: () => apiFetch<TokenInfo>(API.tokenLookup, { method: 'POST', body: { token } }),
     retry: false,
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
   });
   if (query.isPending) return <p role="status">Carregando...</p>;
   if (query.isError) {
