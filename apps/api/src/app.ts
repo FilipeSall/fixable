@@ -1,23 +1,31 @@
 import cookie from '@fastify/cookie';
+import rateLimit from '@fastify/rate-limit';
 import { sql } from 'drizzle-orm';
 import Fastify, { type FastifyInstance } from 'fastify';
 import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
 import type { Config } from './config.ts';
 import type { Db } from './db/client.ts';
 import type { Mailer } from './modules/mail/mailer.ts';
+import { authRoutes } from './modules/auth/routes.ts';
+import { registerAuth } from './plugins/auth.ts';
 import { registerErrorHandler } from './plugins/errors.ts';
+import { registerOriginCheck } from './plugins/origin-check.ts';
 
 export type AppDeps = { config: Config; db: Db; mailer: Mailer };
 
 export async function buildApp({ config, db }: AppDeps): Promise<FastifyInstance> {
-  const app = Fastify({ logger: config.NODE_ENV !== 'test' });
+  const app = Fastify({ logger: config.NODE_ENV !== 'test', trustProxy: config.TRUST_PROXY });
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
   registerErrorHandler(app);
   await app.register(cookie);
+  await app.register(rateLimit, { global: false });
+  registerOriginCheck(app, config);
+  registerAuth(app, { db, config });
 
   await app.register(
     (api) => {
+      void api.register(authRoutes({ db, config }));
       api.get('/health', async (_request, reply) => {
         try {
           await db.execute(sql`select 1`);

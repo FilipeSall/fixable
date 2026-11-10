@@ -6,6 +6,18 @@ import { ERROR_CODES, type ApiError, type ErrorCode } from '@fixable/shared';
 const INTERNAL_MESSAGE = 'Algo deu errado. Tente de novo.';
 const VALIDATION_MESSAGE = 'Dados inválidos.';
 
+export class AppError extends Error {
+  readonly statusCode: number;
+  readonly code: ErrorCode;
+
+  constructor(statusCode: number, code: ErrorCode, message: string) {
+    super(message);
+    this.name = 'AppError';
+    this.statusCode = statusCode;
+    this.code = code;
+  }
+}
+
 type FieldIssue = { path: string[]; message: string };
 
 const CLIENT_ERROR_CODES: Partial<Record<number, ErrorCode>> = {
@@ -48,6 +60,10 @@ function clientStatusOf(error: unknown): number | undefined {
 
 export function registerErrorHandler(app: FastifyInstance): void {
   app.setErrorHandler((error, request, reply) => {
+    if (error instanceof AppError) {
+      const body: ApiError = { error: { code: error.code, message: error.message } };
+      return reply.status(error.statusCode).send(body);
+    }
     if (error instanceof ZodError) {
       const issues = error.issues.map((issue) => ({ path: issue.path.map(String), message: issue.message }));
       return reply.status(400).send(validationBody(issues));

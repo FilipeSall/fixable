@@ -6,6 +6,7 @@ import { buildApp } from '../src/app.ts';
 import { loadConfig, type Config } from '../src/config.ts';
 import { createDb, type Db } from '../src/db/client.ts';
 import { users } from '../src/db/schema/index.ts';
+import { hashPassword } from '../src/modules/auth/passwords.ts';
 import { createMemoryMailer, type MemoryMailer } from '../src/modules/mail/memory-mailer.ts';
 
 const DEFAULT_DATABASE_URL_TEST = 'postgres://fixable:fixable@localhost:5432/fixable_test';
@@ -57,9 +58,10 @@ export async function resetDb(db: Db): Promise<void> {
 
 export async function createUser(
   db: Db,
-  p: { role: Role; status?: UserStatus; email?: string; nome?: string; passwordHash?: string },
+  p: { role: Role; status?: UserStatus; email?: string; nome?: string; passwordHash?: string; senha?: string },
 ): Promise<{ id: string; email: string }> {
   const suffix = randomUUID().slice(0, 8);
+  const passwordHash = p.senha === undefined ? (p.passwordHash ?? null) : await hashPassword(p.senha);
   const [row] = await db
     .insert(users)
     .values({
@@ -67,8 +69,23 @@ export async function createUser(
       status: p.status ?? 'ativo',
       nome: p.nome ?? `Usuário ${suffix}`,
       email: p.email ?? `usuario-${suffix}@fixable.test`,
-      passwordHash: p.passwordHash ?? null,
+      passwordHash,
     })
     .returning({ id: users.id, email: users.email });
   return row!;
+}
+
+export async function loginAs(app: FastifyInstance, email: string, senha: string): Promise<string> {
+  const response = await app.inject({
+    method: 'POST',
+    url: '/api/auth/login',
+    headers: { origin: 'http://localhost:4321' },
+    payload: { email, senha },
+  });
+  if (response.statusCode !== 200) {
+    throw new Error(`loginAs falhou com ${response.statusCode}: ${response.body}`);
+  }
+  const cookie = response.cookies.find((item) => item.name === 'fx_session');
+  if (!cookie) throw new Error('loginAs: cookie fx_session ausente');
+  return `fx_session=${cookie.value}`;
 }
