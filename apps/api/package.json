@@ -17,11 +17,13 @@
     "drizzle-orm": "^0.44",
     "fastify": "^5",
     "fastify-type-provider-zod": "^6",
+    "nodemailer": "^10.4.0",
     "postgres": "^3",
     "zod": "^4"
   },
   "devDependencies": {
     "@types/node": "^24",
+    "@types/nodemailer": "^8.0.2",
     "drizzle-kit": "^0.31.11",
     "vitest": "^5.1.0"
   }
