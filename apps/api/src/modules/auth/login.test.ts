@@ -10,6 +10,8 @@ let t: TestApp;
 
 beforeEach(async () => {
   t = await testApp();
+  t.app.put('/api/_teste/escrita', (_request, reply) => reply.send({ ok: true }));
+  t.app.delete('/api/_teste/escrita', (_request, reply) => reply.send({ ok: true }));
   t.app.get('/api/_teste/admin', { preHandler: [t.app.requireRole('admin')] }, (_request, reply) => reply.send({ ok: true }));
   await t.app.ready();
   await resetDb(t.db);
@@ -192,6 +194,22 @@ describe('origin-check', () => {
     expect(outra.json()).toEqual(expected);
   });
 
+  it('caminho com percent-encoding sem Origin também devolve 403', async () => {
+    for (const url of ['/%61pi/auth/logout', '/%61%70%69/auth/logout']) {
+      const response = await t.app.inject({ method: 'POST', url });
+      expect(response.statusCode).toBe(403);
+    }
+  });
+
+  it('PUT e DELETE sem Origin devolvem 403 e com Origin correto passam', async () => {
+    for (const method of ['PUT', 'DELETE'] as const) {
+      const sem = await t.app.inject({ method, url: '/api/_teste/escrita' });
+      expect(sem.statusCode).toBe(403);
+      const com = await t.app.inject({ method, url: '/api/_teste/escrita', headers: { origin: ORIGIN } });
+      expect(com.statusCode).toBe(200);
+    }
+  });
+
   it('GET não exige Origin', async () => {
     const response = await t.app.inject({ method: 'GET', url: '/api/health' });
     expect(response.statusCode).toBe(200);
@@ -213,5 +231,27 @@ describe('requireRole', () => {
     expect(ok.statusCode).toBe(200);
     const anonimo = await t.app.inject({ method: 'GET', url: '/api/_teste/admin' });
     expect(anonimo.statusCode).toBe(401);
+  });
+});
+
+describe('TRUST_PROXY', () => {
+  it('com TRUST_PROXY=true o rate limit usa o IP do último salto e ignora X-Forwarded-For forjado', async () => {
+    const proxied = await testApp({ TRUST_PROXY: true });
+    try {
+      await proxied.app.ready();
+      const attempt = (fake: string) =>
+        proxied.app.inject({
+          method: 'POST',
+          url: '/api/auth/login',
+          headers: { origin: ORIGIN, 'x-forwarded-for': `${fake}, 10.0.0.9` },
+          payload: { email: 'ninguem@fixable.com', senha: SENHA },
+        });
+      for (let i = 0; i < 10; i++) {
+        expect((await attempt(`203.0.113.${i + 1}`)).statusCode).toBe(401);
+      }
+      expect((await attempt('203.0.113.200')).statusCode).toBe(429);
+    } finally {
+      await proxied.close();
+    }
   });
 });

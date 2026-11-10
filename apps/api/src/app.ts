@@ -14,7 +14,8 @@ import { registerOriginCheck } from './plugins/origin-check.ts';
 export type AppDeps = { config: Config; db: Db; mailer: Mailer };
 
 export async function buildApp({ config, db }: AppDeps): Promise<FastifyInstance> {
-  const app = Fastify({ logger: config.NODE_ENV !== 'test', trustProxy: config.TRUST_PROXY });
+  const trustProxy = config.TRUST_PROXY ? (_address: string, hop: number) => hop === 0 : false;
+  const app = Fastify({ logger: config.NODE_ENV !== 'test', trustProxy });
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
   registerErrorHandler(app);
