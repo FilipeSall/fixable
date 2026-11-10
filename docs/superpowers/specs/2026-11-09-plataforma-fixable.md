@@ -162,6 +162,8 @@ apps/api        Fastify + Drizzle + Postgres
 packages/shared schemas Zod, enums de status, catálogo de planos e categorias, tipos da API
 ```
 
+- **API em MVC + services** (`routes/` → `controllers/` → `services/` → `models/`, com `views/emails`, `middlewares`, `mailers`, `workers`, `utils`, `config` e `types`). Os testes ficam em `apps/api/tests/`. Os tipos ficam em pastas `types/`. Todas as funções levam JSDoc em pt-BR. Nenhum arquivo passa de 700 linhas. Detalhes no `CLAUDE.md` da raiz.
+
 - Site e API servidos **no mesmo domínio**: o nginx entrega os estáticos e faz proxy de `/api` para
   o Fastify. Com isso o cookie é first-party e não há CORS. Toda rota `/app/*` cai em
   `app/index.html` (fallback da SPA).

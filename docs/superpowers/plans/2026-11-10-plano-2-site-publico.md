@@ -49,13 +49,43 @@
   - todos os textos passam por `trim`.
 - URLs sem barra final (`trailingSlash: 'never'`, `build.format: 'directory'`). O canonical é absoluto, a partir de `SITE_URL`, cujo padrão é `https://www.fixable.com.br`.
 
+## Convenções de arquitetura (decididas pelo usuário em 2026-11-10; valem para este plano e os próximos)
+
+- **Backend em MVC + services** (`apps/api/src`):
+  - `routes/`: só declaram caminho, schema Zod, rate limit e preHandlers, e apontam para um controller. `routes/index.ts` registra tudo sob `/api`.
+  - `controllers/`: leem `request`, chamam services, definem status e cookies e devolvem a resposta. Não usam Drizzle.
+  - `services/`: regra de negócio e acesso ao banco via Drizzle e models.
+  - `models/`: só as tabelas Drizzle (`*.model.ts`), com um `models/index.ts` que reexporta.
+  - `views/emails/`: os templates de e-mail.
+  - `middlewares/`: hooks do Fastify (auth, Origin, tratamento de erro).
+  - `mailers/`: drivers SMTP e memória.
+  - `workers/`: worker do outbox.
+  - `utils/`: funções puras (senha, hash de token, escape de HTML, redação de log, `AppError`).
+  - `config/`: leitura do env.
+  - `db/`: client e migrate.
+  - `cli/`: comandos de linha.
+  - `types/`: as interfaces e os tipos.
+- **Nomes de arquivo:** `auth.routes.ts`, `auth.controller.ts`, `auth.service.ts`, `user.model.ts`, `auth.middleware.ts`, `smtp.mailer.ts`, `outbox.worker.ts`, `*.types.ts`.
+- **Testes da API** em `apps/api/tests/`, espelhando `src/`: `tests/services/…`, `tests/routes/…` (integração via `inject`), `tests/utils/…`. Os helpers ficam em `tests/helpers.ts` e `tests/global-setup.ts`.
+- **Interfaces e tipos em pastas dedicadas:** toda `interface` ou `type` nomeado fica em `types/`:
+  - API: `apps/api/src/types/`;
+  - site: `apps/site/src/types/`, incluindo as `Props` dos componentes;
+  - shared: `packages/shared/src/types/`, incluindo os `z.infer`.
+  - Exceção: a declaração `declare module 'fastify'` fica em `apps/api/src/types/fastify.d.ts`.
+- **JSDoc em pt-BR em todas as funções** (declarações, arrow functions atribuídas a constante, métodos, componentes React e classes):
+  - bloco `/** */` logo acima, de 1 a 4 linhas, dizendo **o que** a função faz e **para quê**;
+  - o Global Constraint "sem comentários no código" passa a valer só para comentários soltos (`//` e `/* */` dentro de corpo ou acima de linha);
+  - callbacks anônimos passados como argumento e arquivos de teste não precisam de JSDoc;
+  - a regra vem do ESLint `jsdoc/require-jsdoc`.
+- **Nenhum arquivo de componente ou módulo passa de 700 linhas** (ESLint `max-lines: 700` para `.ts`/`.tsx`; nos `.astro`, a revisão confere).
+
 ## Review Focus
 
-1. **Duplo clique ou dois envios simultâneos do mesmo e-mail novo:** cria um usuário e um cliente só, e as duas respostas são `204`. Teste na Task 4.
-2. **E-mail de cliente existente digitado com maiúsculas ou espaços:** cai no ramo "diagnóstico adicional" e não cria conta nova. Teste na Task 4.
-3. **Nenhum engenheiro ativo** (só convidados ou bloqueados): o cliente nasce sem engenheiro, o lead fica sem atribuição, o convite sai mesmo assim e o aviso à equipe diz `Sem atribuição`. Teste nas Tasks 2 e 4.
-4. **Honeypot preenchido:** responde `204` e não grava nada nem envia e-mail. Teste na Task 4.
-5. **`?plano=` inválido ou adulterado na URL:** é ignorado, sem chip. Um plano válido aparece no chip e pode ser removido. Teste na Task 7.
+1. **Duplo clique ou dois envios simultâneos do mesmo e-mail novo:** cria um usuário e um cliente só, e as duas respostas são `204`. Teste na Task 6.
+2. **E-mail de cliente existente digitado com maiúsculas ou espaços:** cai no ramo "diagnóstico adicional" e não cria conta nova. Teste na Task 6.
+3. **Nenhum engenheiro ativo** (só convidados ou bloqueados): o cliente nasce sem engenheiro, o lead fica sem atribuição, o convite sai mesmo assim e o aviso à equipe diz `Sem atribuição`. Teste nas Tasks 2 e 6.
+4. **Honeypot preenchido:** responde `204` e não grava nada nem envia e-mail. Teste na Task 6.
+5. **`?plano=` inválido ou adulterado na URL:** é ignorado, sem chip. Um plano válido aparece no chip e pode ser removido. Teste na Task 9.
 
 ---
 
@@ -130,10 +160,80 @@
 - [ ] **Step 4:** `pnpm --filter api db:migrate` num banco limpo e `pnpm --filter api test` → PASS.
 - [ ] **Step 5:** Commit `feat(api): tabelas de cliente, imóvel, maquete, solicitação, lead e candidatura`, com a migration no mesmo commit.
 
-### Task 3: E-mails de lead, candidatura e diagnóstico adicional
+### Task 3: Backend em MVC + services e testes em `apps/api/tests/`
+
+Refatoração **sem mudança de comportamento**. Todos os testes existentes continuam passando, só mudam de lugar.
+
+**Files:** move ou divide todo o `apps/api/src` atual conforme "Convenções de arquitetura". Mapa mínimo:
+- `config.ts` → `config/env.ts`
+- `db/schema/*.ts` → `models/*.model.ts`:
+  - `identity` → `user`, `session` e `email-token`;
+  - `outbox` → `email-outbox`;
+  - `clients` → `client`, `property` (com os atributos), `floorplan` (andares e cômodos) e `service-request`;
+  - `public-intake` → `diagnostic-lead` e `application`;
+  - mais `models/index.ts`.
+- `drizzle.config.ts` passa a apontar para `src/models/index.ts`. Rodar `pnpm --filter api db:generate` deve dizer que não há mudanças: **nenhuma migration nova**.
+- `modules/auth/routes.ts` → `routes/auth.routes.ts` + `controllers/auth.controller.ts` + `services/auth.service.ts` (login, aceitar convite, esqueci a senha, redefinir senha).
+- `modules/auth/sessions.ts` → `services/session.service.ts`; os helpers de cookie vão para o controller ou para `utils/session-cookie.ts`.
+- `modules/auth/email-tokens.ts` → `services/email-token.service.ts`; `modules/auth/invites.ts` → `services/invite.service.ts`.
+- `modules/auth/passwords.ts` → `utils/password.ts`; `hashToken` → `utils/token.ts`.
+- `modules/mail/outbox.ts`:
+  - `enqueueEmail` e `processOutbox` vão para `services/outbox.service.ts`;
+  - `startOutboxWorker` vai para `workers/outbox.worker.ts`.
+- `modules/mail/templates.ts` → `views/emails/` (um arquivo por template mais `render.ts`), com o escape de HTML em `utils/html.ts`.
+- `modules/mail/{smtp,memory}-mailer.ts` → `mailers/smtp.mailer.ts` e `mailers/memory.mailer.ts`; a interface `Mailer` vai para `types/`.
+- `modules/clients/assignment.ts` → `services/assignment.service.ts`; `floorplan-template.ts` → `services/floorplan.service.ts`.
+- `plugins/` → `middlewares/`:
+  - `auth.middleware.ts`, `origin-check.middleware.ts` e `error-handler.middleware.ts`;
+  - `AppError` e as mensagens fixas vão para `utils/app-error.ts`;
+  - `log-redaction.ts` vai para `utils/log-redaction.ts`.
+- O health check vira `routes/health.routes.ts` e `controllers/health.controller.ts`. O `app.ts` fica só com a montagem dos plugins e dos middlewares e `register(routes)`.
+- Testes: todos os `src/**/*.test.ts` e `test/*` vão para `tests/`, espelhando `src/`. Atualizar `vitest.config.ts` (`include: ['tests/**/*.test.ts']`, globalSetup), `tsconfig.json` (`include` com `tests`), o `eslint.config.js` (o override do smtp-mailer, agora no novo caminho), o `Dockerfile` (se algum caminho mudou) e o `README.md` (se cita caminhos).
+
+**Regras:**
+- Controllers não importam `drizzle-orm` nem `models/`.
+- Routes não têm lógica além de declarar a rota.
+- Services não importam `fastify`, com exceção dos tipos.
+
+- [ ] **Step 1:** Rodar `pnpm --filter api test` e anotar o total de testes no relatório; é a linha de base.
+- [ ] **Step 2:** Mover e dividir, ajustando os imports (com extensão `.ts`).
+- [ ] **Step 3:** `pnpm lint`, `pnpm typecheck` e `pnpm --filter api test` → PASS, com o **mesmo total** da linha de base. `pnpm --filter api db:generate` não gera arquivo. `docker compose build api` → OK.
+- [ ] **Step 4:** `grep -rn "drizzle-orm\|models/" apps/api/src/controllers` → vazio.
+- [ ] **Step 5:** Commit `refactor(api): estrutura MVC com services e testes em tests/`.
+
+### Task 4: Tipos em pastas dedicadas, JSDoc em pt-BR e limite de 700 linhas
 
 **Files:**
-- Modify: `apps/api/src/config.ts`, `apps/api/src/modules/mail/templates.ts`, `apps/api/src/modules/mail/templates.test.ts`, `apps/api/src/modules/mail/outbox.ts`, `apps/api/test/helpers.ts`, `.env.example`, `compose.yml`, `apps/site/e2e/env.ts`, `README.md`
+- `eslint.config.js` e `package.json` da raiz (devDependency `eslint-plugin-jsdoc`).
+- Todo `apps/api/src`, `apps/site/src` e `packages/shared/src` (código, não testes).
+- Create: `apps/api/src/types/*.types.ts`, `apps/api/src/types/fastify.d.ts`, `apps/site/src/types/*.types.ts` e `packages/shared/src/types/*.types.ts`.
+
+**Regras de lint** (só para arquivos que não são de teste):
+- `jsdoc/require-jsdoc` com `require: { FunctionDeclaration: true, MethodDefinition: true, ClassDeclaration: true, ArrowFunctionExpression: false, FunctionExpression: false }` e `contexts: ['VariableDeclarator > ArrowFunctionExpression', 'VariableDeclarator > FunctionExpression']`.
+- `jsdoc/require-description`.
+- `max-lines: ['error', { max: 700 }]`.
+- Os testes (`**/*.test.{ts,tsx}`, `**/tests/**`, `**/e2e/**`) ficam fora do `require-jsdoc`.
+
+**Conteúdo:**
+- Mover toda `interface` e `type` nomeado para a pasta `types/` do pacote, agrupados por assunto (ex.: `session.types.ts`, `mail.types.ts`, `forms.types.ts`, `auth-screens.types.ts`), e importar de lá.
+- No shared, os `z.infer` vão para `src/types/` e o `index.ts` continua exportando tudo.
+- Escrever o JSDoc em pt-BR, de 1 a 4 linhas, em cada função e componente. Exemplo: `/** Cria a sessão do usuário e devolve o token opaco que vai no cookie. */`.
+
+- [ ] **Step 1:** Configurar o ESLint e rodar `pnpm lint`. A falha é esperada e lista as funções sem JSDoc; anotar a contagem no relatório.
+- [ ] **Step 2:** Mover os tipos.
+- [ ] **Step 3:** Escrever os JSDoc.
+- [ ] **Step 4:** `pnpm lint`, `pnpm typecheck` e `pnpm test` → PASS, com os mesmos totais de antes. Rodar também `grep -rnE "^\s*(export )?(interface|type) [A-Z]" apps/api/src apps/site/src packages/shared/src | grep -v "/types/"`; deve vir vazio, salvo os reexports.
+- [ ] **Step 5:** Commit `refactor: tipos em pastas dedicadas, JSDoc em pt-BR e limite de 700 linhas`.
+
+### Task 5: E-mails de lead, candidatura e diagnóstico adicional
+
+**Files:**
+- Create: `apps/api/src/views/emails/{novo-lead,nova-candidatura,diagnostico-recebido}.ts`
+- Modify:
+  - `apps/api/src/config/env.ts`, `apps/api/src/views/emails/render.ts`, `apps/api/src/types/mail.types.ts` e `apps/api/src/services/outbox.service.ts`
+  - os testes `apps/api/tests/views/emails/*.test.ts` e `apps/api/tests/config/env.test.ts`
+  - `apps/api/tests/helpers.ts`, `.env.example`, `compose.yml`, `apps/site/e2e/env.ts` e `README.md`
+- Os caminhos exatos são os que a Task 3 criou; confira com `ls apps/api/src/*`.
 
 **Interfaces:**
 - Config:
@@ -158,24 +258,28 @@
   - `nova-candidatura` traz a área no assunto.
   - `loadConfig exige TEAM_EMAIL em produção`.
 - [ ] **Step 2:** `pnpm --filter api test -- templates config` → FAIL.
-- [ ] **Step 3:** Implementar. Cada template continua sendo um `Content` declarativo; o texto e o HTML vêm do mesmo conteúdo.
+- [ ] **Step 3:** Implementar. Cada template continua sendo um `Content` declarativo; o texto e o HTML vêm do mesmo conteúdo. Todo código novo leva JSDoc em pt-BR, e os tipos vão para `types/`.
 - [ ] **Step 4:** `pnpm --filter api test` → PASS.
 - [ ] **Step 5:** Commit `feat(api): e-mails de novo lead, nova candidatura e diagnóstico adicional`.
 
-### Task 4: Módulo `public` — rotas de diagnóstico e candidatura
+### Task 6: Módulo `public` — rotas de diagnóstico e candidatura
 
 **Files:**
-- Create: `apps/api/src/modules/public/routes.ts`, `apps/api/src/modules/public/diagnostics.ts`, `apps/api/src/modules/public/applications.ts`, `apps/api/src/modules/public/diagnostics.test.ts`, `apps/api/src/modules/public/applications.test.ts`
-- Modify: `apps/api/src/app.ts`
+- Create:
+  - `apps/api/src/routes/public.routes.ts` e `apps/api/src/controllers/public.controller.ts`
+  - `apps/api/src/services/diagnostic.service.ts` e `apps/api/src/services/application.service.ts`
+  - `apps/api/src/types/public.types.ts` (se precisar)
+  - `apps/api/tests/routes/public-diagnostics.test.ts` e `apps/api/tests/routes/public-applications.test.ts`
+- Modify: `apps/api/src/routes/index.ts`
 
 **Interfaces:**
 - Consumes:
   - `diagnosticInput` e `applicationInput` (Task 1);
   - `pickEngineer` e `floorplanFor` (Task 2);
-  - `enqueueEmail` tipado (Task 3);
+  - `enqueueEmail` tipado (Task 5);
   - `sendInvite(db, config, userId)` (plano 1).
 - Produces:
-  - `publicRoutes(deps: { db: Db; config: Config })`, registrado sob `/api`;
+  - `publicRoutes(deps: { db: Db; config: Config })` em `routes/public.routes.ts`, registrado pelo `routes/index.ts`; os handlers ficam no `public.controller.ts`;
   - `submitDiagnostic(db: Db, config: Config, input: DiagnosticInput, now?: Date): Promise<void>`;
   - `submitApplication(db: Db, config: Config, input: ApplicationInput, now?: Date): Promise<void>`.
 
@@ -221,7 +325,7 @@
 - [ ] **Step 4:** `pnpm --filter api test` → PASS.
 - [ ] **Step 5:** Commit `feat(api): rotas públicas de diagnóstico e candidatura`.
 
-### Task 5: Base do site — layout, estilos, assets e conteúdo
+### Task 7: Base do site — layout, estilos, assets e conteúdo
 
 **Files:**
 - Create:
@@ -279,7 +383,7 @@
 - [ ] **Step 4:** `pnpm --filter site build` → PASS. Conferir que `dist/index.html` não tem `<script` além do menu mobile.
 - [ ] **Step 5:** Commit `feat(site): layout público, conteúdo em collections e assets do modelo`.
 
-### Task 6: Seções da home
+### Task 8: Seções da home
 
 **Files:**
 - Create: `apps/site/src/components/site/sections/{Hero,Checkup,HowItWorks,Services,Problem,Packages,FixableId,Guarantee,Professionals,ForBusiness,Faq}.astro`
@@ -291,14 +395,14 @@
 - `Services` lê a collection `servicos`. O "Saiba mais" de cada card leva a `/servicos/{id}`.
 - `Packages` lê `pacotes`. O botão é `<a href="/?plano={id}#solicitar">`.
 - `Faq` lê `faq` e usa `<details>`/`<summary>` nativos, sem JS.
-- `#solicitar` e `#time-fixable` ficam com o título, o texto do modelo e um `<div>` onde a Task 7 monta a ilha.
+- `#solicitar` e `#time-fixable` ficam com o título, o texto do modelo e um `<div>` onde a Task 9 monta a ilha.
 - A home recebe o JSON-LD `Organization` (`name: 'Fixable'`, `url`, `email: 'contato@fixable.com.br'`, `telephone: '+55 11 90000-0000'`, `logo`).
 
 - [ ] **Step 1:** Implementar as seções.
 - [ ] **Step 2:** `pnpm --filter site build` → PASS. `pnpm --filter site preview` e conferir manualmente, contra o modelo, em 375, 768 e 1440 px (o PRD exclui teste automatizado de fidelidade visual).
 - [ ] **Step 3:** Commit `feat(site): seções da home do modelo 4`.
 
-### Task 7: Formulários de diagnóstico e candidatura (ilhas React)
+### Task 9: Formulários de diagnóstico e candidatura (ilhas React)
 
 **Files:**
 - Create:
@@ -340,7 +444,7 @@
 - [ ] **Step 4:** `pnpm --filter site test` e `pnpm --filter site build` → PASS.
 - [ ] **Step 5:** Commit `feat(site): formulários de diagnóstico e candidatura ligados à API`.
 
-### Task 8: Páginas serviço × cidade, páginas legais e checagem de SEO
+### Task 10: Páginas serviço × cidade, páginas legais e checagem de SEO
 
 **Files:**
 - Create:
@@ -386,14 +490,15 @@
 - [ ] **Step 4:** `pnpm seo:check` → sem problemas, com 12 páginas de serviço e 72 de serviço × cidade. Lighthouse mobile na home pelo `pnpm --filter site preview` (`npx lighthouse http://localhost:4321 --form-factor=mobile --only-categories=performance,seo,accessibility`) deve dar ≥ 90 nas três categorias. Registrar as notas no relatório.
 - [ ] **Step 5:** Commit `feat(site): páginas serviço × cidade, sitemap, robots e checagem de SEO`.
 
-### Task 9: Pendências do plano 1
+### Task 11: Pendências do plano 1
 
 **Files:**
 - Modify:
   - `apps/site/src/app/App.tsx` e `apps/site/src/app/api.ts`
   - `apps/site/src/app/auth/ForgotPasswordPage.tsx` e o teste dela
-  - `apps/api/src/plugins/log-redaction.ts` e `log-redaction.test.ts`
+  - `apps/api/src/utils/log-redaction.ts` e `apps/api/tests/utils/log-redaction.test.ts`
 - Create: `apps/site/src/app/NotFoundPage.tsx`, `apps/site/src/app/App.test.tsx`
+- Todo arquivo novo ou alterado segue as Convenções de arquitetura (JSDoc e tipos em `types/`).
 
 **Interfaces e regras:**
 - 401 global: `QueryCache({ onError })` e `MutationCache({ onError })`. Quando o erro é `ApiError` com status 401 e a query não é `['me']`, fazem `queryClient.setQueryData(['me'], null)`, e o `RequireAuth` leva ao login com `?next`.
@@ -413,7 +518,7 @@
 - [ ] **Step 4:** `pnpm test` → PASS.
 - [ ] **Step 5:** Commit `fix: pendências do plano 1 (401 global, rota 404, redação de logs e texto do esqueci a senha)`.
 
-### Task 10: E2E do site público e smoke atrás do nginx
+### Task 12: E2E do site público e smoke atrás do nginx
 
 **Files:**
 - Create: `apps/site/e2e/public.spec.ts`, `apps/site/e2e/nginx-smoke.spec.ts`, `apps/site/playwright.nginx.config.ts`
