@@ -73,6 +73,29 @@ describe('fila de e-mail', () => {
     expect(after).toEqual({ sent: 0, failed: 0 });
   });
 
+  it('remove o link dos dados após o envio e mantém as demais chaves', async () => {
+    await enqueueEmail(db, message);
+    await processOutbox(db, createMemoryMailer());
+    expect((await onlyRow()).data).toEqual({ nome: 'Ana' });
+  });
+
+  it('mantém o link enquanto pendente após uma falha e remove ao falhar de vez', async () => {
+    const mailer = createMemoryMailer();
+    mailer.failNext(10);
+    await enqueueEmail(db, message);
+    let now = new Date();
+    await processOutbox(db, mailer, now);
+    expect((await onlyRow()).status).toBe('pendente');
+    expect((await onlyRow()).data).toEqual(message.data);
+    for (let i = 0; i < 4; i += 1) {
+      now = new Date(now.getTime() + minutes(60));
+      await processOutbox(db, mailer, now);
+    }
+    const row = await onlyRow();
+    expect(row.status).toBe('falhou');
+    expect(row.data).toEqual({ nome: 'Ana' });
+  });
+
   it('ignora linhas com próxima tentativa no futuro', async () => {
     const mailer = createMemoryMailer();
     await enqueueEmail(db, message);

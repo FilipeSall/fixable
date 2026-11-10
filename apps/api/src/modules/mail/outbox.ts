@@ -1,4 +1,4 @@
-import { and, eq, lte } from 'drizzle-orm';
+import { and, eq, lte, sql } from 'drizzle-orm';
 import type { Db, Tx } from '../../db/client.ts';
 import { emailOutbox } from '../../db/schema/index.ts';
 import type { Mailer } from './mailer.ts';
@@ -7,6 +7,7 @@ import { renderTemplate, type TemplateData, type TemplateName } from './template
 const BATCH_SIZE = 20;
 const MAX_ATTEMPTS = 5;
 const MINUTE_MS = 60_000;
+const withoutLink = sql`${emailOutbox.data} - 'link'`;
 
 export async function enqueueEmail(
   db: Db | Tx,
@@ -37,16 +38,18 @@ export async function processOutbox(
         await mailer.send({ to: row.to, ...content });
         await tx
           .update(emailOutbox)
-          .set({ status: 'enviado', sentAt: now, lastError: null })
+          .set({ status: 'enviado', sentAt: now, lastError: null, data: withoutLink })
           .where(eq(emailOutbox.id, row.id));
         sent += 1;
       } catch (error) {
         const attempts = row.attempts + 1;
+        const exhausted = attempts >= MAX_ATTEMPTS;
         await tx
           .update(emailOutbox)
           .set({
             attempts,
-            status: attempts >= MAX_ATTEMPTS ? 'falhou' : 'pendente',
+            status: exhausted ? 'falhou' : 'pendente',
+            ...(exhausted ? { data: withoutLink } : {}),
             nextAttemptAt: new Date(now.getTime() + 2 ** attempts * MINUTE_MS),
             lastError: error instanceof Error ? error.message : String(error),
           })

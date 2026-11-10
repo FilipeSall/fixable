@@ -7,7 +7,7 @@ import type { Config } from '../../config.ts';
 import type { Db } from '../../db/client.ts';
 import { users } from '../../db/schema/index.ts';
 import { AppError } from '../../plugins/errors.ts';
-import { consumeEmailToken, peekEmailToken } from './email-tokens.ts';
+import { consumeEmailToken, peekEmailToken, type EmailTokenPurpose } from './email-tokens.ts';
 import { sendPasswordReset } from './invites.ts';
 import { hashPassword, verifyPassword } from './passwords.ts';
 import {
@@ -21,9 +21,15 @@ import {
 
 const LOGIN_WINDOW = '15 minutes';
 const LOGIN_MAX_ATTEMPTS = 10;
+const TOKEN_WINDOW = '15 minutes';
+const TOKEN_MAX_REQUESTS = 20;
 const FORGOT_WINDOW = '1 hour';
 const FORGOT_MAX_REQUESTS = 5;
 const DUMMY_PASSWORD_HASH = await hashPassword('senha-inexistente-0');
+
+const tokenRateLimit = {
+  rateLimit: { max: TOKEN_MAX_REQUESTS, timeWindow: TOKEN_WINDOW, keyGenerator: (request: { ip: string }) => request.ip },
+};
 
 function tokenInvalid(): AppError {
   return new AppError(410, 'token_invalid', 'Este link expirou ou já foi usado.');
@@ -38,6 +44,11 @@ export function authRoutes(deps: { db: Db; config: Pick<Config, 'COOKIE_SECURE' 
 
   return (instance: FastifyInstance, _options: object, done: () => void): void => {
     const app = instance.withTypeProvider<ZodTypeProvider>();
+
+    async function requireLivePurpose(token: string, purpose: EmailTokenPurpose): Promise<void> {
+      const info = await peekEmailToken(db, token);
+      if (info?.purpose !== purpose) throw tokenInvalid();
+    }
 
     app.post(
       '/auth/login',
@@ -90,9 +101,10 @@ export function authRoutes(deps: { db: Db; config: Pick<Config, 'COOKIE_SECURE' 
 
     app.post(
       '/auth/invite/accept',
-      { schema: { body: setPasswordInput, response: { 200: meResponse } } },
+      { config: tokenRateLimit, schema: { body: setPasswordInput, response: { 200: meResponse } } },
       async (request, reply) => {
         const { token, senha } = request.body;
+        await requireLivePurpose(token, 'convite');
         const passwordHash = await hashPassword(senha);
         const outcome = await db.transaction(async (tx) => {
           const consumed = await consumeEmailToken(tx, token, 'convite');
@@ -137,8 +149,9 @@ export function authRoutes(deps: { db: Db; config: Pick<Config, 'COOKIE_SECURE' 
       },
     );
 
-    app.post('/auth/password/reset', { schema: { body: setPasswordInput } }, async (request, reply) => {
+    app.post('/auth/password/reset', { config: tokenRateLimit, schema: { body: setPasswordInput } }, async (request, reply) => {
       const { token, senha } = request.body;
+      await requireLivePurpose(token, 'redefinicao');
       const passwordHash = await hashPassword(senha);
       const done = await db.transaction(async (tx) => {
         const consumed = await consumeEmailToken(tx, token, 'redefinicao');
