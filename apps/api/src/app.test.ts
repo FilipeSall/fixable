@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { emailSchema } from '@fixable/shared';
+import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import { loadConfig } from './config.ts';
 import { resetDb, testApp, type TestApp } from '../test/helpers.ts';
@@ -8,7 +9,12 @@ let ctx: TestApp;
 
 beforeAll(async () => {
   ctx = await testApp();
-  ctx.app.post('/api/_test/validate', (request) => z.object({ email: emailSchema }).parse(request.body));
+  ctx.app.withTypeProvider<ZodTypeProvider>().post(
+    '/api/_test/validate',
+    { schema: { body: z.object({ email: emailSchema, endereco: z.object({ cidade: z.string().min(1, 'Informe a cidade.') }).optional() }) } },
+    () => ({ ok: true }),
+  );
+  ctx.app.post('/api/_test/thrown', (request) => z.object({ email: emailSchema }).parse(request.body));
   ctx.app.get('/api/_test/boom', () => {
     throw new Error('segredo');
   });
@@ -29,7 +35,7 @@ describe('GET /api/health', () => {
 });
 
 describe('erros padronizados', () => {
-  it('ZodError vira 400 validation com fields por caminho', async () => {
+  it('erro de validação do type provider vira 400 validation com fields', async () => {
     const res = await ctx.app.inject({
       method: 'POST',
       url: '/api/_test/validate',
@@ -40,6 +46,41 @@ describe('erros padronizados', () => {
     const body = res.json<{ error: { code: string; fields: Record<string, string> } }>();
     expect(body.error.code).toBe('validation');
     expect(body.error.fields['email']).toBe('Informe um e-mail válido.');
+  });
+
+  it('fields usa o caminho com pontos', async () => {
+    const res = await ctx.app.inject({
+      method: 'POST',
+      url: '/api/_test/validate',
+      headers: { origin: ctx.config.APP_ORIGIN },
+      payload: { email: 'a@b.com', endereco: { cidade: '' } },
+    });
+    expect(res.statusCode).toBe(400);
+    expect(res.json<{ error: { fields: Record<string, string> } }>().error.fields['endereco.cidade']).toBe('Informe a cidade.');
+  });
+
+  it('ZodError lançado vira 400 validation com fields', async () => {
+    const res = await ctx.app.inject({
+      method: 'POST',
+      url: '/api/_test/thrown',
+      headers: { origin: ctx.config.APP_ORIGIN },
+      payload: { email: 'x' },
+    });
+    expect(res.statusCode).toBe(400);
+    const body = res.json<{ error: { code: string; fields: Record<string, string> } }>();
+    expect(body.error.code).toBe('validation');
+    expect(body.error.fields['email']).toBe('Informe um e-mail válido.');
+  });
+
+  it('JSON malformado vira 400 validation, não 500', async () => {
+    const res = await ctx.app.inject({
+      method: 'POST',
+      url: '/api/_test/validate',
+      headers: { origin: ctx.config.APP_ORIGIN, 'content-type': 'application/json' },
+      payload: '{"email":',
+    });
+    expect(res.statusCode).toBe(400);
+    expect(res.json<{ error: { code: string } }>().error.code).toBe('validation');
   });
 
   it('erro desconhecido vira 500 internal sem vazar detalhes', async () => {
