@@ -10,6 +10,8 @@ import {
 } from '../../src/services/auth.service.ts';
 import type { EmailTokenPurpose } from '../../src/services/email-token.service.ts';
 import { sendInvite, sendPasswordReset } from '../../src/services/invite.service.ts';
+import { revokeUserSessions } from '../../src/services/session.service.ts';
+import { hashPassword } from '../../src/utils/password.ts';
 import { hashToken } from '../../src/utils/token.ts';
 import { createUser, resetDb, testApp, type TestApp } from '../helpers.ts';
 
@@ -44,6 +46,25 @@ describe('login concorrente com redefinição de senha', () => {
       statusCode: 401,
       code: 'invalid_credentials',
     });
+    expect(await t.db.select().from(sessions).where(eq(sessions.userId, user.id))).toHaveLength(0);
+  });
+
+  it('reset em andamento com o usuário travado: o login espera o commit e devolve 401 sem sessão', async () => {
+    const user = await createUser(t.db, { role: 'cliente', email: 'ana@fixable.com', senha: SENHA_ANTIGA });
+    const verified = await verifyLoginCredentials(t.db, { email: 'ana@fixable.com', senha: SENHA_ANTIGA });
+    const novoHash = await hashPassword(SENHA_NOVA);
+
+    let issuing: Promise<unknown> = Promise.resolve();
+    await t.db.transaction(async (tx) => {
+      await tx.select({ id: users.id }).from(users).where(eq(users.id, user.id)).for('update');
+      await tx.update(users).set({ passwordHash: novoHash, updatedAt: new Date() }).where(eq(users.id, user.id));
+      await revokeUserSessions(tx, user.id);
+      issuing = issueLoginSession(t.db, verified, undefined);
+      issuing.catch(() => undefined);
+      await waitForLockWait();
+    });
+
+    await expect(issuing).rejects.toMatchObject({ statusCode: 401, code: 'invalid_credentials' });
     expect(await t.db.select().from(sessions).where(eq(sessions.userId, user.id))).toHaveLength(0);
   });
 
