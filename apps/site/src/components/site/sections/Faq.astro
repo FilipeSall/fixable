@@ -1,0 +1,30 @@
+---
+import { getCollection } from 'astro:content';
+
+const perguntas = (await getCollection('faq')).toSorted((a, b) => a.data.ordem - b.data.ordem);
+---
+
+<section id="faq">
+  <div class="wrap">
+    <div class="section-head center">
+      <h2>Perguntas frequentes</h2>
+    </div>
+    <div id="faq-list">
+      {
+        perguntas.map(({ id, data }) => (
+          <details class="faq-item" id={`faq-${id}`}>
+            <summary class="faq-q">
+              {data.pergunta}
+              <span class="plus" aria-hidden="true">
+                +
+              </span>
+            </summary>
+            <div class="faq-a">
+              <div class="faq-a-inner">{data.resposta}</div>
+            </div>
+          </details>
+        ))
+      }
+    </div>
+  </div>
+</section>

@@ -1,0 +1,28 @@
+---
+const diferenciais = [
+  { titulo: 'Transparência', texto: 'Orçamentos claros, sem letras miúdas, antes de qualquer execução.' },
+  { titulo: 'Comunicação', texto: 'Um canal único para acompanhar tudo, do início ao fim.' },
+  { titulo: 'Acompanhamento', texto: 'Alguém da Fixable acompanha o andamento de cada serviço.' },
+  { titulo: 'Registro', texto: 'Histórico documentado de cada intervenção na sua casa.' },
+  { titulo: 'Avaliação', texto: 'Você avalia o serviço prestado ao final de cada atendimento.' },
+  { titulo: 'Garantia', texto: 'Cobertura conforme definido em contrato para cada serviço.' },
+];
+---
+
+<section id="guarantee">
+  <div class="wrap">
+    <div class="section-head center">
+      <h2>Do primeiro contato ao serviço concluído.</h2>
+    </div>
+    <div class="grid guarantee-grid">
+      {
+        diferenciais.map(({ titulo, texto }) => (
+          <div class="card">
+            <h3>{titulo}</h3>
+            <p>{texto}</p>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>

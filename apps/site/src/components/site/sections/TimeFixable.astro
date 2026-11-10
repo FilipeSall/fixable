@@ -1,0 +1,20 @@
+---
+import CertBadge from '../CertBadge.astro';
+---
+
+<section id="time-fixable">
+  <div class="wrap">
+    <div class="section-head center">
+      <h2>Faça parte do time da Fixable</h2>
+      <p>Faça parte da nossa rede de profissionais parceiros. Cadastre seus dados, apresente sua experiência e tenha acesso a oportunidades de serviços pela plataforma Fixable.</p>
+      <div class="fx-flow">
+        <div><CertBadge /></div>
+        <div><span><b>Engenheiro:</b> após o cadastro, você entra no painel de gestão de clientes e profissionais.</span></div>
+        <div><span><b>Outro profissional:</b> você monta seu perfil, anexa o currículo e passa a receber solicitações.</span></div>
+      </div>
+    </div>
+    <div class="form-wrap" id="application-form-root">
+      <slot />
+    </div>
+  </div>
+</section>

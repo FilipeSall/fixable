@@ -14,3 +14,17 @@ export type IconSymbol = {
   attributes: Record<string, string>;
   body: string;
 };
+
+export type CertBadgeProps = {
+  large?: boolean;
+};
+
+export type OrganizationJsonLd = {
+  '@context': 'https://schema.org';
+  '@type': 'Organization';
+  name: string;
+  url: string;
+  email: string;
+  telephone: string;
+  logo: string;
+};

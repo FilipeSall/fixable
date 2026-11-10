@@ -1,0 +1,36 @@
+---
+import { getCollection } from 'astro:content';
+import Icon from '../Icon.astro';
+
+const pacotes = (await getCollection('pacotes')).toSorted((a, b) => a.data.ordem - b.data.ordem);
+---
+
+<section id="packages">
+  <div class="wrap">
+    <div class="section-head center">
+      <h2>Pacotes personalizados para cada momento da casa.</h2>
+    </div>
+    <div class="grid grid-4">
+      {
+        pacotes.map(({ id, data }) => (
+          <div class:list={['card', 'pkg-card', { 'pkg-featured': data.destaque }]}>
+            <h3>{data.nome}</h3>
+            <div class="pkg-price">{data.preco}</div>
+            <p class="pkg-desc">{data.descricao}</p>
+            <ul class="pkg-list">
+              {data.itens.map((item) => (
+                <li>
+                  <Icon name="check" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+            <a class:list={['btn', 'btn-block', data.destaque ? 'btn-primary' : 'btn-ghost']} href={`/?plano=${id}#solicitar`}>
+              Solicitar orçamento
+            </a>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>

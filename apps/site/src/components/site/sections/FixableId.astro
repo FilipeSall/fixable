@@ -1,0 +1,37 @@
+---
+import Icon from '../Icon.astro';
+
+const itens = [
+  { titulo: 'Orçamentos e notas fiscais', texto: 'Centralizados por serviço', icone: 'receipt' },
+  { titulo: 'Fotos antes/depois', texto: 'Registro visual de cada intervenção', icone: 'camera' },
+  { titulo: 'Garantias', texto: 'Prazo e cobertura de cada serviço', icone: 'shield' },
+  { titulo: 'Histórico de profissionais', texto: 'Quem esteve na sua casa e quando', icone: 'person' },
+  { titulo: 'Recomendações preventivas', texto: 'Manutenções futuras sugeridas', icone: 'bell' },
+];
+---
+
+<section id="fixable-id">
+  <div class="wrap fixid-wrap">
+    <div class="fixid-card">
+      <span class="fixid-tag">Fixable ID</span>
+      {
+        itens.map(({ titulo, texto, icone }) => (
+          <div class="fixid-item">
+            <div class="ic">
+              <Icon name={icone} />
+            </div>
+            <div>
+              <strong>{titulo}</strong>
+              <br />
+              <span class="muted">{texto}</span>
+            </div>
+          </div>
+        ))
+      }
+    </div>
+    <div>
+      <h2>Uma história completa da sua casa.</h2>
+      <p class="muted mt-16">Estamos construindo um painel digital que reúne todo o histórico da sua residência em um só lugar.</p>
+    </div>
+  </div>
+</section>

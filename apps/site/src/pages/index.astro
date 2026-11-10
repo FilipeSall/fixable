@@ -1,8 +1,39 @@
 ---
 import SiteLayout from '../layouts/SiteLayout.astro';
+import Checkup from '../components/site/sections/Checkup.astro';
+import Faq from '../components/site/sections/Faq.astro';
+import FixableId from '../components/site/sections/FixableId.astro';
+import ForBusiness from '../components/site/sections/ForBusiness.astro';
+import Guarantee from '../components/site/sections/Guarantee.astro';
+import Hero from '../components/site/sections/Hero.astro';
+import HowItWorks from '../components/site/sections/HowItWorks.astro';
+import Packages from '../components/site/sections/Packages.astro';
+import Problem from '../components/site/sections/Problem.astro';
+import Professionals from '../components/site/sections/Professionals.astro';
+import Services from '../components/site/sections/Services.astro';
+import Solicitar from '../components/site/sections/Solicitar.astro';
+import TimeFixable from '../components/site/sections/TimeFixable.astro';
+import { organizationJsonLd } from '../lib/seo.ts';
+
+const jsonLd = [organizationJsonLd(Astro.site)];
 ---
 
 <SiteLayout
   title="Fixable · Manutenção residencial com diagnóstico e acompanhamento"
   description="A FIXABLE diagnostica, organiza e acompanha a manutenção da sua casa com profissionais qualificados. Fixing before breaking."
-/>
+  jsonLd={jsonLd}
+>
+  <Hero />
+  <Checkup />
+  <HowItWorks />
+  <Services />
+  <Problem />
+  <Packages />
+  <FixableId />
+  <Guarantee />
+  <Professionals />
+  <ForBusiness />
+  <Solicitar />
+  <TimeFixable />
+  <Faq />
+</SiteLayout>

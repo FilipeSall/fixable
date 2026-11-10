@@ -1,0 +1,31 @@
+---
+import { Picture } from 'astro:assets';
+import hero from '../../../assets/hero.webp';
+import Arrow from '../Arrow.astro';
+---
+
+<section id="hero" class="editorial-hero">
+  <div class="wrap">
+    <div class="editorial-intro">
+      <h1>Sua casa em dia.<br /><em>Sua vida mais leve.</em></h1>
+      <div class="editorial-summary">
+        <p>A Fixable diagnostica o que sua casa precisa e coordena os profissionais para resolver. Do primeiro olhar ao último detalhe.</p>
+        <a class="btn btn-primary" href="#solicitar">Solicitar diagnóstico <Arrow /></a>
+        <a class="editorial-textlink" href="#how">Entenda como funciona</a>
+      </div>
+    </div>
+    <figure class="editorial-photo">
+      <Picture
+        src={hero}
+        widths={[640, 1024, 1440]}
+        fallbackFormat="jpg"
+        sizes="(min-width: 1336px) 1240px, 100vw"
+        class="house-photo"
+        alt="Sala integrada ao jardim, com madeira natural e luz da tarde. Imagem ilustrativa gerada por IA."
+        loading="eager"
+        fetchpriority="high"
+      />
+      <figcaption><span>Mais tempo para viver a sua casa.</span><span>Ambiente ilustrativo · imagem gerada por IA</span></figcaption>
+    </figure>
+  </div>
+</section>

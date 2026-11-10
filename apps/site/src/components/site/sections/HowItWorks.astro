@@ -1,0 +1,28 @@
+---
+const passos = [
+  { titulo: 'Você solicita.', texto: 'Conte o que está acontecendo e informe os dados da sua residência.' },
+  { titulo: 'A gente entende.', texto: 'Um especialista vai até sua casa e avalia cada área.' },
+  { titulo: 'Você decide.', texto: 'Receba um relatório com prioridades e um orçamento personalizado.' },
+  { titulo: 'A gente resolve.', texto: 'Profissionais qualificados executam, com acompanhamento até o fim.' },
+];
+---
+
+<section id="how">
+  <div class="wrap">
+    <div class="editorial-section-top">
+      <h2>Você conta com a gente.<br /><em>A gente cuida do resto.</em></h2>
+      <p>Da visita ao serviço concluído, um caminho claro e um único ponto de contato.</p>
+    </div>
+    <ol class="editorial-steps">
+      {
+        passos.map(({ titulo, texto }, indice) => (
+          <li>
+            <span class="stage-num">{indice + 1}</span>
+            <h3>{titulo}</h3>
+            <p>{texto}</p>
+          </li>
+        ))
+      }
+    </ol>
+  </div>
+</section>

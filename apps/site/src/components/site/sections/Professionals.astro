@@ -1,0 +1,63 @@
+---
+import CertBadge from '../CertBadge.astro';
+import Icon from '../Icon.astro';
+
+const etapas = [
+  'Verificação de documentação e experiência',
+  'Entrevista técnica por especialidade',
+  'Avaliação prática de serviços anteriores',
+  'Acompanhamento contínuo de qualidade',
+  'Avaliação pós-serviço pelo cliente',
+  'Renovação periódica de certificação',
+];
+
+const perfis = [
+  { iniciais: 'MR', nome: 'Marcos Ribeiro', funcao: 'Eletricista · profissional parceiro', classe: '' },
+  { iniciais: 'SC', nome: 'Sílvia Costa', funcao: 'Pintora · profissional parceira', classe: 'av-alt' },
+];
+---
+
+<section id="professionals">
+  <div class="wrap pros-wrap">
+    <div>
+      <h2>Profissionais preparados para fazer a diferença.</h2>
+      <p class="muted mt-16">Todo profissional passa por um programa de treinamento e avaliação antes de atender pela Fixable.</p>
+      <ul class="pros-list">
+        {
+          etapas.map((etapa) => (
+            <li>
+              <span class="ic">
+                <Icon name="check" />
+              </span>
+              {etapa}
+            </li>
+          ))
+        }
+      </ul>
+      <a class="btn btn-primary" href="#time-fixable">Faça parte da Fixable</a>
+    </div>
+    <div>
+      {
+        perfis.map(({ iniciais, nome, funcao, classe }) => (
+          <div class="pros-profile">
+            <span class:list={['av', 'md', classe]} aria-hidden="true">
+              {iniciais}
+            </span>
+            <div class="who">
+              <strong>{nome}</strong>
+              <span>{funcao}</span>
+            </div>
+            <CertBadge large />
+          </div>
+        ))
+      }
+      <div class="seal">
+        <svg width="70" height="70" viewBox="0 0 70 70" aria-hidden="true" focusable="false"><circle cx="35" cy="35" r="33" fill="none" stroke="#2a4d3c" stroke-width="2"></circle><circle cx="35" cy="35" r="27" fill="none" stroke="#2a4d3c" stroke-width="1" stroke-dasharray="2 3"></circle><circle cx="35" cy="35" r="22" fill="#2a4d3c"></circle><path d="M25.5 35.5l6.5 6.5 12.5-13" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        <div>
+          <strong>✓ Fixable Certified</strong>
+          <p class="muted">Selo exibido ao lado do perfil de cada profissional parceiro aprovado no programa de certificação Fixable.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,35 @@
+---
+import Icon from '../Icon.astro';
+
+const dores = [
+  { titulo: 'Tempo perdido', texto: 'Buscar, comparar e negociar com prestadores diferentes para cada problema.', icone: 'clock' },
+  { titulo: 'Falta de confiança', texto: 'Sem saber se o profissional é qualificado ou se o preço é justo.', icone: 'shield' },
+  { titulo: 'Zero histórico', texto: 'Nenhum registro do que já foi feito, quando e por quem.', icone: 'history' },
+  { titulo: 'Problemas que voltam', texto: 'Manutenção reativa em vez de prevenção — o mesmo problema se repete.', icone: 'repeat' },
+  { titulo: 'Comunicação fragmentada', texto: 'Whatsapp de um, ligação de outro, sem acompanhamento centralizado.', icone: 'chat' },
+  { titulo: 'Orçamento às cegas', texto: 'Sem clareza do que realmente precisa ser feito antes de gastar.', icone: 'wallet' },
+];
+---
+
+<section id="problem">
+  <div class="wrap">
+    <div class="section-head center">
+      <h2>Manter uma casa não deveria ser tão complicado.</h2>
+      <p>Entre orçamentos que não fecham, profissionais que não aparecem e problemas que voltam, cuidar da própria casa vira mais um trabalho.</p>
+    </div>
+    <div class="grid grid-3">
+      {
+        dores.map(({ titulo, texto, icone }) => (
+          <div class="card">
+            <div class="icon-badge">
+              <Icon name={icone} />
+            </div>
+            <h3>{titulo}</h3>
+            <p>{texto}</p>
+          </div>
+        ))
+      }
+    </div>
+    <div class="problem-highlight">A Fixable centraliza tudo para você.</div>
+  </div>
+</section>

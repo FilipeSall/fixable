@@ -1,0 +1,49 @@
+---
+import Icon from '../Icon.astro';
+
+const recursos = [
+  'Gestão centralizada de múltiplos imóveis',
+  'Relatórios consolidados de manutenção',
+  'SLA e priorização por carteira',
+  'Atendimento comercial dedicado',
+];
+
+const indicadores = [
+  { rotulo: 'Imóveis ativos', valor: '—' },
+  { rotulo: 'Solicitações em aberto', valor: '—' },
+  { rotulo: 'Serviços em andamento', valor: '—' },
+  { rotulo: 'Relatório mensal', valor: 'Disponível' },
+];
+---
+
+<section id="for-business">
+  <div class="wrap biz-grid">
+    <div>
+      <h2>Manutenção residencial em escala.</h2>
+      <p>Para imobiliárias, administradoras e condomínios que gerenciam múltiplos imóveis.</p>
+      <div class="biz-feats">
+        {
+          recursos.map((recurso) => (
+            <div>
+              <span>
+                <Icon name="check" />
+              </span>
+              {recurso}
+            </div>
+          ))
+        }
+      </div>
+      <a class="btn btn-outline-light" href="#solicitar">Falar com o time comercial</a>
+    </div>
+    <div class="biz-panel">
+      {
+        indicadores.map(({ rotulo, valor }) => (
+          <div class="row">
+            <span>{rotulo}</span>
+            <span>{valor}</span>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>

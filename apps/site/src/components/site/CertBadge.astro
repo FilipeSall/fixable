@@ -1,0 +1,9 @@
+---
+import type { CertBadgeProps } from '../../types/site.types.ts';
+
+type Props = CertBadgeProps;
+
+const { large = false } = Astro.props;
+---
+
+<span class:list={['fx-cert', { lg: large }]}><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m5 12 4.5 4.5L19 7"></path></svg></i>Fixable Certified</span>

@@ -455,3 +455,8 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .skip-link{position:absolute;left:16px;top:-100px;z-index:100;background:#2a4d3c;color:#fff;padding:10px 16px;border-radius:3px;font-size:.8rem;font-weight:700}
 .skip-link:focus{top:12px}
 #conteudo:focus{outline:none}
+.editorial-services .card a{display:inline-block;margin-top:10px}
+.seal strong{font-family:'Sora'}
+.seal p{font-size:.85rem;margin-top:4px}
+.av.av-alt{background:#36543f}
+.nav-actions .btn,.editorial-summary .btn,.service-editorial .btn,.pkg-card .btn,#for-business .btn,.faq-q{line-height:normal}

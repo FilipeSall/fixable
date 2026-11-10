@@ -1,0 +1,34 @@
+---
+import Arrow from '../Arrow.astro';
+
+const linhas = [
+  { area: 'Hidráulica', status: 'Tudo certo', classe: 'report-good' },
+  { area: 'Elétrica', status: 'Precisa de atenção', classe: 'report-warn' },
+  { area: 'Pintura e acabamento', status: 'Tudo certo', classe: 'report-good' },
+  { area: 'Gás', status: 'Avaliação prioritária', classe: 'report-bad' },
+  { area: 'Climatização', status: 'Precisa de atenção', classe: 'report-warn' },
+  { area: 'Estrutura e vedação', status: 'Tudo certo', classe: 'report-good' },
+];
+---
+
+<section id="checkup">
+  <div class="wrap open-report">
+    <div class="open-report-copy">
+      <h2>Antes de consertar,<br /><em>entender.</em></h2>
+      <p>Um olhar completo sobre a saúde da sua casa. Nosso HOME CHECK-UP avalia seis frentes e mostra o que precisa de atenção primeiro.</p>
+      <a class="editorial-textlink" href="#solicitar">Quero conhecer minha casa melhor <Arrow /></a>
+    </div>
+    <div class="report-sheet">
+      <div class="report-sheet-top"><strong>HOME CHECK-UP</strong><span>Exemplo de relatório</span></div>
+      {
+        linhas.map(({ area, status, classe }) => (
+          <div class="report-row">
+            <span>{area}</span>
+            <span class={classe}>{status}</span>
+          </div>
+        ))
+      }
+      <p class="report-note">Diagnóstico orientativo. Gás, elétrica e estrutura exigem avaliação de profissional habilitado.</p>
+    </div>
+  </div>
+</section>

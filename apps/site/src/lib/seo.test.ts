@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { canonicalUrl, jsonLdHtml } from './seo.ts';
+import { canonicalUrl, jsonLdHtml, organizationJsonLd } from './seo.ts';
 
 const SITE = new URL('https://www.fixable.com.br');
 
@@ -19,5 +19,19 @@ describe('jsonLdHtml', () => {
     const html = jsonLdHtml({ name: '</script><script>alert(1)</script>' });
     expect(html).not.toContain('<');
     expect(JSON.parse(html)).toEqual({ name: '</script><script>alert(1)</script>' });
+  });
+});
+
+describe('organizationJsonLd', () => {
+  it('descreve a Fixable com URL e logo absolutos a partir do site', () => {
+    expect(organizationJsonLd(SITE)).toEqual({
+      '@context': 'https://schema.org',
+      '@type': 'Organization',
+      name: 'Fixable',
+      url: 'https://www.fixable.com.br/',
+      email: 'contato@fixable.com.br',
+      telephone: '+55 11 90000-0000',
+      logo: 'https://www.fixable.com.br/logo.svg',
+    });
   });
 });
