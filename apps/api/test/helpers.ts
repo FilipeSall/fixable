@@ -1,8 +1,11 @@
 import type { FastifyInstance } from 'fastify';
+import { randomUUID } from 'node:crypto';
 import { sql } from 'drizzle-orm';
+import type { Role, UserStatus } from '@fixable/shared';
 import { buildApp } from '../src/app.ts';
 import { loadConfig, type Config } from '../src/config.ts';
 import { createDb, type Db } from '../src/db/client.ts';
+import { users } from '../src/db/schema/index.ts';
 import { createMemoryMailer, type MemoryMailer } from '../src/modules/mail/memory-mailer.ts';
 
 const DEFAULT_DATABASE_URL_TEST = 'postgres://fixable:fixable@localhost:5432/fixable_test';
@@ -45,9 +48,27 @@ export async function testApp(overrides: Partial<Config> = {}): Promise<TestApp>
 
 export async function resetDb(db: Db): Promise<void> {
   const rows = await db.execute<{ tablename: string }>(
-    sql`SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename NOT LIKE '%drizzle%' AND tablename NOT LIKE '\_\_%'`,
+    sql`SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename NOT LIKE '%drizzle%'`,
   );
   if (rows.length === 0) return;
   const names = rows.map((row) => `"public"."${row.tablename}"`).join(', ');
   await db.execute(sql.raw(`TRUNCATE ${names} RESTART IDENTITY CASCADE`));
+}
+
+export async function createUser(
+  db: Db,
+  p: { role: Role; status?: UserStatus; email?: string; nome?: string; passwordHash?: string },
+): Promise<{ id: string; email: string }> {
+  const suffix = randomUUID().slice(0, 8);
+  const [row] = await db
+    .insert(users)
+    .values({
+      role: p.role,
+      status: p.status ?? 'ativo',
+      nome: p.nome ?? `Usuário ${suffix}`,
+      email: p.email ?? `usuario-${suffix}@fixable.test`,
+      passwordHash: p.passwordHash ?? null,
+    })
+    .returning({ id: users.id, email: users.email });
+  return row!;
 }

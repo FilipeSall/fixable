@@ -7,6 +7,7 @@ if (existsSync(envFile)) process.loadEnvFile(envFile);
 export default defineConfig({
   test: {
     include: ['src/**/*.test.ts'],
+    globalSetup: ['./test/global-setup.ts'],
     fileParallelism: false,
   },
 });
