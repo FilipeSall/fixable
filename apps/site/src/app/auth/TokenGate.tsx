@@ -31,6 +31,12 @@ function Expired() {
   );
 }
 
+const HTTP_GONE = 410;
+
+function isGone(error: unknown): boolean {
+  return error instanceof ApiRequestError && error.status === HTTP_GONE;
+}
+
 function TokenLookup({ token, purpose, children }: Readonly<Props & { token: string }>) {
   const query = useQuery({
     queryKey: ['token-info', token],
@@ -39,12 +45,21 @@ function TokenLookup({ token, purpose, children }: Readonly<Props & { token: str
   });
   if (query.isPending) return <p role="status">Carregando...</p>;
   if (query.isError) {
-    return query.error instanceof ApiRequestError ? (
-      <Expired />
-    ) : (
-      <p role="alert" className="err">
-        {messageOf(query.error)}
-      </p>
+    if (isGone(query.error)) return <Expired />;
+    return (
+      <>
+        <p role="alert" className="err">
+          {messageOf(query.error)}
+        </p>
+        <button
+          type="button"
+          className="btn btn-primary btn-block"
+          disabled={query.isFetching}
+          onClick={() => void query.refetch()}
+        >
+          Tentar de novo
+        </button>
+      </>
     );
   }
   if (query.data.purpose !== purpose) return <Expired />;

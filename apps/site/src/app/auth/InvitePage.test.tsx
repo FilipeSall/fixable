@@ -58,7 +58,29 @@ describe('InvitePage', () => {
     stub(() => Promise.reject(new ApiRequestError(410, 'token_invalid', 'Este link expirou ou já foi usado.')));
     renderInvite();
     expect(await screen.findByText('Este link expirou ou já foi usado.')).toBeInTheDocument();
-    expect(screen.getByRole('link')).toHaveAttribute('href', '/esqueci-senha');
+    expect(screen.getByRole('link', { name: 'Pedir um novo link' })).toHaveAttribute('href', '/esqueci-senha');
+    expect(screen.queryByRole('button', { name: 'Tentar de novo' })).not.toBeInTheDocument();
+  });
+
+  it.each([
+    ['500', new ApiRequestError(500, 'internal', 'Algo deu errado. Tente de novo.'), 'Algo deu errado. Tente de novo.'],
+    [
+      '429',
+      new ApiRequestError(429, 'rate_limited', 'Muitas tentativas. Aguarde alguns minutos e tente de novo.'),
+      'Muitas tentativas. Aguarde alguns minutos e tente de novo.',
+    ],
+    ['falha de rede', new TypeError('Failed to fetch'), 'Algo deu errado. Tente de novo.'],
+  ])('erro %s ao validar o token mostra a mensagem e permite tentar de novo', async (_label, error, message) => {
+    let calls = 0;
+    stub(() => {
+      calls += 1;
+      return calls === 1 ? Promise.reject(error) : Promise.resolve(tokenInfo);
+    });
+    renderInvite();
+    expect(await screen.findByRole('alert')).toHaveTextContent(message);
+    expect(screen.queryByText('Este link expirou ou já foi usado.')).not.toBeInTheDocument();
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Tentar de novo' }));
+    expect(await screen.findByText(/Olá, Ana\./)).toBeInTheDocument();
   });
 
   it('sem token na URL mostra a mensagem de link expirado', async () => {
