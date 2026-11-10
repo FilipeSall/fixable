@@ -6,4 +6,6 @@ export const API = {
   acceptInvite: '/api/auth/invite/accept',
   forgot: '/api/auth/password/forgot',
   reset: '/api/auth/password/reset',
+  publicDiagnostics: '/api/public/diagnostics',
+  publicApplications: '/api/public/applications',
 };
