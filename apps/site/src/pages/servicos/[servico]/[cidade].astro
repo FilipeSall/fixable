@@ -1,0 +1,38 @@
+---
+import { getCollection } from 'astro:content';
+import { DiagnosticForm } from '../../../components/forms/DiagnosticForm.tsx';
+import SiteLayout from '../../../layouts/SiteLayout.astro';
+import { serviceJsonLd, servicoCidadeMeta } from '../../../lib/seo.ts';
+
+/** Gera uma página para cada combinação de serviço e cidade, para o SEO local. */
+export async function getStaticPaths() {
+  const servicos = await getCollection('servicos');
+  const cidades = await getCollection('cidades');
+  return servicos.flatMap((servico) =>
+    cidades.map((cidade) => ({
+      params: { servico: servico.data.id, cidade: cidade.data.id },
+      props: { servico: servico.data, cidade: cidade.data },
+    })),
+  );
+}
+
+const { servico, cidade } = Astro.props;
+const { title, description, heading } = servicoCidadeMeta(servico, cidade);
+const jsonLd = [serviceJsonLd(servico, cidade, Astro.site)];
+---
+
+<SiteLayout title={title} description={description} jsonLd={jsonLd}>
+  <section class="page-section">
+    <div class="wrap">
+      <h1>{heading}</h1>
+      <p class="page-lead">{description}</p>
+      <div class="form-wrap">
+        <DiagnosticForm client:visible cidadeInicial={cidade.nome} />
+        <noscript>
+          <p class="muted">Para enviar sem JavaScript, escreva para contato@fixable.com.br.</p>
+        </noscript>
+      </div>
+      <p><a href={`/servicos/${servico.id}`}>Ver todas as cidades de {servico.nome}</a></p>
+    </div>
+  </section>
+</SiteLayout>

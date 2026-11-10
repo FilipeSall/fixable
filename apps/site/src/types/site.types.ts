@@ -28,3 +28,44 @@ export type OrganizationJsonLd = {
   telephone: string;
   logo: string;
 };
+
+export type ServicoPagina = {
+  id: string;
+  nome: string;
+  busca: string;
+  descricao: string;
+};
+
+export type CidadePagina = {
+  id: string;
+  nome: string;
+  uf: string;
+};
+
+export type PaginaMeta = {
+  title: string;
+  description: string;
+};
+
+export type ServicoCidadeMeta = PaginaMeta & {
+  heading: string;
+};
+
+export type ServiceJsonLd = {
+  '@context': 'https://schema.org';
+  '@type': 'Service';
+  serviceType: string;
+  areaServed: { '@type': 'City'; name: string };
+  provider: {
+    '@type': 'LocalBusiness';
+    name: string;
+    url: string;
+    email: string;
+    telephone: string;
+  };
+};
+
+export type PassoComoFunciona = {
+  titulo: string;
+  texto: string;
+};

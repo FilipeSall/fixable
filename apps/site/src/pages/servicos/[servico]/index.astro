@@ -1,0 +1,49 @@
+---
+import { getCollection } from 'astro:content';
+import SiteLayout from '../../../layouts/SiteLayout.astro';
+import { PASSOS_COMO_FUNCIONA } from '../../../lib/passos.ts';
+import { servicoMeta } from '../../../lib/seo.ts';
+
+/** Gera uma página para cada serviço do catálogo, com a lista de cidades atendidas. */
+export async function getStaticPaths() {
+  const servicos = await getCollection('servicos');
+  const cidades = (await getCollection('cidades')).map(({ data }) => data);
+  return servicos.map(({ data }) => ({ params: { servico: data.id }, props: { servico: data, cidades } }));
+}
+
+const { servico, cidades } = Astro.props;
+const { title, description } = servicoMeta(servico);
+---
+
+<SiteLayout title={title} description={description}>
+  <section class="page-section">
+    <div class="wrap">
+      <h1>{servico.nome}</h1>
+      <p class="page-lead">{servico.descricao}</p>
+      <h2>Como funciona</h2>
+      <ol class="editorial-steps">
+        {
+          PASSOS_COMO_FUNCIONA.map(({ titulo, texto }, indice) => (
+            <li>
+              <span class="stage-num">{indice + 1}</span>
+              <h3>{titulo}</h3>
+              <p>{texto}</p>
+            </li>
+          ))
+        }
+      </ol>
+      <h2>Cidades atendidas</h2>
+      <ul class="city-links">
+        {
+          cidades.map((cidade) => (
+            <li>
+              <a href={`/servicos/${servico.id}/${cidade.id}`}>
+                {servico.busca} em {cidade.nome}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+</SiteLayout>

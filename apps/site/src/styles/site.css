@@ -461,3 +461,11 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .seal p{font-size:.85rem;margin-top:4px}
 .av.av-alt{background:#36543f}
 .nav-actions .btn,.editorial-summary .btn,.service-editorial .btn,.pkg-card .btn,#for-business .btn,.faq-q{line-height:normal}
+
+.page-section{padding:140px 0 80px}
+.page-section h1{font-size:clamp(2.2rem,4.4vw,3.6rem);font-weight:400;margin-bottom:20px}
+.page-section h2{font-size:1.6rem;font-weight:400;margin:48px 0 20px}
+.page-lead{max-width:62ch;color:#53665a;margin-bottom:32px}
+.city-links{list-style:none;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px 24px;padding:0}
+.city-links a,.page-section p a{text-decoration:underline}
+@media(max-width:700px){.page-section{padding:110px 0 60px}}
