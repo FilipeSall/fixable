@@ -32,6 +32,7 @@ export async function testApp(overrides: Partial<Config> = {}): Promise<TestApp>
       COOKIE_SECURE: 'false',
       MAIL_DRIVER: 'memory',
       MAIL_FROM: 'Fixable <nao-responda@fixable.local>',
+      TEAM_EMAIL: 'equipe@fixable.local',
     }),
     ...overrides,
   };

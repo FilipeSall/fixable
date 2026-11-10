@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { Config } from '../types/config.types.ts';
 
+const DEFAULT_TEAM_EMAIL = 'equipe@fixable.local';
 const booleanString = z.enum(['true', 'false']).transform((value) => value === 'true');
 
 export const configSchema = z
@@ -14,6 +15,7 @@ export const configSchema = z
     MAIL_DRIVER: z.enum(['smtp', 'memory']).default('smtp'),
     SMTP_URL: z.string().min(1).optional(),
     MAIL_FROM: z.string().min(1),
+    TEAM_EMAIL: z.email().optional(),
   })
   .refine((config) => config.MAIL_DRIVER !== 'smtp' || config.SMTP_URL !== undefined, {
     path: ['SMTP_URL'],
@@ -22,7 +24,12 @@ export const configSchema = z
   .refine((config) => config.NODE_ENV !== 'production' || config.MAIL_DRIVER === 'smtp', {
     path: ['MAIL_DRIVER'],
     message: 'MAIL_DRIVER precisa ser smtp quando NODE_ENV=production',
-  });
+  })
+  .refine((config) => config.NODE_ENV !== 'production' || config.TEAM_EMAIL !== undefined, {
+    path: ['TEAM_EMAIL'],
+    message: 'TEAM_EMAIL é obrigatório quando NODE_ENV=production',
+  })
+  .transform((config) => ({ ...config, TEAM_EMAIL: config.TEAM_EMAIL ?? DEFAULT_TEAM_EMAIL }));
 
 /** Lê o ambiente e devolve a configuração validada, ou falha listando as variáveis inválidas. */
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {

@@ -8,6 +8,7 @@ export const apiEnv = {
   PORT: '3333',
   NODE_ENV: 'development',
   MAIL_FROM: 'Fixable <nao-responda@fixable.local>',
+  TEAM_EMAIL: 'equipe@fixable.local',
 };
 
 export const mailpitUrl = 'http://localhost:8025';

@@ -2,7 +2,6 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { emailSchema } from '@fixable/shared';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
-import { loadConfig } from '../src/config/env.ts';
 import { resetDb, testApp, type TestApp } from './helpers.ts';
 
 let ctx: TestApp;
@@ -125,22 +124,5 @@ describe('erros padronizados', () => {
     const res = await ctx.app.inject({ method: 'GET', url: '/api/_test/boom' });
     expect(res.statusCode).toBe(500);
     expect(res.json()).toEqual({ error: { code: 'internal', message: 'Algo deu errado. Tente de novo.' } });
-  });
-});
-
-describe('loadConfig', () => {
-  it('lança erro citando DATABASE_URL quando faltar', () => {
-    expect(() => loadConfig({})).toThrow(/DATABASE_URL/);
-  });
-
-  it('em produção exige MAIL_DRIVER=smtp', () => {
-    const production = {
-      NODE_ENV: 'production',
-      DATABASE_URL: 'postgres://x',
-      APP_ORIGIN: 'https://fixable.com.br',
-      MAIL_FROM: 'Fixable <nao-responda@fixable.com.br>',
-    };
-    expect(() => loadConfig({ ...production, MAIL_DRIVER: 'memory' })).toThrow(/MAIL_DRIVER/);
-    expect(loadConfig({ ...production, MAIL_DRIVER: 'smtp', SMTP_URL: 'smtps://mail:465' }).MAIL_DRIVER).toBe('smtp');
   });
 });

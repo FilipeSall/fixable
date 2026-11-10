@@ -39,7 +39,7 @@ async function sendTokenEmail(
   });
 }
 
-/** Executa o trabalho dentro de uma transação, reaproveitando a corrente quando já houver uma. */
+/** Executa o trabalho em uma transação, aninhada (savepoint) quando já houver uma em andamento. */
 async function inTransaction(db: Db | Tx, work: (tx: Tx) => Promise<void>): Promise<void> {
   await db.transaction(work);
 }

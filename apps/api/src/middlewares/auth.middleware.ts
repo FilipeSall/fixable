@@ -27,7 +27,7 @@ export function registerAuth(app: FastifyInstance, deps: { db: Db; config: Pick<
     }
   });
 
-  /** Pre-handler que recusa a requisição quando não há usuário autenticado. */
+  /** Hook preHandler que recusa a requisição quando não há usuário autenticado. */
   const requireAuth: PreHandler = (request, _reply, done) => done(request.user ? undefined : UNAUTHENTICATED());
   app.decorate('requireAuth', requireAuth);
 

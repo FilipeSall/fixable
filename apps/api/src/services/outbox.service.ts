@@ -1,7 +1,7 @@
 import { and, eq, gt, inArray, isNull, lte, sql } from 'drizzle-orm';
 import type { Db, Tx } from '../types/db.types.ts';
 import { emailOutbox, emailTokens } from '../models/index.ts';
-import type { Mailer, TemplateData, TemplateName } from '../types/mail.types.ts';
+import type { Mailer, TemplateDataMap, TemplateName } from '../types/mail.types.ts';
 import type { DeliveryOutcome, OutboxRow } from '../types/outbox.types.ts';
 import { renderTemplate } from '../views/emails/render.ts';
 
@@ -12,9 +12,9 @@ const CLAIM_LEASE_MS = 5 * MINUTE_MS;
 const withoutLink = sql`${emailOutbox.data} - 'link'`;
 
 /** Grava uma mensagem na fila de e-mail para envio posterior pelo worker. */
-export async function enqueueEmail(
+export async function enqueueEmail<N extends TemplateName>(
   db: Db | Tx,
-  msg: { to: string; template: TemplateName; data: Record<string, string>; emailTokenId?: string },
+  msg: { to: string; template: N; data: TemplateDataMap[N]; emailTokenId?: string },
 ): Promise<void> {
   await db.insert(emailOutbox).values({
     to: msg.to,
@@ -75,7 +75,8 @@ async function deliver(db: Db, mailer: Mailer, row: OutboxRow, clock: () => Date
     return 'descartado';
   }
   try {
-    const content = renderTemplate(row.template as TemplateName, row.data as TemplateData);
+    const template = row.template as TemplateName;
+    const content = renderTemplate(template, row.data as TemplateDataMap[typeof template]);
     await mailer.send({ to: row.to, ...content });
   } catch (error) {
     await markFailed(db, row, error, clock());
