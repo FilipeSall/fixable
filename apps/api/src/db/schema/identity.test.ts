@@ -50,4 +50,19 @@ describe('schema de identidade', () => {
       .returning();
     expect(user!.status).toBe('convidado');
   });
+
+  it.each(['Ana@X.com', ' ana@x.com', 'ana@x.com '])('rejeita e-mail não normalizado %j direto no banco', async (email) => {
+    await expect(ctx.db.insert(users).values({ role: 'cliente', nome: 'Ana', email })).rejects.toThrow();
+    expect(await ctx.db.select().from(users)).toHaveLength(0);
+  });
+
+  it('atualizar o usuário renova updatedAt automaticamente', async () => {
+    const past = new Date('2026-01-01T00:00:00Z');
+    const [user] = await ctx.db
+      .insert(users)
+      .values({ role: 'cliente', nome: 'Ana', email: 'ana@fixable.com', updatedAt: past })
+      .returning();
+    const [updated] = await ctx.db.update(users).set({ nome: 'Ana Souza' }).where(eq(users.id, user!.id)).returning();
+    expect(updated!.updatedAt.getTime()).toBeGreaterThan(past.getTime());
+  });
 });
