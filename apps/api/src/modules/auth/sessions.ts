@@ -2,7 +2,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import { and, eq, gt, lt } from 'drizzle-orm';
 import type { FastifyReply } from 'fastify';
 import type { Role } from '@fixable/shared';
-import type { Db } from '../../db/client.ts';
+import type { Db, Tx } from '../../db/client.ts';
 import { sessions, users } from '../../db/schema/index.ts';
 
 export const SESSION_COOKIE = 'fx_session';
@@ -21,12 +21,12 @@ export type SessionUser = {
 
 export type SessionLookup = { user: SessionUser; renewedExpiresAt: Date | null };
 
-function hashToken(token: string): string {
+export function hashToken(token: string): string {
   return createHash('sha256').update(token).digest('hex');
 }
 
 export async function createSession(
-  db: Db,
+  db: Db | Tx,
   userId: string,
   now: Date = new Date(),
 ): Promise<{ token: string; expiresAt: Date }> {
@@ -72,7 +72,7 @@ export async function revokeSession(db: Db, token: string): Promise<void> {
   await db.delete(sessions).where(eq(sessions.tokenHash, hashToken(token)));
 }
 
-export async function revokeUserSessions(db: Db, userId: string): Promise<void> {
+export async function revokeUserSessions(db: Db | Tx, userId: string): Promise<void> {
   await db.delete(sessions).where(eq(sessions.userId, userId));
 }
 

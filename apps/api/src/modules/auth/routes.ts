@@ -1,29 +1,39 @@
 import { eq } from 'drizzle-orm';
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
-import { loginInput, meResponse } from '@fixable/shared';
+import { forgotPasswordInput, loginInput, meResponse, setPasswordInput, tokenInfoResponse } from '@fixable/shared';
+import { z } from 'zod';
 import type { Config } from '../../config.ts';
 import type { Db } from '../../db/client.ts';
 import { users } from '../../db/schema/index.ts';
 import { AppError } from '../../plugins/errors.ts';
+import { consumeEmailToken, peekEmailToken } from './email-tokens.ts';
+import { sendPasswordReset } from './invites.ts';
 import { hashPassword, verifyPassword } from './passwords.ts';
 import {
   clearSessionCookie,
   createSession,
   revokeSession,
+  revokeUserSessions,
   SESSION_COOKIE,
   setSessionCookie,
 } from './sessions.ts';
 
 const LOGIN_WINDOW = '15 minutes';
 const LOGIN_MAX_ATTEMPTS = 10;
+const FORGOT_WINDOW = '1 hour';
+const FORGOT_MAX_REQUESTS = 5;
 const DUMMY_PASSWORD_HASH = await hashPassword('senha-inexistente-0');
+
+function tokenInvalid(): AppError {
+  return new AppError(410, 'token_invalid', 'Este link expirou ou já foi usado.');
+}
 
 function invalidCredentials(): AppError {
   return new AppError(401, 'invalid_credentials', 'E-mail ou senha incorretos.');
 }
 
-export function authRoutes(deps: { db: Db; config: Pick<Config, 'COOKIE_SECURE'> }) {
+export function authRoutes(deps: { db: Db; config: Pick<Config, 'COOKIE_SECURE' | 'APP_ORIGIN'> }) {
   const { db, config } = deps;
 
   return (instance: FastifyInstance, _options: object, done: () => void): void => {
@@ -65,6 +75,79 @@ export function authRoutes(deps: { db: Db; config: Pick<Config, 'COOKIE_SECURE'>
       const token = request.cookies[SESSION_COOKIE];
       if (token) await revokeSession(db, token);
       clearSessionCookie(reply);
+      return reply.status(204).send();
+    });
+
+    app.get(
+      '/auth/tokens/:token',
+      { schema: { params: z.object({ token: z.string().min(1) }), response: { 200: tokenInfoResponse } } },
+      async (request) => {
+        const info = await peekEmailToken(db, request.params.token);
+        if (!info) throw tokenInvalid();
+        return { purpose: info.purpose, nome: info.nome, email: info.email };
+      },
+    );
+
+    app.post(
+      '/auth/invite/accept',
+      { schema: { body: setPasswordInput, response: { 200: meResponse } } },
+      async (request, reply) => {
+        const { token, senha } = request.body;
+        const passwordHash = await hashPassword(senha);
+        const outcome = await db.transaction(async (tx) => {
+          const consumed = await consumeEmailToken(tx, token, 'convite');
+          if (!consumed) return null;
+          const [user] = await tx.select().from(users).where(eq(users.id, consumed.userId)).for('update');
+          if (!user) return null;
+          if (user.status === 'bloqueado') return { blocked: true as const };
+          await tx
+            .update(users)
+            .set({ passwordHash, status: 'ativo', updatedAt: new Date() })
+            .where(eq(users.id, user.id));
+          const session = await createSession(tx, user.id);
+          return { blocked: false as const, user, session };
+        });
+
+        if (!outcome) throw tokenInvalid();
+        if (outcome.blocked) {
+          throw new AppError(403, 'account_blocked', 'Sua conta está bloqueada. Fale com a Fixable.');
+        }
+        setSessionCookie(reply, outcome.session.token, outcome.session.expiresAt, config.COOKIE_SECURE);
+        const { id, nome, email, role } = outcome.user;
+        return { id, nome, email, role };
+      },
+    );
+
+    app.post(
+      '/auth/password/forgot',
+      {
+        config: {
+          rateLimit: {
+            max: FORGOT_MAX_REQUESTS,
+            timeWindow: FORGOT_WINDOW,
+            keyGenerator: (request) => request.ip,
+          },
+        },
+        schema: { body: forgotPasswordInput },
+      },
+      async (request, reply) => {
+        const [user] = await db.select().from(users).where(eq(users.email, request.body.email)).limit(1);
+        if (user?.status === 'ativo') await sendPasswordReset(db, config, user.id);
+        return reply.status(204).send();
+      },
+    );
+
+    app.post('/auth/password/reset', { schema: { body: setPasswordInput } }, async (request, reply) => {
+      const { token, senha } = request.body;
+      const passwordHash = await hashPassword(senha);
+      const done = await db.transaction(async (tx) => {
+        const consumed = await consumeEmailToken(tx, token, 'redefinicao');
+        if (!consumed) return false;
+        await tx.update(users).set({ passwordHash, updatedAt: new Date() }).where(eq(users.id, consumed.userId));
+        await revokeUserSessions(tx, consumed.userId);
+        return true;
+      });
+      if (!done) throw tokenInvalid();
       return reply.status(204).send();
     });
 

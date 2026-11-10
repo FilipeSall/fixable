@@ -9,13 +9,15 @@ import type { Mailer } from './modules/mail/mailer.ts';
 import { authRoutes } from './modules/auth/routes.ts';
 import { registerAuth } from './plugins/auth.ts';
 import { registerErrorHandler } from './plugins/errors.ts';
+import { serializeRequest } from './plugins/log-redaction.ts';
 import { registerOriginCheck } from './plugins/origin-check.ts';
 
 export type AppDeps = { config: Config; db: Db; mailer: Mailer };
 
 export async function buildApp({ config, db }: AppDeps): Promise<FastifyInstance> {
   const trustProxy = config.TRUST_PROXY ? (_address: string, hop: number) => hop === 0 : false;
-  const app = Fastify({ logger: config.NODE_ENV !== 'test', trustProxy });
+  const app = Fastify({ logger: config.NODE_ENV === 'test' ? false : { serializers: { req: serializeRequest } },
+    trustProxy });
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
   registerErrorHandler(app);
