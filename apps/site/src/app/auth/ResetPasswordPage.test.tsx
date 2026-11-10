@@ -3,6 +3,7 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { ApiInit } from '../api.ts';
 import { LoginPage } from './LoginPage.tsx';
 import { ResetPasswordPage } from './ResetPasswordPage.tsx';
 import { ana, mockedFetch, renderApp } from './test-utils.tsx';
@@ -17,9 +18,9 @@ const tokenInfo = { purpose: 'redefinicao', nome: 'Ana', email: 'ana@fixable.com
 describe('ResetPasswordPage', () => {
   beforeEach(() => {
     mockedFetch.mockReset();
-    mockedFetch.mockImplementation((path: string) => {
+    mockedFetch.mockImplementation((path: string, init?: ApiInit) => {
       if (path === API.me) return Promise.resolve(ana);
-      if (path === API.tokenInfo('abc')) return Promise.resolve(tokenInfo);
+      if (path === API.tokenLookup && init?.method === 'POST') return Promise.resolve(tokenInfo);
       if (path === API.reset) return Promise.resolve(undefined);
       return Promise.reject(new Error(`inesperado: ${path}`));
     });

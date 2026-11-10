@@ -1,7 +1,13 @@
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
-import { forgotPasswordInput, loginInput, meResponse, setPasswordInput, tokenInfoResponse } from '@fixable/shared';
-import { z } from 'zod';
+import {
+  forgotPasswordInput,
+  loginInput,
+  meResponse,
+  setPasswordInput,
+  tokenInfoResponse,
+  tokenLookupInput,
+} from '@fixable/shared';
 import type { Config } from '../config/env.ts';
 import { createAuthController } from '../controllers/auth.controller.ts';
 import type { Db } from '../db/client.ts';
@@ -39,10 +45,10 @@ export function authRoutes(deps: { db: Db; config: Pick<Config, 'COOKIE_SECURE' 
 
     app.post('/auth/logout', controller.logout);
 
-    app.get(
-      '/auth/tokens/:token',
-      { schema: { params: z.object({ token: z.string().min(1) }), response: { 200: tokenInfoResponse } } },
-      controller.tokenInfo,
+    app.post(
+      '/auth/tokens/lookup',
+      { config: tokenRateLimit, schema: { body: tokenLookupInput, response: { 200: tokenInfoResponse } } },
+      controller.tokenLookup,
     );
 
     app.post(

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { emailSchema, loginInput, passwordSchema } from './auth.ts';
+import { emailSchema, loginInput, passwordSchema, tokenLookupInput } from './auth.ts';
 
 describe('emailSchema', () => {
   it('normaliza espaços e maiúsculas', () => {
@@ -30,5 +30,12 @@ describe('limite de tamanho da senha', () => {
   it('loginInput rejeita senha com mais de 128 caracteres', () => {
     const result = loginInput.safeParse({ email: 'ana@fixable.com', senha: longa });
     expect(result.error?.issues[0]?.message).toBe('A senha pode ter no máximo 128 caracteres.');
+  });
+});
+describe('tokenLookupInput', () => {
+  it('exige o token no corpo', () => {
+    expect(tokenLookupInput.safeParse({ token: 'abc' }).success).toBe(true);
+    expect(tokenLookupInput.safeParse({ token: '' }).success).toBe(false);
+    expect(tokenLookupInput.safeParse({}).success).toBe(false);
   });
 });

@@ -3,7 +3,7 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ApiRequestError } from '../api.ts';
+import { ApiRequestError, type ApiInit } from '../api.ts';
 import { InvitePage } from './InvitePage.tsx';
 import { ResetPasswordPage } from './ResetPasswordPage.tsx';
 import { ana, mockedFetch, renderApp, unauthenticated } from './test-utils.tsx';
@@ -26,10 +26,14 @@ function renderInvite(route = '/convite?token=abc') {
   );
 }
 
+function isLookupOf(token: string, init: ApiInit | undefined): boolean {
+  return init?.method === 'POST' && (init.body as { token?: string } | undefined)?.token === token;
+}
+
 function stub(info: () => Promise<unknown>, accept: () => Promise<unknown> = () => Promise.resolve(ana)) {
-  mockedFetch.mockImplementation((path: string) => {
+  mockedFetch.mockImplementation((path: string, init?: ApiInit) => {
     if (path === API.me) return Promise.reject(unauthenticated());
-    if (path === API.tokenInfo('abc')) return info();
+    if (path === API.tokenLookup && isLookupOf('abc', init)) return info();
     if (path === API.acceptInvite) return accept();
     return Promise.reject(new Error(`inesperado: ${path}`));
   });
@@ -52,6 +56,15 @@ describe('InvitePage', () => {
     renderInvite();
     expect(await screen.findByText(/Olá, Ana\./)).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Crie sua senha' })).toBeInTheDocument();
+  });
+
+  it('consulta o token por POST com o token no corpo, fora da URL', async () => {
+    stub(() => Promise.resolve(tokenInfo));
+    renderInvite();
+    expect(await screen.findByText(/Olá, Ana\./)).toBeInTheDocument();
+    expect(mockedFetch).toHaveBeenCalledWith('/api/auth/tokens/lookup', { method: 'POST', body: { token: 'abc' } });
+    const paths = mockedFetch.mock.calls.map(([path]) => path);
+    expect(paths.some((path) => path.includes('abc'))).toBe(false);
   });
 
   it('token 410 mostra "Este link expirou ou já foi usado."', async () => {

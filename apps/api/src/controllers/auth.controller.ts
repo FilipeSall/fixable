@@ -1,5 +1,5 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import type { forgotPasswordInput, loginInput, Me, setPasswordInput } from '@fixable/shared';
+import type { forgotPasswordInput, loginInput, Me, setPasswordInput, tokenLookupInput } from '@fixable/shared';
 import type { z } from 'zod';
 import type { Config } from '../config/env.ts';
 import type { Db } from '../db/client.ts';
@@ -10,7 +10,7 @@ type AuthDeps = { db: Db; config: Pick<Config, 'COOKIE_SECURE' | 'APP_ORIGIN'> }
 type LoginRequest = FastifyRequest<{ Body: z.infer<typeof loginInput> }>;
 type SetPasswordRequest = FastifyRequest<{ Body: z.infer<typeof setPasswordInput> }>;
 type ForgotPasswordRequest = FastifyRequest<{ Body: z.infer<typeof forgotPasswordInput> }>;
-type TokenRequest = FastifyRequest<{ Params: { token: string } }>;
+type TokenLookupRequest = FastifyRequest<{ Body: z.infer<typeof tokenLookupInput> }>;
 
 export function createAuthController({ db, config }: AuthDeps) {
   return {
@@ -31,8 +31,8 @@ export function createAuthController({ db, config }: AuthDeps) {
       return reply.status(204).send();
     },
 
-    tokenInfo: (request: TokenRequest) => {
-      return authService.getTokenInfo(db, request.params.token);
+    tokenLookup: (request: TokenLookupRequest) => {
+      return authService.getTokenInfo(db, request.body.token);
     },
 
     acceptInvite: async (request: SetPasswordRequest, reply: FastifyReply): Promise<Me> => {

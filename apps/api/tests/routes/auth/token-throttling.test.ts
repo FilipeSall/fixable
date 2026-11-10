@@ -53,7 +53,7 @@ describe('proteção dos endpoints de token', () => {
     expect(hashCalls.count).toBe(1);
   });
 
-  it.each(['/api/auth/invite/accept', '/api/auth/password/reset'])('a 21ª requisição em 15 min em %s devolve 429', async (url) => {
+  it.each(['/api/auth/invite/accept', '/api/auth/password/reset', '/api/auth/tokens/lookup'])('a 21ª requisição em 15 min em %s devolve 429', async (url) => {
     const statuses: number[] = [];
     for (let attempt = 0; attempt < 21; attempt += 1) statuses.push((await post(url, 'inexistente')).statusCode);
     expect(statuses.slice(0, 20).every((status) => status === 410)).toBe(true);

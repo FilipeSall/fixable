@@ -40,7 +40,7 @@ function isGone(error: unknown): boolean {
 function TokenLookup({ token, purpose, children }: Readonly<Props & { token: string }>) {
   const query = useQuery({
     queryKey: ['token-info', token],
-    queryFn: () => apiFetch<TokenInfo>(API.tokenInfo(token)),
+    queryFn: () => apiFetch<TokenInfo>(API.tokenLookup, { method: 'POST', body: { token } }),
     retry: false,
   });
   if (query.isPending) return <p role="status">Carregando...</p>;

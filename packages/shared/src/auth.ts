@@ -31,6 +31,10 @@ export const setPasswordInput = z.object({
   senha: passwordSchema,
 });
 
+export const tokenLookupInput = z.object({
+  token: z.string().min(1),
+});
+
 export const forgotPasswordInput = z.object({
   email: emailSchema,
 });

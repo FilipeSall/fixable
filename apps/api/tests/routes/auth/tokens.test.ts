@@ -48,6 +48,15 @@ function reset(token: string, senha: string = SENHA_NOVA) {
   });
 }
 
+function lookup(token: string) {
+  return t.app.inject({
+    method: 'POST',
+    url: '/api/auth/tokens/lookup',
+    headers: { origin: ORIGIN },
+    payload: { token },
+  });
+}
+
 function forgot(email: string) {
   return t.app.inject({
     method: 'POST',
@@ -166,17 +175,17 @@ describe('convite', () => {
   });
 });
 
-describe('GET /api/auth/tokens/:token', () => {
+describe('POST /api/auth/tokens/lookup', () => {
   it('devolve purpose, nome e email; token desconhecido devolve 410', async () => {
     const user = await createUser(t.db, { role: 'cliente', status: 'convidado', nome: 'Ana', email: 'ana@fixable.com' });
     await sendInvite(t.db, t.config, user.id);
     const token = await lastLinkToken('convite');
 
-    const ok = await t.app.inject({ method: 'GET', url: `/api/auth/tokens/${token}` });
+    const ok = await lookup(token);
     expect(ok.statusCode).toBe(200);
     expect(ok.json()).toEqual({ purpose: 'convite', nome: 'Ana', email: 'ana@fixable.com' });
 
-    const unknown = await t.app.inject({ method: 'GET', url: '/api/auth/tokens/desconhecido' });
+    const unknown = await lookup('desconhecido');
     expect(unknown.statusCode).toBe(410);
     expect(unknown.json()).toEqual(TOKEN_INVALIDO);
   });
@@ -186,8 +195,25 @@ describe('GET /api/auth/tokens/:token', () => {
     await sendInvite(t.db, t.config, user.id);
     const token = await lastLinkToken('convite');
     await accept(token);
-    const response = await t.app.inject({ method: 'GET', url: `/api/auth/tokens/${token}` });
+    const response = await lookup(token);
     expect(response.statusCode).toBe(410);
+  });
+
+  it('corpo sem token devolve 400', async () => {
+    const response = await t.app.inject({
+      method: 'POST',
+      url: '/api/auth/tokens/lookup',
+      headers: { origin: ORIGIN },
+      payload: {},
+    });
+    expect(response.statusCode).toBe(400);
+  });
+
+  it('o GET antigo com o token no caminho não existe mais', async () => {
+    const user = await createUser(t.db, { role: 'cliente', status: 'convidado' });
+    await sendInvite(t.db, t.config, user.id);
+    const response = await t.app.inject({ method: 'GET', url: `/api/auth/tokens/${await lastLinkToken('convite')}` });
+    expect(response.statusCode).toBe(404);
   });
 });
 
@@ -326,6 +352,6 @@ describe('redefinição de senha', () => {
       .from(emailTokens)
       .where(and(eq(emailTokens.userId, user.id), eq(emailTokens.purpose, 'redefinicao')));
     expect(rows.filter((row) => row.usedAt === null)).toHaveLength(1);
-    expect((await t.app.inject({ method: 'GET', url: `/api/auth/tokens/${invite}` })).statusCode).toBe(200);
+    expect((await lookup(invite)).statusCode).toBe(200);
   });
 });
