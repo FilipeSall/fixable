@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "types": ["astro/client", "@testing-library/jest-dom/vitest"]
+  },
+  "include": ["src", "astro.config.mjs", "vitest.config.ts"]
+}
