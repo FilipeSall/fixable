@@ -1,0 +1,38 @@
+[
+  {
+    "id": "1m",
+    "nome": "Plano para 1 mês",
+    "preco": "Orçamento personalizado",
+    "descricao": "Ideal para quem precisa resolver problemas pontuais e realizar uma avaliação inicial da residência.",
+    "itens": ["Diagnóstico inicial", "Priorização de reparos", "Acompanhamento do mês"],
+    "destaque": false,
+    "ordem": 1
+  },
+  {
+    "id": "3m",
+    "nome": "Plano para 3 meses",
+    "preco": "Orçamento personalizado",
+    "descricao": "Indicado para quem deseja organizar reparos e acompanhar as principais necessidades da casa a curto prazo.",
+    "itens": ["Diagnóstico completo", "Organização dos reparos", "Acompanhamento trimestral"],
+    "destaque": true,
+    "ordem": 2
+  },
+  {
+    "id": "6m",
+    "nome": "Plano para 6 meses",
+    "preco": "Orçamento personalizado",
+    "descricao": "Uma solução para quem busca manutenção contínua, acompanhamento e prevenção de problemas.",
+    "itens": ["Manutenção contínua", "Prevenção de problemas", "Acompanhamento semestral"],
+    "destaque": false,
+    "ordem": 3
+  },
+  {
+    "id": "12m",
+    "nome": "Plano anual",
+    "preco": "Orçamento personalizado",
+    "descricao": "Acompanhamento completo da residência ao longo do ano, com planejamento preventivo e histórico de manutenção.",
+    "itens": ["Planejamento preventivo", "Histórico de manutenção", "Acompanhamento dedicado"],
+    "destaque": false,
+    "ordem": 4
+  }
+]

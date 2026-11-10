@@ -1,0 +1,8 @@
+[
+  { "id": "sao-paulo", "nome": "São Paulo", "uf": "SP" },
+  { "id": "santo-andre", "nome": "Santo André", "uf": "SP" },
+  { "id": "sao-bernardo-do-campo", "nome": "São Bernardo do Campo", "uf": "SP" },
+  { "id": "sao-caetano-do-sul", "nome": "São Caetano do Sul", "uf": "SP" },
+  { "id": "guarulhos", "nome": "Guarulhos", "uf": "SP" },
+  { "id": "osasco", "nome": "Osasco", "uf": "SP" }
+]

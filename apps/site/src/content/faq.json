@@ -1,0 +1,12 @@
+[
+  { "id": "diagnostico-inicial", "pergunta": "Como funciona o diagnóstico inicial?", "resposta": "Um profissional Fixable visita sua casa, avalia as principais áreas e entrega um relatório com prioridades e recomendações.", "ordem": 1 },
+  { "id": "custo-do-diagnostico", "pergunta": "O diagnóstico tem custo?", "resposta": "Isso depende do pacote e da região. As condições são apresentadas antes da confirmação da visita.", "ordem": 2 },
+  { "id": "profissionais", "pergunta": "Os profissionais são funcionários da Fixable?", "resposta": "Os profissionais fazem parte da rede Fixable e passam por um processo de verificação e treinamento antes de atender.", "ordem": 3 },
+  { "id": "garantia", "pergunta": "Como funciona a garantia dos serviços?", "resposta": "Cada serviço possui garantia conforme definido em contrato no momento da contratação.", "ordem": 4 },
+  { "id": "cobertura", "pergunta": "A Fixable atende toda a cidade?", "resposta": "A cobertura varia por região. Informe sua cidade no formulário para confirmarmos disponibilidade.", "ordem": 5 },
+  { "id": "servico-especifico", "pergunta": "Posso solicitar apenas um serviço específico?", "resposta": "Sim. Você pode solicitar um diagnóstico completo ou indicar diretamente a área de interesse.", "ordem": 6 },
+  { "id": "empresas", "pergunta": "Como funciona para imobiliárias e condomínios?", "resposta": "Oferecemos atendimento B2B com gestão centralizada — veja a seção 'Para empresas'.", "ordem": 7 },
+  { "id": "fixable-id", "pergunta": "O que é o Fixable ID?", "resposta": "É um painel digital com o histórico completo da casa.", "ordem": 8 },
+  { "id": "seja-profissional", "pergunta": "Como me torno um profissional Fixable?", "resposta": "Preencha o formulário de cadastro na seção “Faça parte do time da Fixable”. Sua candidatura passa por análise.", "ordem": 9 },
+  { "id": "suporte", "pergunta": "Como entro em contato com o suporte?", "resposta": "Pelo e-mail contato@fixable.com.br ou telefone informado no rodapé do site.", "ordem": 10 }
+]

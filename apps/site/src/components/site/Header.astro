@@ -1,0 +1,56 @@
+---
+import Logo from './Logo.astro';
+
+const links = [
+  { href: '/#how', label: 'Como funciona' },
+  { href: '/#services', label: 'Serviços' },
+  { href: '/#guarantee', label: 'Diferenciais' },
+  { href: '/#time-fixable', label: 'Para profissionais' },
+  { href: '/#for-business', label: 'Para empresas' },
+  { href: '/#faq', label: 'FAQ' },
+];
+---
+
+<header id="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="/">
+      <Logo />
+    </a>
+    <nav class="nav-links" aria-label="Principal">
+      {links.map(({ href, label }) => <a href={href}>{label}</a>)}
+    </nav>
+    <div class="nav-actions">
+      <a class="btn btn-ghost" href="/app/login">Entrar</a>
+      <a class="btn btn-primary" href="/#solicitar">Solicitar diagnóstico</a>
+      <button class="hamburger" type="button" aria-label="Menu" aria-expanded="false" aria-controls="mobile-menu" data-menu-toggle>
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+  <nav id="mobile-menu" aria-label="Menu móvel">
+    {links.map(({ href, label }) => <a href={href}>{label}</a>)}
+    <a href="/app/login">Entrar</a>
+  </nav>
+</header>
+
+<script>
+  const toggle = document.querySelector<HTMLButtonElement>('[data-menu-toggle]');
+  const menu = document.getElementById('mobile-menu');
+
+  /** Abre ou fecha o menu móvel, mantendo o aria-expanded do botão em sincronia. */
+  function setMenuOpen(open: boolean): void {
+    menu?.classList.toggle('open', open);
+    toggle?.setAttribute('aria-expanded', String(open));
+  }
+
+  toggle?.addEventListener('click', () => setMenuOpen(toggle.getAttribute('aria-expanded') !== 'true'));
+  menu?.addEventListener('click', (event) => {
+    if (event.target instanceof HTMLAnchorElement) setMenuOpen(false);
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && toggle?.getAttribute('aria-expanded') === 'true') {
+      setMenuOpen(false);
+      toggle.focus();
+    }
+  });
+</script>

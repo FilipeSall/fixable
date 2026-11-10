@@ -1,0 +1,11 @@
+---
+import { iconSymbol } from '../../lib/icons.ts';
+import type { IconProps } from '../../types/site.types.ts';
+
+type Props = IconProps;
+
+const { name, class: className } = Astro.props;
+const { attributes, body } = iconSymbol(name);
+---
+
+<svg class:list={['fx-icon', className]} width="24" height="24" aria-hidden="true" focusable="false" {...attributes} set:html={body} />

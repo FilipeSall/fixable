@@ -1,0 +1,27 @@
+---
+import '../styles/tokens.css';
+import '../styles/site.css';
+import Footer from '../components/site/Footer.astro';
+import Header from '../components/site/Header.astro';
+import Seo from '../components/site/Seo.astro';
+import type { SeoProps } from '../types/site.types.ts';
+
+type Props = SeoProps;
+---
+
+<!doctype html>
+<html lang="pt-BR" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <Seo {...Astro.props} />
+  </head>
+  <body>
+    <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+    <Header />
+    <main id="conteudo" tabindex="-1">
+      <slot />
+    </main>
+    <Footer />
+  </body>
+</html>

@@ -1,0 +1,42 @@
+---
+import Logo from './Logo.astro';
+
+const ano = new Date().getFullYear();
+---
+
+<footer>
+  <div class="wrap">
+    <div class="footer-grid">
+      <div>
+        <div class="brand footer-brand">
+          <Logo />
+        </div>
+        <p class="footer-about">Fixing before breaking. Gestão e manutenção residencial de ponta a ponta.</p>
+      </div>
+      <div>
+        <h5>Empresa</h5>
+        <a href="/#problem">Sobre a Fixable</a>
+        <a href="/#services">Serviços</a>
+        <a href="/#time-fixable">Trabalhe conosco</a>
+      </div>
+      <div>
+        <h5>Suporte</h5>
+        <a href="/#faq">Perguntas frequentes</a>
+        <a href="/#solicitar">Solicitar diagnóstico</a>
+        <a href="/app/login">Entrar na plataforma</a>
+      </div>
+      <div>
+        <h5>Contato</h5>
+        <a href="mailto:contato@fixable.com.br">contato@fixable.com.br</a>
+        <a href="tel:+5511900000000">(11) 90000-0000</a>
+        <span class="footer-place">São Paulo, SP</span>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© {ano} Fixable Tecnologia e Serviços Ltda. Todos os direitos reservados.</span>
+      <span class="footer-legal">
+        <a href="/termos-de-uso">Termos de uso</a><a href="/privacidade">Privacidade</a><a href="/privacidade#lgpd">LGPD</a>
+      </span>
+    </div>
+  </div>
+</footer>

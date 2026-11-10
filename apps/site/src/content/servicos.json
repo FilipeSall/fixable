@@ -1,0 +1,14 @@
+[
+  { "id": "eletrica", "nome": "Elétrica", "busca": "Eletricista", "descricao": "Instalações, reparos e troca de quadros e pontos.", "icone": "electric", "ordem": 1 },
+  { "id": "hidraulica", "nome": "Hidráulica", "busca": "Encanador", "descricao": "Vazamentos, tubulações, registros e caixas d'água.", "icone": "water", "ordem": 2 },
+  { "id": "gas", "nome": "Gás", "busca": "Instalador de gás", "descricao": "Instalação e manutenção de rede e equipamentos a gás.", "icone": "gas", "ordem": 3 },
+  { "id": "ar-condicionado", "nome": "Ar-condicionado", "busca": "Técnico de ar-condicionado", "descricao": "Instalação, limpeza e manutenção de climatização.", "icone": "climate", "ordem": 4 },
+  { "id": "pintura", "nome": "Pintura", "busca": "Pintor", "descricao": "Pintura interna, externa e tratamento de superfícies.", "icone": "paint", "ordem": 5 },
+  { "id": "marcenaria", "nome": "Marcenaria", "busca": "Marceneiro", "descricao": "Móveis planejados, reparos e ajustes sob medida.", "icone": "wood", "ordem": 6 },
+  { "id": "alvenaria", "nome": "Alvenaria", "busca": "Pedreiro", "descricao": "Reformas estruturais, reboco e acabamento.", "icone": "masonry", "ordem": 7 },
+  { "id": "portas-e-janelas", "nome": "Portas e janelas", "busca": "Instalação de portas e janelas", "descricao": "Instalação, ajuste e troca de esquadrias.", "icone": "door", "ordem": 8 },
+  { "id": "impermeabilizacao", "nome": "Impermeabilização", "busca": "Impermeabilização", "descricao": "Proteção contra infiltrações e umidade.", "icone": "seal", "ordem": 9 },
+  { "id": "seguranca-residencial", "nome": "Segurança residencial", "busca": "Segurança residencial", "descricao": "Fechaduras, câmeras e sistemas de alarme.", "icone": "security", "ordem": 10 },
+  { "id": "area-externa", "nome": "Área externa", "busca": "Manutenção de área externa", "descricao": "Jardim, quintal, calçadas e áreas de lazer.", "icone": "garden", "ordem": 11 },
+  { "id": "pequenos-reparos", "nome": "Pequenos reparos", "busca": "Pequenos reparos", "descricao": "Ajustes gerais do dia a dia da casa.", "icone": "repair", "ordem": 12 }
+]
