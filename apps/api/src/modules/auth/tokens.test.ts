@@ -199,12 +199,24 @@ describe('redefinição de senha', () => {
     expect(await t.db.select().from(emailOutbox)).toHaveLength(0);
   });
 
-  it('forgot de usuário que não está ativo devolve 204 e não enfileira nada', async () => {
-    await createUser(t.db, { role: 'cliente', status: 'convidado', email: 'a@fixable.com' });
+  it('forgot de usuário bloqueado devolve 204 e não enfileira nada', async () => {
     await createUser(t.db, { role: 'cliente', status: 'bloqueado', email: 'b@fixable.com' });
-    expect((await forgot('a@fixable.com')).statusCode).toBe(204);
     expect((await forgot('b@fixable.com')).statusCode).toBe(204);
     expect(await t.db.select().from(emailOutbox)).toHaveLength(0);
+  });
+
+  it('forgot de usuário convidado reenvia o convite e invalida o anterior', async () => {
+    const user = await createUser(t.db, { role: 'cliente', status: 'convidado', email: 'a@fixable.com' });
+    await sendInvite(t.db, t.config, user.id);
+    const previous = await lastLinkToken('convite');
+
+    expect((await forgot('A@Fixable.com')).statusCode).toBe(204);
+
+    const queued = await t.db.select().from(emailOutbox);
+    expect(queued.map((row) => row.template)).toEqual(['convite', 'convite']);
+    expect((queued[1]!.data as { link: string }).link).toMatch(/^http:\/\/localhost:4321\/app\/convite\?token=/);
+    expect((await accept(previous)).statusCode).toBe(410);
+    expect((await accept(await lastLinkToken('convite'))).statusCode).toBe(200);
   });
 
   it('forgot trata e-mail com maiúsculas e espaços como o mesmo usuário', async () => {

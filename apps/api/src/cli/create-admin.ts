@@ -1,4 +1,5 @@
 import { parseArgs } from 'node:util';
+import { eq } from 'drizzle-orm';
 import { emailSchema } from '@fixable/shared';
 import { loadConfig, type Config } from '../config.ts';
 import { createDb, type Db } from '../db/client.ts';
@@ -7,20 +8,27 @@ import { sendInvite } from '../modules/auth/invites.ts';
 
 const DUPLICATE_MESSAGE = 'Já existe um usuário com este e-mail.';
 
+export type InviteDelivery = 'enviado' | 'reenviado';
+
 export async function createAdmin(
   db: Db,
   config: Pick<Config, 'APP_ORIGIN'>,
   input: { nome: string; email: string },
-): Promise<{ userId: string }> {
+): Promise<{ userId: string; invite: InviteDelivery }> {
   return db.transaction(async (tx) => {
     const [created] = await tx
       .insert(users)
       .values({ role: 'admin', status: 'convidado', nome: input.nome, email: input.email })
       .onConflictDoNothing({ target: users.email })
       .returning({ id: users.id });
-    if (!created) throw new Error(DUPLICATE_MESSAGE);
-    await sendInvite(tx, config, created.id);
-    return { userId: created.id };
+    if (created) {
+      await sendInvite(tx, config, created.id);
+      return { userId: created.id, invite: 'enviado' };
+    }
+    const [existing] = await tx.select().from(users).where(eq(users.email, input.email)).for('update');
+    if (existing?.role !== 'admin' || existing.status !== 'convidado') throw new Error(DUPLICATE_MESSAGE);
+    await sendInvite(tx, config, existing.id);
+    return { userId: existing.id, invite: 'reenviado' };
   });
 }
 
@@ -43,8 +51,8 @@ async function main(): Promise<void> {
     const config = loadConfig();
     const connection = createDb(config.DATABASE_URL);
     close = connection.close;
-    await createAdmin(connection.db, config, input);
-    console.log(`Convite enviado para ${input.email}`);
+    const { invite } = await createAdmin(connection.db, config, input);
+    console.log(`Convite ${invite} para ${input.email}`);
   } catch (error) {
     console.error(error instanceof Error ? error.message : String(error));
     process.exitCode = 1;

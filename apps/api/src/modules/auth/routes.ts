@@ -8,7 +8,7 @@ import type { Db } from '../../db/client.ts';
 import { users } from '../../db/schema/index.ts';
 import { AppError } from '../../plugins/errors.ts';
 import { consumeEmailToken, peekEmailToken, type EmailTokenPurpose } from './email-tokens.ts';
-import { sendPasswordReset } from './invites.ts';
+import { sendInvite, sendPasswordReset } from './invites.ts';
 import { hashPassword, verifyPassword } from './passwords.ts';
 import {
   clearSessionCookie,
@@ -145,6 +145,7 @@ export function authRoutes(deps: { db: Db; config: Pick<Config, 'COOKIE_SECURE' 
       async (request, reply) => {
         const [user] = await db.select().from(users).where(eq(users.email, request.body.email)).limit(1);
         if (user?.status === 'ativo') await sendPasswordReset(db, config, user.id);
+        if (user?.status === 'convidado') await sendInvite(db, config, user.id);
         return reply.status(204).send();
       },
     );
