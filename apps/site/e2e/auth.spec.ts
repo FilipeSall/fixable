@@ -1,36 +1,12 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { expect, test } from '@playwright/test';
-import { apiEnv, mailpitUrl } from './env.ts';
+import { apiEnv } from './env.ts';
+import { clearMailbox, readInviteLink } from './mailpit.ts';
 
 const run = promisify(execFile);
 const senha = 'senha123';
 const apiDir = new URL('../../api', import.meta.url).pathname;
-
-type MessageSummary = { ID: string; To: { Address: string }[] };
-
-async function clearMailbox(): Promise<void> {
-  const res = await fetch(`${mailpitUrl}/api/v1/messages`, { method: 'DELETE' });
-  expect(res.ok).toBe(true);
-}
-
-async function findMessageId(email: string): Promise<string | undefined> {
-  const res = await fetch(`${mailpitUrl}/api/v1/messages`);
-  const body = (await res.json()) as { messages: MessageSummary[] };
-  return body.messages.find((message) => message.To.some((to) => to.Address === email))?.ID;
-}
-
-async function readInviteLink(email: string): Promise<string> {
-  let id: string | undefined;
-  await expect
-    .poll(async () => (id = await findMessageId(email)), { timeout: 30_000, intervals: [500] })
-    .toBeDefined();
-  const res = await fetch(`${mailpitUrl}/api/v1/message/${id}`);
-  const { Text } = (await res.json()) as { Text: string };
-  const link = /https?:\/\/\S+\/app\/convite#token=\S+/.exec(Text)?.[0];
-  if (!link) throw new Error('Link de convite não encontrado no e-mail.');
-  return link;
-}
 
 test.describe.configure({ mode: 'serial' });
 

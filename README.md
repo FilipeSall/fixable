@@ -60,3 +60,15 @@ pnpm e2e
 
 - `pnpm test` usa o banco `fixable_test` do Postgres do compose.
 - `pnpm e2e` roda o Playwright contra a API em `:3333` e o site em `:4321`, reaproveitando os que já estiverem rodando. Na primeira vez, instale o navegador com `pnpm --filter site exec playwright install chromium`.
+
+## Teste manual do fluxo público
+
+Com `docker compose up -d --build` e `pnpm dev` rodando:
+
+1. Abra `http://localhost:4321`, escolha um pacote em "Solicitar orçamento" e veja o chip "Plano de interesse" no formulário.
+2. Preencha o diagnóstico, aceite os termos e envie. A tela mostra "Solicitação registrada.".
+3. Abra o Mailpit (`http://localhost:8025`) e o e-mail de convite enviado ao endereço informado.
+4. Clique no link do convite (`/app/convite#token=...`), crie a senha e confira que você cai no painel do cliente em `/app/cliente`.
+5. Teste também o formulário "Faça parte do time" (resposta "Cadastro recebido.") e uma página de serviço por cidade, como `http://localhost:4321/servicos/eletrica/santo-andre`, que já vem com a cidade preenchida.
+
+Cada rota pública aceita 5 envios a cada 15 minutos por IP. Se receber 429 ao repetir o teste, reinicie a API com `docker compose restart api`.

@@ -2,9 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { shouldRewrite } from './spa-fallback.ts';
 
 describe('shouldRewrite', () => {
-  it('reescreve as rotas do app, inclusive /app/ e com query string', () => {
+  it('reescreve as rotas do app, inclusive /app/, com query string e com fragmento', () => {
     expect(shouldRewrite('GET', '/app/')).toBe(true);
     expect(shouldRewrite('GET', '/app/login')).toBe(true);
+    expect(shouldRewrite('GET', '/app/convite?origem=email')).toBe(true);
     expect(shouldRewrite('GET', '/app/convite#token=abc')).toBe(true);
   });
 
