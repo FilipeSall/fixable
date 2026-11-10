@@ -1,0 +1,2 @@
+CREATE DATABASE fixable;
+CREATE DATABASE fixable_test;
