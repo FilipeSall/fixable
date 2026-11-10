@@ -52,7 +52,7 @@ export async function findSessionUser(
   return { user, renewedExpiresAt };
 }
 
-export async function revokeSession(db: Db, token: string): Promise<void> {
+export async function revokeSession(db: Db | Tx, token: string): Promise<void> {
   await db.delete(sessions).where(eq(sessions.tokenHash, hashToken(token)));
 }
 

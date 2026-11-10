@@ -3,6 +3,7 @@ import type { Me } from '@fixable/shared';
 import type { Config } from '../config/env.ts';
 import type { Db } from '../db/client.ts';
 import { users } from '../models/index.ts';
+import type { VerifiedLogin } from '../types/auth.types.ts';
 import { AppError } from '../utils/app-error.ts';
 import { hashPassword, verifyPassword } from '../utils/password.ts';
 import { consumeEmailToken, peekEmailToken, type EmailTokenPurpose } from './email-token.service.ts';
@@ -30,21 +31,46 @@ async function requireLivePurpose(db: Db, token: string, purpose: EmailTokenPurp
   if (info?.purpose !== purpose) throw tokenInvalid();
 }
 
-export async function login(
-  db: Db,
-  input: { email: string; senha: string; previousToken: string | undefined },
-): Promise<SessionGrant> {
+/** Confere e-mail, senha e situação da conta, para só então emitir a sessão. */
+export async function verifyLoginCredentials(db: Db, input: { email: string; senha: string }): Promise<VerifiedLogin> {
   const [user] = await db.select().from(users).where(eq(users.email, input.email)).limit(1);
 
   const passwordMatches = await verifyPassword(user?.passwordHash ?? DUMMY_PASSWORD_HASH, input.senha);
   if (!user?.passwordHash || !passwordMatches) throw invalidCredentials();
   if (user.status === 'bloqueado') throw accountBlocked();
   if (user.status !== 'ativo') throw invalidCredentials();
+  return { user, passwordHash: user.passwordHash };
+}
 
-  if (input.previousToken) await revokeSession(db, input.previousToken);
+/** Emite a sessão do login já verificado, revogando a sessão anterior do navegador. */
+export async function issueLoginSession(
+  db: Db,
+  verified: VerifiedLogin,
+  previousToken: string | undefined,
+): Promise<SessionGrant> {
+  const outcome = await db.transaction(async (tx) => {
+    const [user] = await tx.select().from(users).where(eq(users.id, verified.user.id)).for('update');
+    if (user?.passwordHash !== verified.passwordHash) return 'invalid' as const;
+    if (user.status === 'bloqueado') return 'blocked' as const;
+    if (user.status !== 'ativo') return 'invalid' as const;
+    if (previousToken) await revokeSession(tx, previousToken);
+    const session = await createSession(tx, user.id);
+    return { user, session };
+  });
 
-  const session = await createSession(db, user.id);
-  return { user: { id: user.id, nome: user.nome, email: user.email, role: user.role }, session };
+  if (outcome === 'invalid') throw invalidCredentials();
+  if (outcome === 'blocked') throw accountBlocked();
+  const { id, nome, email, role } = outcome.user;
+  return { user: { id, nome, email, role }, session: outcome.session };
+}
+
+/** Autentica por e-mail e senha e devolve o usuário com a nova sessão. */
+export async function login(
+  db: Db,
+  input: { email: string; senha: string; previousToken: string | undefined },
+): Promise<SessionGrant> {
+  const verified = await verifyLoginCredentials(db, input);
+  return issueLoginSession(db, verified, input.previousToken);
 }
 
 export async function logout(db: Db, token: string | undefined): Promise<void> {
