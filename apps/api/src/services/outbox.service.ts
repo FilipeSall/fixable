@@ -66,8 +66,9 @@ async function markFailed(db: Db, row: OutboxRow, error: unknown, now: Date): Pr
     .where(eq(emailOutbox.id, row.id));
 }
 
-async function deliver(db: Db, mailer: Mailer, row: OutboxRow, now: Date): Promise<DeliveryOutcome> {
-  if (row.emailTokenId && !(await isTokenOpen(db, row.emailTokenId, now))) {
+/** Entrega uma mensagem reservada, lendo o relógio a cada passo para validar o link e datar o resultado. */
+async function deliver(db: Db, mailer: Mailer, row: OutboxRow, clock: () => Date): Promise<DeliveryOutcome> {
+  if (row.emailTokenId && !(await isTokenOpen(db, row.emailTokenId, clock()))) {
     await db.update(emailOutbox).set({ status: 'descartado', data: withoutLink }).where(eq(emailOutbox.id, row.id));
     return 'descartado';
   }
@@ -75,27 +76,28 @@ async function deliver(db: Db, mailer: Mailer, row: OutboxRow, now: Date): Promi
     const content = renderTemplate(row.template as TemplateName, row.data as TemplateData);
     await mailer.send({ to: row.to, ...content });
   } catch (error) {
-    await markFailed(db, row, error, now);
+    await markFailed(db, row, error, clock());
     return 'falhou';
   }
   await db
     .update(emailOutbox)
-    .set({ status: 'enviado', sentAt: now, lastError: null, data: withoutLink })
+    .set({ status: 'enviado', sentAt: clock(), lastError: null, data: withoutLink })
     .where(eq(emailOutbox.id, row.id));
   return 'enviado';
 }
 
+/** Processa um lote da fila de e-mail; o relógio é lido a cada reserva e entrega, não uma vez por lote. */
 export async function processOutbox(
   db: Db,
   mailer: Mailer,
-  now: Date = new Date(),
+  clock: () => Date = () => new Date(),
 ): Promise<{ sent: number; failed: number }> {
   let sent = 0;
   let failed = 0;
   for (let claimed = 0; claimed < BATCH_SIZE; claimed += 1) {
-    const row = await claimNext(db, now);
+    const row = await claimNext(db, clock());
     if (!row) break;
-    const outcome = await deliver(db, mailer, row, now);
+    const outcome = await deliver(db, mailer, row, clock);
     if (outcome === 'enviado') sent += 1;
     if (outcome === 'falhou') failed += 1;
   }

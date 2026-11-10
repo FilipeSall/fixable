@@ -262,7 +262,7 @@ describe('redefinição de senha', () => {
     expect((queued!.data as { link: string }).link).toMatch(/^http:\/\/localhost:4321\/app\/redefinir-senha\?token=/);
 
     expect(await processOutbox(t.db, t.mailer)).toEqual({ sent: 0, failed: 1 });
-    expect(await processOutbox(t.db, t.mailer, new Date(Date.now() + 10 * MINUTE_MS))).toEqual({ sent: 1, failed: 0 });
+    expect(await processOutbox(t.db, t.mailer, () => new Date(Date.now() + 10 * MINUTE_MS))).toEqual({ sent: 1, failed: 0 });
     expect(t.mailer.sent).toHaveLength(1);
   });
 
