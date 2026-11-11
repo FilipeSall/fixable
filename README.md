@@ -81,4 +81,4 @@ Com `docker compose up -d --build` e `pnpm dev` rodando:
 4. Clique no link do convite (`/app/convite#token=...`), crie a senha e confira que você cai no painel do cliente em `/app/cliente`.
 5. Teste também o formulário "Faça parte do time" (resposta "Cadastro recebido.") e uma página de serviço por cidade, como `http://localhost:4321/servicos/eletrica/santo-andre`, que já vem com a cidade preenchida.
 
-Cada rota pública aceita 5 envios a cada 15 minutos por IP. Se receber 429 ao repetir o teste, reinicie a API com `docker compose restart api`.
+Cada rota pública aceita `PUBLIC_FORM_RATE_LIMIT` envios a cada 15 minutos por IP. O padrão, usado em produção, é 5; o compose de desenvolvimento e o `.env.example` usam 100. Se receber 429 ao repetir o teste, reinicie a API com `docker compose restart api`.

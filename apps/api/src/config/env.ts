@@ -12,6 +12,7 @@ export const configSchema = z
     APP_ORIGIN: z.url(),
     COOKIE_SECURE: booleanString.default(true),
     TRUST_PROXY_HOPS: z.coerce.number().int().min(0).default(0),
+    PUBLIC_FORM_RATE_LIMIT: z.coerce.number().int().positive().default(5),
     MAIL_DRIVER: z.enum(['smtp', 'memory']).default('smtp'),
     SMTP_URL: z.string().min(1).optional(),
     MAIL_FROM: z.string().min(1),

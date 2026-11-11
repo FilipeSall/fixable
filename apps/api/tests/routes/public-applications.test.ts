@@ -103,6 +103,20 @@ describe('POST /api/public/applications', () => {
     expect(await t.db.select().from(applications)).toHaveLength(5);
   });
 
+  it('PUBLIC_FORM_RATE_LIMIT muda o limite por IP: com 2, o 3º envio é 429', async () => {
+    const limitado = await testApp({ PUBLIC_FORM_RATE_LIMIT: 2 });
+    try {
+      await limitado.app.ready();
+      const enviarLimitado = (email: string) =>
+        limitado.app.inject({ method: 'POST', url: URL_CANDIDATURA, headers: { origin: ORIGIN }, payload: { ...envio, email } });
+      expect((await enviarLimitado('bruno1@ex.com')).statusCode).toBe(204);
+      expect((await enviarLimitado('bruno2@ex.com')).statusCode).toBe(204);
+      expect((await enviarLimitado('bruno3@ex.com')).statusCode).toBe(429);
+    } finally {
+      await limitado.close();
+    }
+  });
+
   it('sem Origin: 403', async () => {
     const response = await enviar(envio, {});
     expect(response.statusCode).toBe(403);

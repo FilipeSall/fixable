@@ -47,4 +47,13 @@ describe('loadConfig', () => {
     expect(() => loadConfig({ ...dev, TRUST_PROXY_HOPS: 'true' })).toThrow(/TRUST_PROXY_HOPS/);
     expect(() => loadConfig({ ...dev, TRUST_PROXY_HOPS: '1.5' })).toThrow(/TRUST_PROXY_HOPS/);
   });
+
+  it('PUBLIC_FORM_RATE_LIMIT é um inteiro positivo com padrão 5', () => {
+    const dev = { ...base, MAIL_DRIVER: 'memory' };
+    expect(loadConfig(dev).PUBLIC_FORM_RATE_LIMIT).toBe(5);
+    expect(loadConfig(production).PUBLIC_FORM_RATE_LIMIT).toBe(5);
+    expect(loadConfig({ ...dev, PUBLIC_FORM_RATE_LIMIT: '100' }).PUBLIC_FORM_RATE_LIMIT).toBe(100);
+    expect(() => loadConfig({ ...dev, PUBLIC_FORM_RATE_LIMIT: '0' })).toThrow(/PUBLIC_FORM_RATE_LIMIT/);
+    expect(() => loadConfig({ ...dev, PUBLIC_FORM_RATE_LIMIT: 'muitos' })).toThrow(/PUBLIC_FORM_RATE_LIMIT/);
+  });
 });

@@ -6,7 +6,7 @@ import { healthRoutes } from './health.routes.ts';
 import { publicRoutes } from './public.routes.ts';
 
 /** Registra todas as rotas da API. */
-export function routes(deps: { db: Db; config: Pick<Config, 'COOKIE_SECURE' | 'APP_ORIGIN' | 'TEAM_EMAIL'> }) {
+export function routes(deps: { db: Db; config: Pick<Config, 'COOKIE_SECURE' | 'APP_ORIGIN' | 'TEAM_EMAIL' | 'PUBLIC_FORM_RATE_LIMIT'> }) {
   return (api: FastifyInstance, _options: object, done: () => void): void => {
     void api.register(authRoutes(deps));
     void api.register(healthRoutes(deps));
