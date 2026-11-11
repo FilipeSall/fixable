@@ -3,12 +3,6 @@ import { mailpitUrl } from './env.ts';
 
 type MessageSummary = { ID: string; To: { Address: string }[] };
 
-/** Apaga todas as mensagens do Mailpit para isolar a execução. */
-export async function clearMailbox(): Promise<void> {
-  const res = await fetch(`${mailpitUrl}/api/v1/messages`, { method: 'DELETE' });
-  expect(res.ok).toBe(true);
-}
-
 async function findMessageId(email: string): Promise<string | undefined> {
   const res = await fetch(`${mailpitUrl}/api/v1/messages`);
   const body = (await res.json()) as { messages: MessageSummary[] };

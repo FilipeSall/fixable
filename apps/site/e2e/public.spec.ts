@@ -1,6 +1,6 @@
 import { expect, test, type Locator } from '@playwright/test';
 import { aguardarHidratacao, segurarIlha } from './hydration.ts';
-import { clearMailbox, readInviteLink } from './mailpit.ts';
+import { readInviteLink } from './mailpit.ts';
 
 const senha = 'senha123';
 const aceite = 'Li e aceito os termos de uso e a política de privacidade.';
@@ -12,8 +12,6 @@ async function escolher(form: Locator, rotulo: string, opcao: string): Promise<v
 }
 
 test.describe.configure({ mode: 'serial' });
-
-test.beforeAll(clearMailbox);
 
 test('visitante solicita diagnóstico com plano e cria a senha pelo convite', async ({ page }) => {
   const email = `cliente-${Date.now()}@fixable.local`;

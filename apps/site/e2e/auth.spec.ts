@@ -2,15 +2,13 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { expect, test } from '@playwright/test';
 import { apiEnv } from './env.ts';
-import { clearMailbox, readInviteLink } from './mailpit.ts';
+import { readInviteLink } from './mailpit.ts';
 
 const run = promisify(execFile);
 const senha = 'senha123';
 const apiDir = new URL('../../api', import.meta.url).pathname;
 
 test.describe.configure({ mode: 'serial' });
-
-test.beforeAll(clearMailbox);
 
 test('admin recebe convite, cria senha, entra, sai e entra de novo', async ({ page }) => {
   const email = `admin-${Date.now()}@fixable.local`;
