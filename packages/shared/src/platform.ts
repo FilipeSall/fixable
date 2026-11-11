@@ -230,6 +230,8 @@ export const appointment = z.object({
   descricao: z.string().nullable(),
 });
 
+export const engineerAppointment = appointment.extend({ clientId: idString, clientNome: z.string() });
+
 export const adminLead = z.object({
   id: idString,
   nome: z.string(),

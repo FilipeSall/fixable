@@ -1,17 +1,22 @@
 import type { FastifyReply } from 'fastify';
-import type { Appointment } from '@fixable/shared';
+import type { Appointment, EngineerAppointment } from '@fixable/shared';
 import * as appointmentService from '../services/appointment.service.ts';
 import type {
   AppointmentDeps,
   CreateAppointmentRequest,
   ListAppointmentsRequest,
   UpdateAppointmentRequest,
+  ViewerAppointmentsRequest,
 } from '../types/appointment.types.ts';
 import type { ClientIdRequest } from '../types/platform.types.ts';
 
-/** Cria o controller dos agendamentos: lista do mês, cadastro, edição com troca de status e exclusão. */
+/** Cria o controller dos agendamentos: calendário da equipe, lista do mês, cadastro, edição com troca de status e exclusão. */
 export function createAppointmentController(deps: AppointmentDeps) {
   return {
+    calendar: (request: ViewerAppointmentsRequest): Promise<EngineerAppointment[]> => {
+      return appointmentService.listViewerAppointments(deps.db, request.user!, request.query);
+    },
+
     list: (request: ListAppointmentsRequest): Promise<Appointment[]> => {
       return appointmentService.listAppointments(deps.db, request.user!, request.params.id, request.query);
     },

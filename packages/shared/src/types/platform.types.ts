@@ -8,6 +8,7 @@ import type {
   clientListItem,
   clientListResponse,
   clientStats,
+  engineerAppointment,
   floor,
   floorInput,
   floorplan,
@@ -64,5 +65,6 @@ export type Floorplan = z.infer<typeof floorplan>;
 export type HistoryItem = z.infer<typeof historyItem>;
 export type ServiceRequest = z.infer<typeof serviceRequest>;
 export type Appointment = z.infer<typeof appointment>;
+export type EngineerAppointment = z.infer<typeof engineerAppointment>;
 export type AdminLead = z.infer<typeof adminLead>;
 export type AdminApplication = z.infer<typeof adminApplication>;

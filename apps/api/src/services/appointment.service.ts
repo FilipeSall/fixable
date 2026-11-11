@@ -5,6 +5,7 @@ import {
   type AppointmentInput,
   type AppointmentsQuery,
   type AppointmentUpdateInput,
+  type EngineerAppointment,
 } from '@fixable/shared';
 import { appointments, clients, properties, users } from '../models/index.ts';
 import type { AppointmentDeps, AppointmentRow } from '../types/appointment.types.ts';
@@ -131,6 +132,31 @@ export async function listAppointments(
     )
     .orderBy(asc(appointments.data), asc(appointments.hora), asc(appointments.id));
   return rows.map(toAppointment);
+}
+
+/** Lista os agendamentos do mês de todos os clientes visíveis: o admin vê todos e o engenheiro só os dele. */
+export async function listViewerAppointments(
+  db: Db,
+  viewer: Viewer,
+  query: AppointmentsQuery,
+): Promise<EngineerAppointment[]> {
+  const { inicio, fim } = monthRange(query.mes);
+  const rows = await db
+    .select({ ...appointmentColumns, clientNome: users.nome })
+    .from(appointments)
+    .innerJoin(properties, eq(properties.id, appointments.propertyId))
+    .innerJoin(clients, eq(clients.id, appointments.clientId))
+    .innerJoin(users, eq(users.id, clients.userId))
+    .where(
+      and(
+        viewer.role === 'admin' ? undefined : eq(clients.engineerId, viewer.id),
+        gte(appointments.data, inicio),
+        lt(appointments.data, fim),
+        query.propertyId ? eq(appointments.propertyId, query.propertyId) : undefined,
+      ),
+    )
+    .orderBy(asc(appointments.data), asc(appointments.hora), asc(appointments.id));
+  return rows.map((row) => ({ ...toAppointment(row), clientId: row.clientId, clientNome: row.clientNome }));
 }
 
 /** Cria o agendamento num imóvel do cliente e avisa o cliente por e-mail na mesma transação. */

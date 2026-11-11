@@ -33,4 +33,5 @@ export const API = {
   adminApplicationApprove: (id: string) => `/api/admin/applications/${id}/approve`,
   adminApplicationRefuse: (id: string) => `/api/admin/applications/${id}/refuse`,
   adminInvites: '/api/admin/invites',
+  appointments: '/api/appointments',
 };

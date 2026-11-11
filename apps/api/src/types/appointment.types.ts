@@ -23,6 +23,7 @@ export type AppointmentRow = {
   descricao: string | null;
 };
 
+export type ViewerAppointmentsRequest = FastifyRequest<{ Querystring: AppointmentsQuery }>;
 export type ListAppointmentsRequest = FastifyRequest<{ Params: IdParams; Querystring: AppointmentsQuery }>;
 export type CreateAppointmentRequest = FastifyRequest<{ Params: IdParams; Body: AppointmentInput }>;
 export type UpdateAppointmentRequest = FastifyRequest<{ Params: IdParams; Body: AppointmentUpdateInput }>;
