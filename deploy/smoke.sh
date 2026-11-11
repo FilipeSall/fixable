@@ -6,6 +6,8 @@ cd "$(dirname "${BASH_SOURCE[0]}")/.."
 compose=(docker compose -p fixable-smoke --env-file deploy/.env.smoke -f deploy/compose.prod.yml -f deploy/compose.smoke.yml)
 admin_email="admin-smoke-$(date +%s)@fixable.local"
 
+bash deploy/check-compose.sh
+
 cleanup() {
   local status=$?
   if (( status != 0 )); then

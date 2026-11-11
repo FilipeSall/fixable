@@ -84,6 +84,8 @@ Edite `deploy/.env.prod`. Ele fica fora do git (`.gitignore`) e da imagem Docker
 | `MAIL_FROM`             | `"Fixable <nao-responda@fixable.com.br>"`   | Entre aspas. O domínio precisa estar autorizado no provedor de SMTP (SPF e DKIM).                            |
 | `TEAM_EMAIL`            | `equipe@fixable.com.br`                     | Caixa da equipe que recebe os avisos de leads e cadastros. Obrigatório em produção.                          |
 | `PUBLIC_FORM_RATE_LIMIT`| `5`                                         | Envios por IP a cada 15 minutos em cada formulário público.                                                  |
+| `TOKEN_RATE_LIMIT`      | `20`                                        | Requisições por IP a cada 15 minutos em cada rota de token (aceitar convite, redefinir senha e consultar o token). Sem a variável, vale `20`. |
+| `LOGIN_RATE_LIMIT`      | `10`                                        | Tentativas de login por IP a cada 15 minutos. Sem a variável, vale `10`.                                     |
 | `BACKUP_TIME`           | `03:00`                                     | Horário do backup diário, no fuso `TZ`.                                                                      |
 | `BACKUP_RETENTION_DAYS` | `7`                                         | Dias que cada dump fica guardado.                                                                            |
 | `TZ`                    | `America/Sao_Paulo`                         | Fuso do serviço de backup.                                                                                   |
@@ -232,12 +234,13 @@ pnpm deploy:smoke
 
 O script `deploy/smoke.sh`:
 
-1. gera o site com `deploy/build-site.sh deploy/.env.smoke` (`SITE_URL=https://localhost`);
-2. sobe o `compose.prod.yml` no projeto `fixable-smoke` com o `.env.smoke` (`DOMAIN=localhost`, certificado da CA interna do Caddy) e o `compose.smoke.yml`, que acrescenta um Mailpit só para o smoke, com a interface numa porta aleatória de `127.0.0.1`;
-3. confere que a API e o banco não publicam porta no host;
-4. cria um admin com o CLI dentro do container da API e confere que o backup inicial foi gerado;
-5. roda o Playwright (`apps/site/playwright.caddy.config.ts`) contra `https://localhost`, ignorando o certificado: home com os cabeçalhos de segurança (HSTS inclusive), assets com cache imutável, página de serviço por cidade, 404, API e deep link da SPA, e o admin que aceita o convite, sai, entra de novo e chega a `/app/admin/leads`;
-6. derruba tudo com `down -v`, mesmo se algo falhar, e mostra os logs da API, do Caddy e do backup quando falha.
+1. roda o `deploy/check-compose.sh`, que lê o `docker compose config` e confere os limites que chegam à API: `TOKEN_RATE_LIMIT=20` e `LOGIN_RATE_LIMIT=10` em produção, com ou sem as variáveis no `.env`, e `1000` nos dois no smoke;
+2. gera o site com `deploy/build-site.sh deploy/.env.smoke` (`SITE_URL=https://localhost`);
+3. sobe o `compose.prod.yml` no projeto `fixable-smoke` com o `.env.smoke` (`DOMAIN=localhost`, certificado da CA interna do Caddy) e o `compose.smoke.yml`, que acrescenta um Mailpit só para o smoke, com a interface numa porta aleatória de `127.0.0.1`;
+4. confere que a API e o banco não publicam porta no host;
+5. cria um admin com o CLI dentro do container da API e confere que o backup inicial foi gerado;
+6. roda o Playwright (`apps/site/playwright.caddy.config.ts`) contra `https://localhost`, ignorando o certificado: home com os cabeçalhos de segurança (HSTS inclusive), assets com cache imutável, página de serviço por cidade, 404, API e deep link da SPA, e o admin que aceita o convite, sai, entra de novo e chega a `/app/admin/leads`;
+7. derruba tudo com `down -v`, mesmo se algo falhar, e mostra os logs da API, do Caddy e do backup quando falha.
 
 O smoke não usa as portas do ambiente de desenvolvimento (5432, 3333, 4321, 1025 e 8025) e não toca nos containers e volumes do projeto `fixable`.
 

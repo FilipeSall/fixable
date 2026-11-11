@@ -42,6 +42,8 @@ services:
       COOKIE_SECURE: "true"
       TRUST_PROXY_HOPS: "1"
       PUBLIC_FORM_RATE_LIMIT: ${PUBLIC_FORM_RATE_LIMIT:-5}
+      TOKEN_RATE_LIMIT: ${TOKEN_RATE_LIMIT:-20}
+      LOGIN_RATE_LIMIT: ${LOGIN_RATE_LIMIT:-10}
       MAIL_DRIVER: smtp
       SMTP_URL: ${SMTP_URL:?defina SMTP_URL no .env.prod}
       MAIL_FROM: ${MAIL_FROM:?defina MAIL_FROM no .env.prod}
