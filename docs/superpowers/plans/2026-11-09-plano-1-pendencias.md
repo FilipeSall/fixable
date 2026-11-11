@@ -14,6 +14,7 @@ Itens apontados nas revisões do plano 1 que ficaram para depois, com o plano em
 
 ## Plano 5 (admin e deploy)
 
+- Antes de abrir os formulários a envios reais, publicar os textos de termos de uso e privacidade aprovados pela cliente. Hoje as páginas dizem "Documento em elaboração", e o formulário pede o aceite desses documentos.
 - Índices em `sessions.user_id` e `email_tokens.user_id` antes de o bloqueio pelo admin chamar `revokeUserSessions`.
 - O bloqueio pelo admin deve encerrar as sessões ativas (`revokeUserSessions`).
 - Ao aceitar convite ou redefinir senha, invalidar os tokens pendentes do outro propósito. Revisitar se o "reenviar convite" for usado como reset pelo admin.
