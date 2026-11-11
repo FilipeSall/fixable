@@ -74,10 +74,18 @@ O comando cria as contas abaixo, todas com a senha `fixable123`, e os dados do m
 
 Rodar de novo apaga e recria só os clientes demo, numa transação; nada de outras contas é alterado. Leads, candidaturas e contas com e-mail terminado em `.demo@fixable.com.br` são tratados como demonstração: o reseed e o `--remove` os apagam, e aprovar uma candidatura desse domínio cria uma conta demo, que nunca recebe leads reais. O comando recusa rodar sem `DEMO_MODE=true` e recusa se um desses e-mails já for de uma conta real. Contas demo nunca recebem leads reais: a atribuição automática ignora o engenheiro demo.
 
+`DEMO_MODE=true` expõe um login público: qualquer pessoa entra como o admin demo. As contas demo só enxergam dados de demonstração. O admin demo vê só os clientes de contas demo e só os leads e candidaturas do domínio `.demo@fixable.com.br`. Ele não aprova nem recusa candidaturas reais (404) e não convida ninguém para a equipe (403 `Indisponível no modo demonstração.`). Mesmo assim, o uso real da plataforma deve rodar com `DEMO_MODE=false`.
+
 Para usar a plataforma de verdade, desligue o modo demo (`DEMO_MODE=false` e reinicie a API) e apague as contas demo com os dados delas:
 
 ```sh
 docker compose exec -T api node src/cli/seed-demo.ts --remove
+```
+
+Depois de desligar, revise as contas criadas enquanto o modo demo esteve ligado e bloqueie as que você não reconhece:
+
+```sh
+docker compose exec -T db psql -U fixable -d fixable -c "select email, role, status, created_at from users where not is_demo order by created_at desc"
 ```
 
 ## Proxy reverso

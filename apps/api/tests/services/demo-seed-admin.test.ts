@@ -3,7 +3,7 @@ import { eq, isNull } from 'drizzle-orm';
 import { DEMO_SENHA } from '@fixable/shared';
 import { applications, clients, diagnosticLeads, users } from '../../src/models/index.ts';
 import { removeDemo, seedDemo } from '../../src/services/demo-seed.service.ts';
-import { loginAs, resetDb, testApp, type TestApp } from '../helpers.ts';
+import { createUser, loginAs, resetDb, testApp, type TestApp } from '../helpers.ts';
 
 let ctx: TestApp;
 const ON = { DEMO_MODE: true };
@@ -108,10 +108,11 @@ describe('seedDemo: leads e candidaturas para as telas do admin', () => {
     expect((await approve(novoCookie, denovo!.id)).statusCode).toBe(200);
   });
 
-  it('aprovar candidatura real cria conta comum, fora da demonstração', async () => {
+  it('o admin real aprova candidatura real e cria conta comum, fora da demonstração', async () => {
     await insertRealLeadAndApplication();
     await seedDemo(ctx.db, ON);
-    const cookie = await loginAs(ctx.app, 'admin.demo@fixable.com.br', DEMO_SENHA);
+    const admin = await createUser(ctx.db, { role: 'admin', senha: 'senha-forte-123' });
+    const cookie = await loginAs(ctx.app, admin.email, 'senha-forte-123');
     const [real] = await ctx.db.select().from(applications).where(eq(applications.email, 'candidato@exemplo.com'));
     expect((await approve(cookie, real!.id)).statusCode).toBe(200);
     const [conta] = await ctx.db.select().from(users).where(eq(users.email, 'candidato@exemplo.com'));

@@ -42,6 +42,7 @@ export async function findSessionUser(
       nome: users.nome,
       email: users.email,
       role: users.role,
+      isDemo: users.isDemo,
     })
     .from(sessions)
     .innerJoin(users, eq(users.id, sessions.userId))
@@ -49,7 +50,14 @@ export async function findSessionUser(
     .limit(1);
   if (!row) return null;
 
-  const user: SessionUser = { id: row.id, nome: row.nome, email: row.email, role: row.role, sessionId: row.sessionId };
+  const user: SessionUser = {
+    id: row.id,
+    nome: row.nome,
+    email: row.email,
+    role: row.role,
+    isDemo: row.isDemo,
+    sessionId: row.sessionId,
+  };
   const renewThreshold = new Date(now.getTime() + RENEW_BELOW_MS);
   if (row.expiresAt >= renewThreshold) return { user, renewedExpiresAt: null };
 

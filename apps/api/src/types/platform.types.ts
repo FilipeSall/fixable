@@ -13,7 +13,7 @@ export type Queryable = Db | Tx;
 
 export type AccessMode = 'read' | 'write';
 
-export type Viewer = { id: string; role: Role };
+export type Viewer = { id: string; role: Role; isDemo: boolean };
 
 export type ClientScope = { clientId: string; engineerId: string | null };
 

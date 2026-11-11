@@ -17,6 +17,7 @@ export type SessionUser = {
   nome: string;
   email: string;
   role: Role;
+  isDemo: boolean;
   sessionId: string;
 };
 

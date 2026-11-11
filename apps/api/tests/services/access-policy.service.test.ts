@@ -1,11 +1,13 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { randomUUID } from 'node:crypto';
+import { eq } from 'drizzle-orm';
 import type { Role } from '@fixable/shared';
 import {
   loadClientScope,
   requireClientAccess,
   requirePropertyAccess,
 } from '../../src/services/access-policy.service.ts';
+import { users } from '../../src/models/index.ts';
 import { AppError } from '../../src/utils/app-error.ts';
 import {
   createClientWithProperty,
@@ -25,7 +27,7 @@ let profissional: string;
 let clienteA: ClientWithProperty;
 let clienteB: ClientWithProperty;
 
-const as = (id: string, role: Role) => ({ id, role });
+const as = (id: string, role: Role, isDemo = false) => ({ id, role, isDemo });
 
 beforeAll(async () => {
   ctx = await testApp();
@@ -75,6 +77,13 @@ describe('loadClientScope', () => {
 
   it('profissional não vê cliente nenhum', async () => {
     expect(await loadClientScope(ctx.db, as(profissional, 'profissional'), clienteA.clientId)).toBeNull();
+  });
+
+  it('admin demo vê só cliente de conta demo', async () => {
+    await ctx.db.update(users).set({ isDemo: true }).where(eq(users.id, clienteA.userId));
+    expect(await loadClientScope(ctx.db, as(admin, 'admin', true), clienteA.clientId)).not.toBeNull();
+    expect(await loadClientScope(ctx.db, as(admin, 'admin', true), clienteB.clientId)).toBeNull();
+    expect(await loadClientScope(ctx.db, as(admin, 'admin'), clienteB.clientId)).not.toBeNull();
   });
 
   it('cliente inexistente devolve null', async () => {

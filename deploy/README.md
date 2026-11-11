@@ -142,7 +142,16 @@ Com `DEMO_MODE=true`, crie (ou restaure, antes de cada apresentação) as contas
 fx exec -T api node src/cli/seed-demo.ts
 ```
 
-As contas (`admin.demo`, `rafael.demo`, `ana.demo`, `carlos.demo` e `juliana.demo`, todas `@fixable.com.br`) usam a senha pública `fixable123` e aparecem na tela de login. Enquanto o modo demo estiver ligado, quem abrir o site entra como o admin demo e vê os leads e candidaturas reais que chegarem.
+As contas (`admin.demo`, `rafael.demo`, `ana.demo`, `carlos.demo` e `juliana.demo`, todas `@fixable.com.br`) usam a senha pública `fixable123` e aparecem na tela de login. Ou seja, `DEMO_MODE=true` expõe um login público: quem abrir o site entra como o admin demo.
+
+As contas demo só enxergam dados de demonstração:
+
+- o admin demo vê só os clientes de contas demo, com os imóveis e a agenda deles;
+- ele vê só os leads e candidaturas do domínio `.demo@fixable.com.br`;
+- ele não aprova nem recusa candidaturas reais (404);
+- ele não convida ninguém para a equipe (403 `Indisponível no modo demonstração.`).
+
+Mesmo assim, o uso real da plataforma deve rodar com `DEMO_MODE=false`. Deixe o modo demo ligado só durante a apresentação.
 
 Para usar a plataforma de verdade, mude `DEMO_MODE=false` no `deploy/.env.prod`, recrie a API com `fx up -d api` e apague as contas demo com os dados delas:
 
@@ -151,6 +160,12 @@ fx exec -T api node src/cli/seed-demo.ts --remove
 ```
 
 Com o modo demo desligado as contas demo já não entram, mesmo antes da remoção.
+
+Depois de desligar, revise as contas criadas enquanto o modo demo esteve ligado e bloqueie as que você não reconhece:
+
+```sh
+fx exec -T db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "select email, role, status, created_at from users where not is_demo order by created_at desc"'
+```
 
 ## 6. Backups
 

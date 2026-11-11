@@ -1,5 +1,6 @@
-import { eq, type SQL } from 'drizzle-orm';
-import { clients, properties } from '../models/index.ts';
+import { eq, inArray, type SQL } from 'drizzle-orm';
+import { alias, QueryBuilder } from 'drizzle-orm/pg-core';
+import { clients, properties, users } from '../models/index.ts';
 import type {
   AccessMode,
   ClientScope,
@@ -12,14 +13,24 @@ import { AppError, NOT_FOUND_MESSAGE } from '../utils/app-error.ts';
 /** Cria o erro 404 usado sempre que o recurso não existe ou o usuário não pode acessá-lo. */
 export const notFound = (): AppError => new AppError(404, 'not_found', NOT_FOUND_MESSAGE);
 
-/** Monta o filtro dos clientes visíveis à equipe: o admin vê todos e o engenheiro só os vinculados a ele. */
+const clientUsers = alias(users, 'client_users');
+
+/** Filtra os clientes cuja conta é de demonstração, para o admin demo não alcançar dados reais. */
+const demoClientsOnly = (): SQL =>
+  inArray(
+    clients.userId,
+    new QueryBuilder().select({ id: clientUsers.id }).from(clientUsers).where(eq(clientUsers.isDemo, true)),
+  );
+
+/** Monta o filtro dos clientes visíveis à equipe: o admin vê todos (o demo só os demo) e o engenheiro os dele. */
 export function visibleClients(viewer: Viewer): SQL | undefined {
-  return viewer.role === 'admin' ? undefined : eq(clients.engineerId, viewer.id);
+  if (viewer.role !== 'admin') return eq(clients.engineerId, viewer.id);
+  return viewer.isDemo ? demoClientsOnly() : undefined;
 }
 
-/** Diz se o usuário enxerga o cliente: admin vê todos, engenheiro só os dele e cliente só o próprio cadastro. */
-function canRead(viewer: Viewer, client: { userId: string; engineerId: string | null }): boolean {
-  if (viewer.role === 'admin') return true;
+/** Diz se o usuário enxerga o cliente: admin vê todos (o demo só os demo), engenheiro os dele e cliente o próprio. */
+function canRead(viewer: Viewer, client: { userId: string; engineerId: string | null; isDemo: boolean }): boolean {
+  if (viewer.role === 'admin') return !viewer.isDemo || client.isDemo;
   if (viewer.role === 'engenheiro') return client.engineerId === viewer.id;
   if (viewer.role === 'cliente') return client.userId === viewer.id;
   return false;
@@ -28,8 +39,14 @@ function canRead(viewer: Viewer, client: { userId: string; engineerId: string | 
 /** Carrega o escopo do cliente quando o usuário pode vê-lo, ou devolve null se não existe ou não é dele. */
 export async function loadClientScope(db: Queryable, viewer: Viewer, clientId: string): Promise<ClientScope | null> {
   const [client] = await db
-    .select({ clientId: clients.id, userId: clients.userId, engineerId: clients.engineerId })
+    .select({
+      clientId: clients.id,
+      userId: clients.userId,
+      engineerId: clients.engineerId,
+      isDemo: clientUsers.isDemo,
+    })
     .from(clients)
+    .innerJoin(clientUsers, eq(clientUsers.id, clients.userId))
     .where(eq(clients.id, clientId));
   if (!client || !canRead(viewer, client)) return null;
   return { clientId: client.clientId, engineerId: client.engineerId };

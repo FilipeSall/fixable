@@ -14,23 +14,23 @@ import type { PlatformMailDeps } from '../types/platform.types.ts';
 export function createAdminController(deps: PlatformMailDeps) {
   return {
     leads: (request: AdminLeadsRequest): Promise<AdminLead[]> => {
-      return adminService.listLeads(deps.db, request.query);
+      return adminService.listLeads(deps.db, request.user!, request.query);
     },
 
     applications: (request: AdminApplicationsRequest): Promise<AdminApplication[]> => {
-      return adminService.listApplications(deps.db, request.query);
+      return adminService.listApplications(deps.db, request.user!, request.query);
     },
 
     approve: (request: AdminApplicationRequest): Promise<AdminApplication> => {
-      return teamService.approveApplication(deps, request.params.id);
+      return teamService.approveApplication(deps, request.user!, request.params.id);
     },
 
     refuse: (request: AdminApplicationRequest): Promise<AdminApplication> => {
-      return teamService.refuseApplication(deps, request.params.id);
+      return teamService.refuseApplication(deps, request.user!, request.params.id);
     },
 
     invite: async (request: TeamInviteRequest, reply: FastifyReply): Promise<TeamInviteResult> => {
-      const result = await teamService.inviteTeamMember(deps, request.body);
+      const result = await teamService.inviteTeamMember(deps, request.user!, request.body);
       reply.status(201);
       return result;
     },

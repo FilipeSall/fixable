@@ -1,28 +1,29 @@
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import type { AdminApplication, ApplicationArea, Role, TeamInviteInput, TeamInviteResult } from '@fixable/shared';
 import { applications, users } from '../models/index.ts';
-import type { PlatformMailDeps } from '../types/platform.types.ts';
+import type { PlatformMailDeps, Viewer } from '../types/platform.types.ts';
 import type { Tx } from '../types/db.types.ts';
 import { AppError } from '../utils/app-error.ts';
-import { isDemoEmail } from '../utils/demo-email.ts';
+import { demoEmailFilter, isDemoEmail } from '../utils/demo-email.ts';
 import { notFound } from './access-policy.service.ts';
 import { applicationColumns, toAdminApplication } from './admin.service.ts';
 import { sendInvite } from './invite.service.ts';
 
 const ALREADY_REVIEWED_MESSAGE = 'Esta candidatura já foi analisada.';
 const ACCOUNT_EXISTS_MESSAGE = 'Já existe uma conta com este e-mail.';
+export const DEMO_UNAVAILABLE_MESSAGE = 'Indisponível no modo demonstração.';
 
 const ROLE_BY_AREA: Record<ApplicationArea, Role> = { engenheiro: 'engenheiro', outro: 'profissional' };
 
 /** Cria o erro 409 com a mensagem informada. */
 const conflict = (message: string): AppError => new AppError(409, 'conflict', message);
 
-/** Trava a candidatura até o fim da transação e recusa com 409 quando ela já não está pendente. */
-async function lockPendingApplication(tx: Tx, applicationId: string) {
+/** Trava a candidatura (o admin demo só alcança as da demonstração) e recusa com 409 se já não está pendente. */
+async function lockPendingApplication(tx: Tx, viewer: Viewer, applicationId: string) {
   const [application] = await tx
     .select(applicationColumns)
     .from(applications)
-    .where(eq(applications.id, applicationId))
+    .where(and(eq(applications.id, applicationId), viewer.isDemo ? demoEmailFilter(applications.email) : undefined))
     .for('update');
   if (!application) throw notFound();
   if (application.status !== 'pendente') throw conflict(ALREADY_REVIEWED_MESSAGE);
@@ -46,10 +47,11 @@ async function setApplicationStatus(
 /** Aprova a candidatura pendente, cria a conta convidada (demo se o e-mail for demo) e envia o convite. */
 export async function approveApplication(
   { db, config }: PlatformMailDeps,
+  viewer: Viewer,
   applicationId: string,
 ): Promise<AdminApplication> {
   return db.transaction(async (tx) => {
-    const application = await lockPendingApplication(tx, applicationId);
+    const application = await lockPendingApplication(tx, viewer, applicationId);
     const [created] = await tx
       .insert(users)
       .values({
@@ -71,15 +73,24 @@ export async function approveApplication(
 }
 
 /** Recusa a candidatura pendente sem criar conta nem enviar e-mail. */
-export async function refuseApplication({ db }: PlatformMailDeps, applicationId: string): Promise<AdminApplication> {
+export async function refuseApplication(
+  { db }: PlatformMailDeps,
+  viewer: Viewer,
+  applicationId: string,
+): Promise<AdminApplication> {
   return db.transaction(async (tx) => {
-    await lockPendingApplication(tx, applicationId);
+    await lockPendingApplication(tx, viewer, applicationId);
     return setApplicationStatus(tx, applicationId, 'recusada');
   });
 }
 
-/** Convida engenheiro ou admin; reenvia ao convidado do mesmo papel e recusa com 409 qualquer outra conta. */
-export async function inviteTeamMember({ db, config }: PlatformMailDeps, input: TeamInviteInput): Promise<TeamInviteResult> {
+/** Convida engenheiro ou admin, reenviando ao convidado do mesmo papel; o admin demo não convida ninguém. */
+export async function inviteTeamMember(
+  { db, config }: PlatformMailDeps,
+  viewer: Viewer,
+  input: TeamInviteInput,
+): Promise<TeamInviteResult> {
+  if (viewer.isDemo) throw new AppError(403, 'forbidden', DEMO_UNAVAILABLE_MESSAGE);
   return db.transaction(async (tx) => {
     const [created] = await tx
       .insert(users)

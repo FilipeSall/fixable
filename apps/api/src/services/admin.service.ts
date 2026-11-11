@@ -1,4 +1,4 @@
-import { desc, eq, isNull } from 'drizzle-orm';
+import { and, desc, eq, isNull } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import type {
   AdminApplication,
@@ -11,6 +11,8 @@ import type { Config } from '../types/config.types.ts';
 import type { Db } from '../types/db.types.ts';
 import { applications, diagnosticLeads, users } from '../models/index.ts';
 import type { ApplicationRow, LeadRow } from '../types/admin.types.ts';
+import type { Viewer } from '../types/platform.types.ts';
+import { demoEmailFilter } from '../utils/demo-email.ts';
 import { sendInvite } from './invite.service.ts';
 
 const DUPLICATE_MESSAGE = 'Já existe um usuário com este e-mail.';
@@ -64,8 +66,8 @@ export async function createAdmin(
   });
 }
 
-/** Lista os pedidos de diagnóstico do mais novo ao mais antigo, todos ou só os sem engenheiro atribuído. */
-export async function listLeads(db: Db, query: AdminLeadsQuery): Promise<AdminLead[]> {
+/** Lista os pedidos de diagnóstico do mais novo ao mais antigo; o admin demo só vê os da demonstração. */
+export async function listLeads(db: Db, viewer: Viewer, query: AdminLeadsQuery): Promise<AdminLead[]> {
   const rows = await db
     .select({
       id: diagnosticLeads.id,
@@ -80,17 +82,31 @@ export async function listLeads(db: Db, query: AdminLeadsQuery): Promise<AdminLe
     })
     .from(diagnosticLeads)
     .leftJoin(engineers, eq(engineers.id, diagnosticLeads.engineerId))
-    .where(query.atribuicao === 'sem' ? isNull(diagnosticLeads.engineerId) : undefined)
+    .where(
+      and(
+        query.atribuicao === 'sem' ? isNull(diagnosticLeads.engineerId) : undefined,
+        viewer.isDemo ? demoEmailFilter(diagnosticLeads.email) : undefined,
+      ),
+    )
     .orderBy(desc(diagnosticLeads.createdAt), desc(diagnosticLeads.id));
   return rows.map(toAdminLead);
 }
 
-/** Lista as candidaturas da mais nova à mais antiga, opcionalmente só as de um status. */
-export async function listApplications(db: Db, query: AdminApplicationsQuery): Promise<AdminApplication[]> {
+/** Lista as candidaturas da mais nova à mais antiga, por status; o admin demo só vê as da demonstração. */
+export async function listApplications(
+  db: Db,
+  viewer: Viewer,
+  query: AdminApplicationsQuery,
+): Promise<AdminApplication[]> {
   const rows = await db
     .select(applicationColumns)
     .from(applications)
-    .where(query.status ? eq(applications.status, query.status) : undefined)
+    .where(
+      and(
+        query.status ? eq(applications.status, query.status) : undefined,
+        viewer.isDemo ? demoEmailFilter(applications.email) : undefined,
+      ),
+    )
     .orderBy(desc(applications.createdAt), desc(applications.id));
   return rows.map(toAdminApplication);
 }
