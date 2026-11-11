@@ -7,6 +7,7 @@ import { homeFor } from './paths.ts';
 import { SetPasswordForm } from './SetPasswordForm.tsx';
 import { TokenGate } from './TokenGate.tsx';
 import { clearTokenFromUrl } from './token-url.ts';
+import { AuthLayout } from './AuthLayout.tsx';
 
 /** Tela de convite: valida o link e deixa o usuário criar a senha e entrar. */
 export function InvitePage() {
@@ -14,8 +15,7 @@ export function InvitePage() {
   const navigate = useNavigate();
 
   return (
-    <main className="app-home">
-      <div id="login-panel">
+    <AuthLayout>
         <h1 className="app-h">Crie sua senha</h1>
         <TokenGate purpose="convite">
           {(token, info) => {
@@ -34,7 +34,6 @@ export function InvitePage() {
             );
           }}
         </TokenGate>
-      </div>
-    </main>
+    </AuthLayout>
   );
 }

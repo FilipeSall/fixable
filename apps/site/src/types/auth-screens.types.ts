@@ -10,6 +10,16 @@ export type AuthContextValue = {
   login: (email: string, senha: string) => Promise<Me>;
   logout: () => Promise<void>;
   setMe: (me: Me | null) => Promise<void>;
+  endedByLogout: () => boolean;
+};
+
+export type AuthLayoutProps = {
+  children: ReactNode;
+  aside?: ReactNode;
+};
+
+export type AccessCardProps = {
+  onPick?: (email: string) => void;
 };
 
 export type AuthProviderProps = { children: ReactNode };

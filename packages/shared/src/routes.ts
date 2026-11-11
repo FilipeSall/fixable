@@ -8,6 +8,7 @@ export const API = {
   reset: '/api/auth/password/reset',
   publicDiagnostics: '/api/public/diagnostics',
   publicApplications: '/api/public/applications',
+  demoAccounts: '/api/public/demo-accounts',
   meClient: '/api/me/client',
   clients: '/api/clients',
   client: (id: string) => `/api/clients/${id}`,

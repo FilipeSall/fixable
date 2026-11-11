@@ -6,6 +6,7 @@ import { useAuth } from './AuthProvider.tsx';
 import { SetPasswordForm } from './SetPasswordForm.tsx';
 import { TokenGate } from './TokenGate.tsx';
 import { clearTokenFromUrl } from './token-url.ts';
+import { AuthLayout } from './AuthLayout.tsx';
 
 const RESET_NOTICE = 'Senha redefinida. Entre com a nova senha.';
 
@@ -19,8 +20,7 @@ export function ResetPasswordPage() {
   }
 
   return (
-    <main className="app-home">
-      <div id="login-panel">
+    <AuthLayout>
         <h1 className="app-h">Redefinir senha</h1>
         <TokenGate purpose="redefinicao">
           {(token) => {
@@ -34,7 +34,6 @@ export function ResetPasswordPage() {
             return <SetPasswordForm submitLabel="Redefinir senha" busyLabel="Salvando..." onSubmit={reset} />;
           }}
         </TokenGate>
-      </div>
-    </main>
+    </AuthLayout>
   );
 }

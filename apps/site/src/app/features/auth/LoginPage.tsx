@@ -1,8 +1,10 @@
-import { loginInput } from '@fixable/shared';
-import { useState } from 'react';
+import { DEMO_SENHA, loginInput } from '@fixable/shared';
+import { useRef, useState } from 'react';
 import type { SubmitEvent } from 'react';
 import { Link, Navigate, useLocation, useSearchParams } from 'react-router';
 import type { LocationState } from '../../../types/auth-screens.types.ts';
+import { AccessCard } from './AccessCard.tsx';
+import { AuthLayout } from './AuthLayout.tsx';
 import { useAuth } from './AuthProvider.tsx';
 import { Field } from './Field.tsx';
 import { fieldErrorsOf } from '../../../lib/form-errors.ts';
@@ -20,9 +22,19 @@ export function LoginPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const submitRef = useRef<HTMLButtonElement>(null);
 
   if (me) {
     return <Navigate to={destinationAfterLogin(me.role, params.get('next'))} replace />;
+  }
+
+  /** Preenche o login com a conta de demonstração escolhida e leva o foco ao botão Entrar. */
+  function pickDemo(account: string) {
+    setEmail(account);
+    setSenha(DEMO_SENHA);
+    setErrors({});
+    setFormError('');
+    submitRef.current?.focus();
   }
 
   /** Evita o envio nativo do formulário e dispara a validação e o login. */
@@ -51,9 +63,12 @@ export function LoginPage() {
   }
 
   return (
-    <main className="app-home">
-      <div id="login-panel">
+    <AuthLayout aside={<AccessCard onPick={pickDemo} />}>
         <h1 className="app-h">Entrar na plataforma</h1>
+        <p className="app-sub">
+          Cada perfil abre um ambiente diferente: o cliente acompanha a própria casa, o engenheiro administra clientes e
+          profissionais, e o profissional parceiro executa e registra os serviços.
+        </p>
         {notice ? <p role="status">{notice}</p> : null}
         <form className="fx-form" noValidate onSubmit={handleSubmit}>
           <Field
@@ -81,14 +96,13 @@ export function LoginPage() {
               {formError}
             </p>
           ) : null}
-          <button type="submit" className="btn btn-primary btn-block" disabled={submitting}>
+          <button ref={submitRef} type="submit" className="btn btn-primary btn-block" disabled={submitting}>
             {submitting ? 'Entrando...' : 'Entrar'}
           </button>
         </form>
         <p className="auth-switch">
           <Link to="/esqueci-senha">Esqueci minha senha</Link>
         </p>
-      </div>
-    </main>
+    </AuthLayout>
   );
 }

@@ -33,6 +33,7 @@ export function AuthProvider({ children }: Readonly<AuthProviderProps>) {
   const queryClient = useQueryClient();
   const { data, isError, isFetching, refetch } = useQuery({ queryKey: ME_KEY, queryFn: fetchMe });
   const identityRef = useRef<string | null | undefined>(undefined);
+  const loggedOutRef = useRef(false);
 
   useEffect(() => {
     if (data === undefined) return;
@@ -50,6 +51,7 @@ export function AuthProvider({ children }: Readonly<AuthProviderProps>) {
       if (changesUser(previous, identity)) await clearPrivateQueries(queryClient);
       else await queryClient.cancelQueries({ queryKey: ME_KEY });
       identityRef.current = identity;
+      if (me) loggedOutRef.current = false;
       queryClient.setQueryData(ME_KEY, me);
     }
     /** Faz login pela API e guarda o usuário. */
@@ -61,13 +63,18 @@ export function AuthProvider({ children }: Readonly<AuthProviderProps>) {
     /** Encerra a sessão pela API e limpa o usuário em cache. */
     async function logout() {
       await apiFetch<void>(API.logout, { method: 'POST' });
+      loggedOutRef.current = true;
       await setMe(null);
     }
     /** Consulta a sessão de novo depois de uma falha que não foi 401. */
     function retry() {
       void refetch();
     }
-    return { me: data ?? null, status: statusOf(data, isError, isFetching), retry, login, logout, setMe };
+    /** Diz se a sessão acabou porque o usuário clicou em Sair (e não por expirar). */
+    function endedByLogout() {
+      return loggedOutRef.current;
+    }
+    return { me: data ?? null, status: statusOf(data, isError, isFetching), retry, login, logout, setMe, endedByLogout };
   }, [queryClient, data, isError, isFetching, refetch]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

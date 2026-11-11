@@ -6,6 +6,7 @@ import { apiFetch } from '../../api.ts';
 import { Field } from './Field.tsx';
 import { fieldErrorsOf } from '../../../lib/form-errors.ts';
 import { messageOf } from './form-errors.ts';
+import { AuthLayout } from './AuthLayout.tsx';
 
 const CONFIRMATION = 'Se houver uma conta com este e-mail, enviamos um link para você criar ou redefinir sua senha.';
 
@@ -43,8 +44,7 @@ export function ForgotPasswordPage() {
   }
 
   return (
-    <main className="app-home">
-      <div id="login-panel">
+    <AuthLayout>
         <h1 className="app-h">Esqueci minha senha</h1>
         {sent ? (
           <p role="status">{CONFIRMATION}</p>
@@ -73,7 +73,6 @@ export function ForgotPasswordPage() {
         <p className="auth-switch">
           <Link to="/login">Voltar para o login</Link>
         </p>
-      </div>
-    </main>
+    </AuthLayout>
   );
 }

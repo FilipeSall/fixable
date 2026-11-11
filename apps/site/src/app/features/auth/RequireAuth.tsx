@@ -6,10 +6,11 @@ import { SessionError } from './SessionError.tsx';
 
 /** Rota protegida: exige login e, quando informado, um dos papéis permitidos; falha da verificação não desloga. */
 export function RequireAuth({ roles }: Readonly<RequireAuthProps>) {
-  const { me, status } = useAuth();
+  const { me, status, endedByLogout } = useAuth();
   const location = useLocation();
   if (status === 'loading') return <p role="status">Carregando...</p>;
   if (status === 'error') return <SessionError />;
+  if (!me && endedByLogout()) return <Navigate to="/login" replace />;
   if (!me) {
     const next = encodeURIComponent(location.pathname + location.search);
     return <Navigate to={`/login?next=${next}`} replace />;
