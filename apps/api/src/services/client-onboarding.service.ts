@@ -1,11 +1,10 @@
 import { PROPERTY_TYPE_LABELS, CONTACT_PREFERENCE_LABELS, planName, type DiagnosticInput } from '@fixable/shared';
-import { clients, floors, properties, propertyAttributes, rooms, serviceRequests, users } from '../models/index.ts';
-import type { Retangulo } from '../types/floorplan.types.ts';
+import { clients, properties, propertyAttributes, serviceRequests, users } from '../models/index.ts';
 import type { Tx } from '../types/db.types.ts';
 import type { LeadAssignment, PublicConfig } from '../types/public.types.ts';
 import { pickEngineer } from './assignment.service.ts';
-import { firstFreeSpot, floorplanFor } from './floorplan.service.ts';
 import { sendInvite } from './invite.service.ts';
+import { insertDefaultFloorplan } from './property.service.ts';
 
 const REQUEST_SUMMARY_LIMIT = 120;
 const REQUEST_PREFIX = { inicial: 'Diagnóstico inicial', adicional: 'Diagnóstico adicional' } as const;
@@ -31,23 +30,6 @@ function attributesFor(input: DiagnosticInput): [chave: string, valor: string][]
   return rows;
 }
 
-/** Grava os andares e cômodos da maquete padrão do tipo de imóvel. */
-async function insertFloorplan(tx: Tx, propertyId: string, input: DiagnosticInput): Promise<void> {
-  for (const [posicao, andar] of floorplanFor(input.tipoImovel).entries()) {
-    const [floor] = await tx
-      .insert(floors)
-      .values({ propertyId, nome: andar.nome, posicao })
-      .returning({ id: floors.id });
-    const ocupados: Retangulo[] = [];
-    const values = andar.comodos.map((comodo, ordem) => {
-      const spot = firstFreeSpot(ocupados, comodo.largura, comodo.altura);
-      ocupados.push({ ...spot, largura: comodo.largura, altura: comodo.altura });
-      return { floorId: floor!.id, ...comodo, ...spot, posicao: ordem };
-    });
-    await tx.insert(rooms).values(values);
-  }
-}
-
 /** Cria o imóvel do primeiro diagnóstico com seus atributos e a maquete padrão, e devolve o id. */
 async function insertProperty(tx: Tx, clientId: string, input: DiagnosticInput): Promise<string> {
   const [property] = await tx
@@ -63,7 +45,7 @@ async function insertProperty(tx: Tx, clientId: string, input: DiagnosticInput):
   await tx
     .insert(propertyAttributes)
     .values(attributesFor(input).map(([chave, valor], posicao) => ({ propertyId, chave, valor, posicao })));
-  await insertFloorplan(tx, propertyId, input);
+  await insertDefaultFloorplan(tx, propertyId, input.tipoImovel);
   return propertyId;
 }
 

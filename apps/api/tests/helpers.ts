@@ -1,11 +1,11 @@
 import type { FastifyInstance } from 'fastify';
 import { randomUUID } from 'node:crypto';
 import { sql } from 'drizzle-orm';
-import type { Role, UserStatus } from '@fixable/shared';
+import type { PropertyType, Role, UserStatus } from '@fixable/shared';
 import { buildApp } from '../src/app.ts';
 import { loadConfig } from '../src/config/env.ts';
 import { createDb } from '../src/db/client.ts';
-import { users } from '../src/models/index.ts';
+import { clients, properties, users } from '../src/models/index.ts';
 import { hashPassword } from '../src/utils/password.ts';
 import { createMemoryMailer } from '../src/mailers/memory.mailer.ts';
 import type { Config } from '../src/types/config.types.ts';
@@ -77,6 +77,44 @@ export async function createUser(
     })
     .returning({ id: users.id, email: users.email });
   return row!;
+}
+
+export async function createEngineer(
+  db: Db,
+  p: { nome?: string; email?: string; senha?: string; status?: UserStatus } = {},
+): Promise<{ id: string; email: string }> {
+  return createUser(db, { role: 'engenheiro', ...p });
+}
+
+export type ClientWithProperty = { userId: string; email: string; clientId: string; propertyId: string };
+
+export async function createClientWithProperty(
+  db: Db,
+  p: {
+    engineerId?: string | null;
+    nome?: string;
+    email?: string;
+    senha?: string;
+    tipo?: PropertyType;
+    cidade?: string;
+    apelido?: string;
+  } = {},
+): Promise<ClientWithProperty> {
+  const user = await createUser(db, { role: 'cliente', nome: p.nome, email: p.email, senha: p.senha });
+  const [client] = await db
+    .insert(clients)
+    .values({ userId: user.id, engineerId: p.engineerId ?? null })
+    .returning({ id: clients.id });
+  const [property] = await db
+    .insert(properties)
+    .values({
+      clientId: client!.id,
+      tipo: p.tipo ?? 'sobrado',
+      cidade: p.cidade ?? 'Santo André',
+      apelido: p.apelido ?? 'Casa principal',
+    })
+    .returning({ id: properties.id });
+  return { userId: user.id, email: user.email, clientId: client!.id, propertyId: property!.id };
 }
 
 export async function loginAs(app: FastifyInstance, email: string, senha: string): Promise<string> {

@@ -52,6 +52,10 @@ const isRealDate = (valor: string): boolean => {
 
 const dateSchema = z.string({ error: DATE_MESSAGE }).refine(isRealDate, DATE_MESSAGE);
 
+export const idParams = z.object({ id: idSchema });
+
+export const propertyAttributeParams = z.object({ id: idSchema, attrId: idSchema });
+
 export const floorInput = z.object({ nome: nameSchema });
 
 export const roomInput = z.object({

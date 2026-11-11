@@ -16,6 +16,7 @@ export const API = {
   clientAppointments: (id: string) => `/api/clients/${id}/appointments`,
   property: (id: string) => `/api/properties/${id}`,
   propertyAttributes: (id: string) => `/api/properties/${id}/attributes`,
+  propertyAttribute: (id: string, attrId: string) => `/api/properties/${id}/attributes/${attrId}`,
   floorplan: (propertyId: string) => `/api/properties/${propertyId}/floorplan`,
   floors: (propertyId: string) => `/api/properties/${propertyId}/floors`,
   floor: (id: string) => `/api/floors/${id}`,

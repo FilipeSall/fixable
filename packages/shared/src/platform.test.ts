@@ -6,7 +6,9 @@ import {
   SERVICE_STATUS_LABELS,
   appointmentInput,
   clientDetail,
+  idParams,
   propertyAttributeInput,
+  propertyAttributeParams,
   roomInput,
   serviceInput,
   serviceRequestInput,
@@ -93,5 +95,13 @@ describe('platform', () => {
     expect(API.serviceComplete('s')).toBe('/api/services/s/complete');
     expect(API.adminApplicationApprove('a')).toBe('/api/admin/applications/a/approve');
     expect(API.meClient).toBe('/api/me/client');
+    expect(API.propertyAttribute('p', 'a')).toBe('/api/properties/p/attributes/a');
+  });
+
+  it('idParams e propertyAttributeParams exigem identificadores válidos', () => {
+    expect(idParams.safeParse({ id }).success).toBe(true);
+    expect(idParams.safeParse({ id: 'abc' }).success).toBe(false);
+    expect(propertyAttributeParams.safeParse({ id, attrId: id }).success).toBe(true);
+    expect(propertyAttributeParams.safeParse({ id, attrId: 'x' }).success).toBe(false);
   });
 });

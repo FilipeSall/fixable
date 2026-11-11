@@ -12,8 +12,10 @@ import type {
   floorInput,
   floorplan,
   historyItem,
+  idParams,
   propertyAttribute,
   propertyAttributeInput,
+  propertyAttributeParams,
   propertyInput,
   propertySummary,
   room,
@@ -40,6 +42,8 @@ export type AppointmentInput = z.infer<typeof appointmentInput>;
 export type PropertyAttributeInput = z.infer<typeof propertyAttributeInput>;
 export type PropertyInput = z.infer<typeof propertyInput>;
 export type TeamInviteInput = z.infer<typeof teamInviteInput>;
+export type IdParams = z.infer<typeof idParams>;
+export type PropertyAttributeParams = z.infer<typeof propertyAttributeParams>;
 
 export type ClientStats = z.infer<typeof clientStats>;
 export type ClientListItem = z.infer<typeof clientListItem>;
