@@ -1,7 +1,8 @@
-import { QueryClient } from '@tanstack/react-query';
+import { QueryCache, QueryClient } from '@tanstack/react-query';
 import { ApiRequestError } from './api.ts';
 import { ME_KEY } from './features/auth/me-key.ts';
 
+const HTTP_UNAUTHORIZED = 401;
 const HTTP_CLIENT_ERROR_MIN = 400;
 const HTTP_SERVER_ERROR_MIN = 500;
 const MAX_RETRIES = 2;
@@ -21,9 +22,19 @@ function retryUpTo(maxRetries: number): (failureCount: number, error: unknown) =
   };
 }
 
-/** Cria o cliente do React Query com a política de repetição do app e uma só repetição para a sessão. */
+/** Diz se a falha de uma consulta que não é a da sessão indica que a sessão caiu (401). */
+function lostSession(error: unknown, queryKey: readonly unknown[]): boolean {
+  return error instanceof ApiRequestError && error.status === HTTP_UNAUTHORIZED && queryKey[0] !== ME_KEY[0];
+}
+
+/** Cria o cliente do React Query com a política de repetição do app, uma só repetição para a sessão e nova consulta da sessão a cada 401. */
 export function createQueryClient(): QueryClient {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: retryUpTo(MAX_RETRIES) } } });
+  const queryCache = new QueryCache({
+    onError: (error, query) => {
+      if (lostSession(error, query.queryKey)) void client.invalidateQueries({ queryKey: ME_KEY });
+    },
+  });
+  const client = new QueryClient({ queryCache, defaultOptions: { queries: { retry: retryUpTo(MAX_RETRIES) } } });
   client.setQueryDefaults(ME_KEY, { retry: retryUpTo(ME_MAX_RETRIES) });
   return client;
 }

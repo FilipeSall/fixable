@@ -24,4 +24,26 @@ describe('createQueryClient', () => {
     expect(meRetry(1, serverError)).toBe(false);
     expect(meRetry(0, unauthorized)).toBe(false);
   });
+
+  it('um 401 numa consulta privada faz a sessão ser consultada de novo', async () => {
+    const queryClient = createQueryClient();
+    queryClient.setQueryData(ME_KEY, { id: 'u1' });
+
+    await queryClient
+      .query({ queryKey: ['segredo'], queryFn: () => Promise.reject(unauthorized), retry: false })
+      .catch(() => undefined);
+
+    expect(queryClient.getQueryState(ME_KEY)?.isInvalidated).toBe(true);
+  });
+
+  it('um erro que não é 401 não mexe na sessão', async () => {
+    const queryClient = createQueryClient();
+    queryClient.setQueryData(ME_KEY, { id: 'u1' });
+
+    await queryClient
+      .query({ queryKey: ['segredo'], queryFn: () => Promise.reject(serverError), retry: false })
+      .catch(() => undefined);
+
+    expect(queryClient.getQueryState(ME_KEY)?.isInvalidated).toBe(false);
+  });
 });

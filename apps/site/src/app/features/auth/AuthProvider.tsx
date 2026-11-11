@@ -1,9 +1,10 @@
 import { API } from '@fixable/shared';
 import type { Me } from '@fixable/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { createContext, useContext, useMemo } from 'react';
+import { createContext, useContext, useEffect, useMemo, useRef } from 'react';
 import { ApiRequestError, apiFetch } from '../../api.ts';
 import { ME_KEY } from './me-key.ts';
+import { changesUser, clearPrivateQueries } from './session-cache.ts';
 import type { AuthContextValue, AuthProviderProps, AuthStatus } from '../../../types/auth-screens.types.ts';
 
 const HTTP_UNAUTHORIZED = 401;
@@ -31,11 +32,24 @@ function statusOf(me: Me | null | undefined, isError: boolean, isFetching: boole
 export function AuthProvider({ children }: Readonly<AuthProviderProps>) {
   const queryClient = useQueryClient();
   const { data, isError, isFetching, refetch } = useQuery({ queryKey: ME_KEY, queryFn: fetchMe });
+  const identityRef = useRef<string | null | undefined>(undefined);
+
+  useEffect(() => {
+    if (data === undefined) return;
+    const identity = data?.id ?? null;
+    const previous = identityRef.current;
+    identityRef.current = identity;
+    if (changesUser(previous, identity)) void clearPrivateQueries(queryClient);
+  }, [data, queryClient]);
 
   const value = useMemo<AuthContextValue>(() => {
-    /** Atualiza o usuário em cache, cancelando consultas em andamento. */
+    /** Atualiza o usuário em cache, descartando os dados do usuário anterior quando a sessão muda de dono. */
     async function setMe(me: Me | null) {
-      await queryClient.cancelQueries({ queryKey: ME_KEY });
+      const identity = me?.id ?? null;
+      const previous = queryClient.getQueryData<Me | null>(ME_KEY)?.id ?? identityRef.current;
+      if (changesUser(previous, identity)) await clearPrivateQueries(queryClient);
+      else await queryClient.cancelQueries({ queryKey: ME_KEY });
+      identityRef.current = identity;
       queryClient.setQueryData(ME_KEY, me);
     }
     /** Faz login pela API e guarda o usuário. */
