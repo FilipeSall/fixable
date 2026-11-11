@@ -19,7 +19,11 @@ Itens apontados nas revisões do plano 1 que ficaram para depois, com o plano em
 - Ao aceitar convite ou redefinir senha, invalidar os tokens pendentes do outro propósito. Revisitar se o "reenviar convite" for usado como reset pelo admin.
 - nginx: `Cache-Control: no-cache` para `/app/index.html` antes do primeiro deploy, e cache imutável para os assets com hash.
 - `stop_grace_period` (ou um prazo no `stopWorker`) maior que o pior lote de SMTP. Com o padrão de 10s do Docker, um SMTP lento pode levar a SIGKILL no meio do envio.
-- Produção atrás do nginx exige `TRUST_PROXY=true`. O Dockerfile já define isso.
+- Definir `TRUST_PROXY_HOPS` pela topologia de proxy de produção: `1` só com o nginx na frente da API (padrão do Dockerfile), `2` se houver um terminador TLS ou CDN antes dele.
+- Não publicar a porta 3333 da API em produção. Com `TRUST_PROXY_HOPS` maior que 0, quem fala direto com a API consegue forjar o IP no `X-Forwarded-For`.
+- Configurar o `TEAM_EMAIL` real da equipe.
+- Limpar o `email_outbox.data` inteiro depois do envio dos templates sem link, que hoje guardam dado pessoal.
+- O telefone `+55 11 90000-0000` e a razão social "Fixable Tecnologia e Serviços Ltda." são placeholders do modelo. Confirmar com a cliente antes do deploy.
 
 ## Sem prazo (qualidade)
 
