@@ -6,12 +6,14 @@ import {
   SERVICE_STATUS_LABELS,
   appointmentInput,
   clientDetail,
+  historyItem,
   idParams,
   newFloorInput,
   propertyAttributeInput,
   propertyAttributeParams,
   roomFieldsInput,
   roomInput,
+  service as serviceSchema,
   serviceInput,
   serviceRequestInput,
   serviceUpdateInput,
@@ -127,5 +129,12 @@ describe('platform', () => {
     expect(roomFieldsInput.safeParse({ ...campos, largura: 5 }).success).toBe(false);
     expect(newFloorInput.safeParse({}).success).toBe(true);
     expect(newFloorInput.safeParse({ nome: '' }).success).toBe(false);
+  });
+
+  it('serviço e histórico aceitam cômodo removido (null)', () => {
+    const item = { id, titulo: 'Pintura', descricao: null, andar: null, comodo: null, concludedAt: '2026-11-10T12:00:00.000Z' };
+    expect(historyItem.safeParse(item).success).toBe(true);
+    const servico = { ...service, id, roomId: null, descricao: null, prazo: null, concludedAt: null };
+    expect(serviceSchema.safeParse(servico).success).toBe(true);
   });
 });

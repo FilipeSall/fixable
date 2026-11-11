@@ -16,7 +16,7 @@ export type MaqueteDeps = { db: Db; clock: Clock };
 
 export type ServiceRow = {
   id: string;
-  roomId: string;
+  roomId: string | null;
   titulo: string;
   descricao: string | null;
   status: ServiceStatus;
@@ -29,12 +29,12 @@ export type HistoryRow = {
   id: string;
   titulo: string;
   descricao: string | null;
-  andar: string;
-  comodo: string;
+  andar: string | null;
+  comodo: string | null;
   concludedAt: Date;
 };
 
-export type ConclusionState = { status: ServiceStatus; concludedAt: Date | null };
+export type ConclusionState = { status: ServiceStatus; concludedAt: Date | null; percentual: number };
 
 export type IdRequest = FastifyRequest<{ Params: IdParams }>;
 export type NewFloorRequest = FastifyRequest<{ Params: IdParams; Body: NewFloorInput | null | undefined }>;

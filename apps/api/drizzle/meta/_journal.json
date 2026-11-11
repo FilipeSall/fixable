@@ -43,6 +43,13 @@
       "when": 1794362546744,
       "tag": "0005_rooms_dentro_da_grade",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794363566853,
+      "tag": "0006_historico_sobrevive_ao_comodo",
+      "breakpoints": true
     }
   ]
 }

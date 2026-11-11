@@ -1,5 +1,5 @@
 import { and, asc, eq } from 'drizzle-orm';
-import type { ApiError, Floor, Floorplan } from '@fixable/shared';
+import type { ApiError, Floor, Floorplan, HistoryItem } from '@fixable/shared';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { floors, rooms, services } from '../../src/models/index.ts';
 import { insertDefaultFloorplan } from '../../src/services/property.service.ts';
@@ -20,7 +20,7 @@ const NOT_FOUND = { error: { code: 'not_found', message: 'Recurso não encontrad
 const COLISAO = {
   error: {
     code: 'validation',
-    message: 'Essa posição ou tamanho encosta em outro cômodo. Escolha outro lugar ou arraste o cômodo na planta.',
+    message: 'Essa posição ou tamanho encosta em outro cômodo. Escolha outro lugar na planta.',
   },
 };
 const ANDAR_ATIVO = {
@@ -35,6 +35,7 @@ const COMODO_ATIVO = {
     message: 'Este cômodo tem serviços ativos. Conclua ou mova os serviços antes de excluir.',
   },
 };
+const POSICAO_INCOMPLETA = { error: { code: 'validation', message: 'Informe a coluna e a linha do cômodo.' } };
 const UNICO_ANDAR = { error: { code: 'validation', message: 'O imóvel precisa ter pelo menos um andar.' } };
 
 let t: TestApp;
@@ -76,6 +77,15 @@ async function comodo(propertyId: string, nome: string) {
     .where(and(eq(floors.propertyId, propertyId), eq(rooms.nome, nome)));
   if (!found) throw new Error(`cômodo ${nome} ausente`);
   return found;
+}
+
+async function historicoSobrevive(cookie: string, servicoId: string) {
+  const historico = await send('GET', `/api/properties/${clienteA.propertyId}/history`, cookie);
+  const itens = historico.json<HistoryItem[]>();
+  expect(itens).toHaveLength(1);
+  expect(itens[0]).toMatchObject({ id: servicoId, titulo: 'Serviço concluido', andar: null, comodo: null });
+  const maquete = await send('GET', `/api/properties/${clienteA.propertyId}/floorplan`, cookie);
+  expect(maquete.json<Floorplan>().services.map((service) => service.id)).not.toContain(servicoId);
 }
 
 async function addService(propertyId: string, roomId: string, status: 'execucao' | 'concluido') {
@@ -187,14 +197,15 @@ describe('andares', () => {
     expect(await andares(clienteA.propertyId)).toHaveLength(2);
   });
 
-  it('excluir andar sem serviço ativo remove andar e cômodos', async () => {
+  it('excluir andar sem serviço ativo remove andar e cômodos e mantém o histórico', async () => {
     const sala = await comodo(clienteA.propertyId, 'Sala de estar');
-    await addService(clienteA.propertyId, sala.id, 'concluido');
+    const servicoId = await addService(clienteA.propertyId, sala.id, 'concluido');
     const cookie = await loginAs(t.app, engA.email, SENHA);
     const response = await send('DELETE', `/api/floors/${sala.floorId}`, cookie);
     expect(response.statusCode).toBe(204);
     expect((await andares(clienteA.propertyId)).map((floor) => floor.nome)).toEqual(['Andar 2']);
     expect(await t.db.select().from(rooms).where(eq(rooms.floorId, sala.floorId))).toEqual([]);
+    await historicoSobrevive(cookie, servicoId);
   });
 
   it('excluir o único andar responde 400', async () => {
@@ -258,6 +269,17 @@ describe('POST /api/floors/:id/rooms', () => {
     const fora = await send('POST', url, cookie, { nome: 'Closet', largura: 2, altura: 1, x: 5, y: 4 });
     expect(fora.statusCode).toBe(400);
     expect(fora.json()).toEqual(COLISAO);
+  });
+
+  it('só a coluna ou só a linha é recusado', async () => {
+    const [primeiro] = await andares(clienteA.propertyId);
+    const cookie = await loginAs(t.app, engA.email, SENHA);
+    const url = `/api/floors/${primeiro!.id}/rooms`;
+    for (const posicao of [{ x: 0 }, { y: 4 }]) {
+      const response = await send('POST', url, cookie, { nome: 'Closet', largura: 1, altura: 1, ...posicao });
+      expect(response.statusCode).toBe(400);
+      expect(response.json()).toEqual(POSICAO_INCOMPLETA);
+    }
   });
 
   it('largura acima de 4 é recusada pela validação', async () => {
@@ -345,13 +367,14 @@ describe('DELETE /api/rooms/:id', () => {
     expect(response.json()).toEqual(COMODO_ATIVO);
   });
 
-  it('excluir cômodo sem serviço ativo responde 204', async () => {
+  it('excluir cômodo sem serviço ativo responde 204 e mantém o histórico', async () => {
     const garagem = await comodo(clienteA.propertyId, 'Garagem');
-    await addService(clienteA.propertyId, garagem.id, 'concluido');
+    const servicoId = await addService(clienteA.propertyId, garagem.id, 'concluido');
     const cookie = await loginAs(t.app, engA.email, SENHA);
     const response = await send('DELETE', `/api/rooms/${garagem.id}`, cookie);
     expect(response.statusCode).toBe(204);
     expect(await t.db.select().from(rooms).where(eq(rooms.id, garagem.id))).toEqual([]);
+    await historicoSobrevive(cookie, servicoId);
   });
 
   it('cliente e engenheiro de outro cliente recebem 404', async () => {

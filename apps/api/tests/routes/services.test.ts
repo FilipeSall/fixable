@@ -1,4 +1,4 @@
-import { and, eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import type { Floorplan, HistoryItem, Service } from '@fixable/shared';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { floors, rooms, services } from '../../src/models/index.ts';
@@ -76,6 +76,41 @@ async function criarId(cookie: string, payload: object = {}) {
   return (await criarServico(cookie, payload)).json<Service>().id;
 }
 
+async function esperarBloqueio() {
+  for (let tentativa = 0; tentativa < 200; tentativa++) {
+    const [row] = await t.db.execute<{ total: number }>(
+      sql`SELECT count(*)::int AS total FROM pg_stat_activity WHERE wait_event_type = 'Lock' AND datname = current_database()`,
+    );
+    if (row!.total > 0) return;
+    await new Promise((resolve) => setTimeout(resolve, 20));
+  }
+  throw new Error('a requisição não ficou esperando o lock do cômodo');
+}
+
+function sinal() {
+  let liberar: () => void = () => undefined;
+  const promise = new Promise<void>((resolve) => {
+    liberar = resolve;
+  });
+  return { promise, resolve: () => liberar() };
+}
+
+async function comExclusaoPendente(roomId: string, pedido: () => ReturnType<typeof send>) {
+  const portao = sinal();
+  const excluido = sinal();
+  const exclusao = t.db.transaction(async (tx) => {
+    await tx.delete(rooms).where(eq(rooms.id, roomId));
+    excluido.resolve();
+    await portao.promise;
+  });
+  await excluido.promise;
+  const resposta = pedido();
+  await esperarBloqueio();
+  portao.resolve();
+  await exclusao;
+  return resposta;
+}
+
 async function linha(id: string) {
   const [row] = await t.db.select().from(services).where(eq(services.id, id));
   return row!;
@@ -142,6 +177,29 @@ describe('PATCH /api/services/:id', () => {
     expect(response.json()).toMatchObject({ status: 'execucao', percentual: 60, concludedAt: null });
   });
 
+  it('reabrir sem percentual zera o progresso', async () => {
+    const cookie = await loginAs(t.app, engA.email, SENHA);
+    const id = await criarId(cookie, { status: 'concluido' });
+    const response = await send('PATCH', `/api/services/${id}`, cookie, { status: 'atencao' });
+    expect(response.json()).toMatchObject({ status: 'atencao', percentual: 0, concludedAt: null });
+    const semMudarStatus = await send('PATCH', `/api/services/${id}`, cookie, { percentual: 35 });
+    const mantido = await send('PATCH', `/api/services/${id}`, cookie, { titulo: 'Outro título' });
+    expect(semMudarStatus.json<Service>().percentual).toBe(35);
+    expect(mantido.json<Service>().percentual).toBe(35);
+  });
+
+  it('reabrir serviço cujo cômodo foi excluído exige um cômodo do imóvel', async () => {
+    const cookie = await loginAs(t.app, engA.email, SENHA);
+    const id = await criarId(cookie, { status: 'concluido' });
+    await t.db.delete(rooms).where(eq(rooms.id, await comodo(clienteA.propertyId, 'Cozinha')));
+    const semComodo = await send('PATCH', `/api/services/${id}`, cookie, { status: 'execucao' });
+    expect(semComodo.statusCode).toBe(400);
+    expect(semComodo.json()).toEqual(COMODO_INVALIDO);
+    const suite = await comodo(clienteA.propertyId, 'Suíte');
+    const comComodo = await send('PATCH', `/api/services/${id}`, cookie, { status: 'execucao', roomId: suite });
+    expect(comComodo.json()).toMatchObject({ status: 'execucao', roomId: suite, concludedAt: null });
+  });
+
   it('descricao null ou vazia limpa; ausente mantém', async () => {
     const cookie = await loginAs(t.app, engA.email, SENHA);
     const id = await criarId(cookie);
@@ -173,6 +231,26 @@ describe('PATCH /api/services/:id', () => {
       expect(response.statusCode).toBe(404);
     }
     expect((await linha(id)).titulo).toBe('Trocar torneira do tanque');
+  });
+});
+
+describe('corrida com a exclusão do cômodo', () => {
+  it('criar serviço num cômodo sendo excluído responde 400, não 500', async () => {
+    const cookie = await loginAs(t.app, engA.email, SENHA);
+    const cozinha = await comodo(clienteA.propertyId, 'Cozinha');
+    const response = await comExclusaoPendente(cozinha, () => criarServico(cookie));
+    expect(response.statusCode).toBe(400);
+    expect(response.json()).toEqual(COMODO_INVALIDO);
+    expect(await t.db.select().from(services)).toEqual([]);
+  });
+
+  it('reabrir serviço cujo cômodo está sendo excluído responde 400 e o serviço segue concluído', async () => {
+    const cookie = await loginAs(t.app, engA.email, SENHA);
+    const id = await criarId(cookie, { status: 'concluido' });
+    const cozinha = await comodo(clienteA.propertyId, 'Cozinha');
+    const response = await comExclusaoPendente(cozinha, () => send('PATCH', `/api/services/${id}`, cookie, { status: 'execucao' }));
+    expect(response.statusCode).toBe(400);
+    expect(await linha(id)).toMatchObject({ status: 'concluido', roomId: null });
   });
 });
 

@@ -12,10 +12,11 @@ import { firstFreeSpot, overlaps } from './floorplan.service.ts';
 import { listVisibleServices } from './room-service.service.ts';
 
 const COLLISION_MESSAGE =
-  'Essa posição ou tamanho encosta em outro cômodo. Escolha outro lugar ou arraste o cômodo na planta.';
+  'Essa posição ou tamanho encosta em outro cômodo. Escolha outro lugar na planta.';
 const FLOOR_ACTIVE_MESSAGE = 'Este andar tem serviços ativos. Conclua ou mova os serviços antes de excluir.';
 const ROOM_ACTIVE_MESSAGE = 'Este cômodo tem serviços ativos. Conclua ou mova os serviços antes de excluir.';
 const LAST_FLOOR_MESSAGE = 'O imóvel precisa ter pelo menos um andar.';
+const PARTIAL_POSITION_MESSAGE = 'Informe a coluna e a linha do cômodo.';
 
 const roomColumns = {
   id: rooms.id,
@@ -166,12 +167,13 @@ export async function deleteFloor(db: Db, viewer: Viewer, floorId: string): Prom
   });
 }
 
-/** Adiciona um cômodo ao andar na posição pedida ou, sem coluna e linha, no primeiro espaço livre. */
+/** Adiciona um cômodo ao andar na posição pedida ou, sem coluna e linha, no primeiro espaço livre; exige as duas ou nenhuma. */
 export async function createRoom(db: Db, viewer: Viewer, floorId: string, input: RoomFieldsInput): Promise<Room> {
   return db.transaction(async (tx) => {
     await requireFloorAccess(tx, viewer, floorId, 'write');
     await lockFloor(tx, floorId);
     const { largura, altura } = input;
+    if ((input.x === undefined) !== (input.y === undefined)) throw invalid(PARTIAL_POSITION_MESSAGE);
     const ocupados = await otherRooms(tx, floorId);
     const spot =
       input.x === undefined || input.y === undefined

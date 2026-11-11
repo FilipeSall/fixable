@@ -27,18 +27,21 @@ const toService = (row: ServiceRow): Service => ({ ...row, concludedAt: row.conc
 /** Converte a linha do histórico no formato da API, com a data de conclusão em ISO. */
 const toHistoryItem = (row: HistoryRow): HistoryItem => ({ ...row, concludedAt: row.concludedAt.toISOString() });
 
-/** Calcula conclusão e percentual: concluir grava a data uma vez e fixa 100%; reabrir limpa a data. */
+/** Calcula conclusão e percentual: concluir grava a data uma vez e fixa 100%; reabrir limpa a data e zera o progresso não informado. */
 export function conclusionFields(
-  next: Pick<ServiceRow, 'status' | 'percentual'>,
+  next: { status: ServiceRow['status']; percentual?: number },
   current: ConclusionState | null,
   now: Date,
 ): { concludedAt: Date | null; percentual: number } {
-  if (next.status !== 'concluido') return { concludedAt: null, percentual: next.percentual };
-  const jaConcluido = current?.status === 'concluido' ? current.concludedAt : null;
-  return { concludedAt: jaConcluido ?? now, percentual: 100 };
+  const estavaConcluido = current?.status === 'concluido';
+  if (next.status === 'concluido') {
+    return { concludedAt: (estavaConcluido ? current.concludedAt : null) ?? now, percentual: 100 };
+  }
+  const anterior = estavaConcluido ? 0 : (current?.percentual ?? 0);
+  return { concludedAt: null, percentual: next.percentual ?? anterior };
 }
 
-/** Lista os serviços que aparecem em andamento: os não concluídos e os concluídos há menos de 24 h. */
+/** Lista os serviços em andamento com cômodo: os não concluídos e os concluídos há menos de 24 h. */
 export async function listVisibleServices(q: Queryable, propertyId: string, now: Date): Promise<Service[]> {
   const limite = new Date(now.getTime() - VISIBLE_AFTER_CONCLUSION_MS);
   const rows = await q
@@ -47,6 +50,7 @@ export async function listVisibleServices(q: Queryable, propertyId: string, now:
     .where(
       and(
         eq(services.propertyId, propertyId),
+        isNotNull(services.roomId),
         or(ne(services.status, 'concluido'), gt(services.concludedAt, limite)),
       ),
     )
@@ -54,25 +58,35 @@ export async function listVisibleServices(q: Queryable, propertyId: string, now:
   return rows.map(toService);
 }
 
-/** Recusa com 400 quando o cômodo não pertence ao imóvel do serviço. */
+/** Cria o erro 400 de cômodo que não é do imóvel ou que já foi removido. */
+const invalidRoom = (): AppError => new AppError(400, 'validation', INVALID_ROOM_MESSAGE);
+
+/** Trava o cômodo contra exclusão até o fim da transação e recusa com 400 quando ele não é do imóvel. */
 async function assertRoomOfProperty(tx: Tx, propertyId: string, roomId: string): Promise<void> {
   const [found] = await tx
     .select({ id: rooms.id })
     .from(rooms)
     .innerJoin(floors, eq(floors.id, rooms.floorId))
-    .where(and(eq(rooms.id, roomId), eq(floors.propertyId, propertyId)));
-  if (!found) throw new AppError(400, 'validation', INVALID_ROOM_MESSAGE);
+    .where(and(eq(rooms.id, roomId), eq(floors.propertyId, propertyId)))
+    .for('key share', { of: rooms });
+  if (!found) throw invalidRoom();
 }
 
-/** Carrega o serviço travado para edição e confere a escrita no imóvel dele, com 404 quando negado. */
+/** Confere a escrita no imóvel do serviço e o carrega travado, travando antes o cômodo atual contra exclusão. */
 async function lockServiceForWrite(tx: Tx, viewer: Viewer, serviceId: string) {
+  const [owner] = await tx
+    .select({ propertyId: services.propertyId, roomId: services.roomId })
+    .from(services)
+    .where(eq(services.id, serviceId));
+  if (!owner) throw notFound();
+  await requirePropertyAccess(tx, viewer, owner.propertyId, 'write');
+  if (owner.roomId) await tx.select({ id: rooms.id }).from(rooms).where(eq(rooms.id, owner.roomId)).for('key share');
   const [current] = await tx
     .select({ ...serviceColumns, propertyId: services.propertyId })
     .from(services)
     .where(eq(services.id, serviceId))
     .for('update');
   if (!current) throw notFound();
-  await requirePropertyAccess(tx, viewer, current.propertyId, 'write');
   return current;
 }
 
@@ -115,7 +129,7 @@ export async function updateService(
     const current = await lockServiceForWrite(tx, viewer, serviceId);
     if (input.roomId !== undefined) await assertRoomOfProperty(tx, current.propertyId, input.roomId);
     const status = input.status ?? current.status;
-    const percentual = input.percentual ?? current.percentual;
+    if (status !== 'concluido' && (input.roomId ?? current.roomId) === null) throw invalidRoom();
     const [updated] = await tx
       .update(services)
       .set({
@@ -124,7 +138,7 @@ export async function updateService(
         descricao: input.descricao,
         prazo: input.prazo,
         status,
-        ...conclusionFields({ status, percentual }, current, clock()),
+        ...conclusionFields({ status, percentual: input.percentual }, current, clock()),
       })
       .where(eq(services.id, serviceId))
       .returning(serviceColumns);
@@ -146,7 +160,7 @@ export async function completeService(db: Db, clock: Clock, viewer: Viewer, serv
   });
 }
 
-/** Lista o histórico de manutenção do imóvel: concluídos do mais recente ao mais antigo, com andar e cômodo. */
+/** Lista o histórico de manutenção do imóvel, do mais recente ao mais antigo; andar e cômodo removidos vêm como null. */
 export async function listHistory(db: Db, viewer: Viewer, propertyId: string): Promise<HistoryItem[]> {
   await requirePropertyAccess(db, viewer, propertyId, 'read');
   const rows = await db
@@ -159,8 +173,8 @@ export async function listHistory(db: Db, viewer: Viewer, propertyId: string): P
       concludedAt: sql<Date>`${services.concludedAt}`.mapWith(services.concludedAt),
     })
     .from(services)
-    .innerJoin(rooms, eq(rooms.id, services.roomId))
-    .innerJoin(floors, eq(floors.id, rooms.floorId))
+    .leftJoin(rooms, eq(rooms.id, services.roomId))
+    .leftJoin(floors, eq(floors.id, rooms.floorId))
     .where(
       and(eq(services.propertyId, propertyId), eq(services.status, 'concluido'), isNotNull(services.concludedAt)),
     )

@@ -10,9 +10,7 @@ export const services = pgTable(
   'services',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    roomId: uuid('room_id')
-      .notNull()
-      .references(() => rooms.id, { onDelete: 'cascade' }),
+    roomId: uuid('room_id').references(() => rooms.id, { onDelete: 'set null' }),
     propertyId: uuid('property_id')
       .notNull()
       .references(() => properties.id, { onDelete: 'cascade' }),

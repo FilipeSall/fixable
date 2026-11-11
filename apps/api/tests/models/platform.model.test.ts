@@ -68,11 +68,12 @@ describe('schema da plataforma', () => {
     await expect(ctx.db.insert(services).values({ ...base, percentual: -1 })).rejects.toThrow();
   });
 
-  it('remover o cômodo remove seus serviços', async () => {
+  it('remover o cômodo mantém seus serviços sem cômodo, para o histórico', async () => {
     const { property, room } = await seedRoom();
-    await ctx.db.insert(services).values({ roomId: room.id, propertyId: property.id, titulo: 'Pintura', status: 'execucao' });
+    await ctx.db.insert(services).values({ roomId: room.id, propertyId: property.id, titulo: 'Pintura', status: 'concluido' });
     await ctx.db.delete(rooms).where(eq(rooms.id, room.id));
-    expect(await ctx.db.select().from(services)).toHaveLength(0);
+    const restantes = await ctx.db.select().from(services);
+    expect(restantes.map((service) => service.roomId)).toEqual([null]);
   });
 
   it('agendamento nasce pendente e some com o cliente', async () => {

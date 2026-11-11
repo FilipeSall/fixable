@@ -190,7 +190,7 @@ export const floor = z.object({
 
 export const service = z.object({
   id: idString,
-  roomId: idString,
+  roomId: idString.nullable(),
   titulo: z.string(),
   descricao: z.string().nullable(),
   status: z.enum(SERVICE_STATUSES),
@@ -205,8 +205,8 @@ export const historyItem = z.object({
   id: idString,
   titulo: z.string(),
   descricao: z.string().nullable(),
-  andar: z.string(),
-  comodo: z.string(),
+  andar: z.string().nullable(),
+  comodo: z.string().nullable(),
   concludedAt: timestamp,
 });
 
