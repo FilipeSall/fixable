@@ -5,13 +5,13 @@ import * as teamService from '../services/team.service.ts';
 import type {
   AdminApplicationRequest,
   AdminApplicationsRequest,
-  AdminDeps,
   AdminLeadsRequest,
   TeamInviteRequest,
 } from '../types/admin.types.ts';
+import type { PlatformMailDeps } from '../types/platform.types.ts';
 
 /** Cria o controller do painel admin: leads, candidaturas e convites da equipe. */
-export function createAdminController(deps: AdminDeps) {
+export function createAdminController(deps: PlatformMailDeps) {
   return {
     leads: (request: AdminLeadsRequest): Promise<AdminLead[]> => {
       return adminService.listLeads(deps.db, request.query);

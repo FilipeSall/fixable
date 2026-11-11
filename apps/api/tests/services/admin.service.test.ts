@@ -17,8 +17,8 @@ afterEach(async () => {
 
 describe('createAdmin', () => {
   it('cria admin convidado e enfileira convite', async () => {
-    const { userId, invite } = await createAdmin(t.db, t.config, { nome: 'Chefe', email: 'chefe@fixable.com' });
-    expect(invite).toBe('enviado');
+    const { userId, convite } = await createAdmin(t.db, t.config, { nome: 'Chefe', email: 'chefe@fixable.com' });
+    expect(convite).toBe('enviado');
     const [user] = await t.db.select().from(users).where(eq(users.id, userId));
     expect(user).toMatchObject({ role: 'admin', status: 'convidado', nome: 'Chefe', email: 'chefe@fixable.com', passwordHash: null });
     const [queued] = await t.db.select().from(emailOutbox);
@@ -44,7 +44,7 @@ describe('createAdmin', () => {
 
     const result = await createAdmin(t.db, t.config, { nome: 'Outro Nome', email: 'chefe@fixable.com' });
 
-    expect(result).toEqual({ userId: existing.id, invite: 'reenviado' });
+    expect(result).toEqual({ userId: existing.id, convite: 'reenviado' });
     const queued = await t.db.select().from(emailOutbox);
     expect(queued.map((row) => row.template)).toEqual(['convite', 'convite']);
     const tokens = await t.db.select().from(emailTokens).where(eq(emailTokens.userId, existing.id));

@@ -11,10 +11,10 @@ import {
   teamInviteResult,
 } from '@fixable/shared';
 import { createAdminController } from '../controllers/admin.controller.ts';
-import type { AdminDeps } from '../types/admin.types.ts';
+import type { PlatformMailDeps } from '../types/platform.types.ts';
 
 /** Declara as rotas do painel admin, todas restritas ao papel admin. */
-export function adminRoutes(deps: AdminDeps) {
+export function adminRoutes(deps: PlatformMailDeps) {
   return (instance: FastifyInstance, _options: object, done: () => void): void => {
     const app = instance.withTypeProvider<ZodTypeProvider>();
     const controller = createAdminController(deps);

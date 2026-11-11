@@ -1,10 +1,10 @@
-import { and, asc, count, desc, eq, inArray, ne, type SQL } from 'drizzle-orm';
+import { and, asc, count, desc, eq, inArray, ne } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import type { ClientDetail, ClientListItem, ClientListResponse } from '@fixable/shared';
 import { appointments, clients, properties, serviceRequests, services, users } from '../models/index.ts';
 import type { Db } from '../types/db.types.ts';
 import type { Viewer } from '../types/platform.types.ts';
-import { notFound, requireClientAccess } from './access-policy.service.ts';
+import { notFound, requireClientAccess, visibleClients } from './access-policy.service.ts';
 
 const NEW_CLIENT_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -15,11 +15,6 @@ export async function findMyClientId(db: Db, viewer: Viewer): Promise<{ clientId
   const [client] = await db.select({ clientId: clients.id }).from(clients).where(eq(clients.userId, viewer.id));
   if (!client) throw notFound();
   return client;
-}
-
-/** Monta o filtro da lista de clientes: o admin vê todos e o engenheiro só os vinculados a ele. */
-function visibleClients(viewer: Viewer): SQL | undefined {
-  return viewer.role === 'admin' ? undefined : eq(clients.engineerId, viewer.id);
 }
 
 /** Conta, por cliente, os registros de uma consulta agrupada e devolve um mapa clientId → total. */

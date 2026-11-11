@@ -25,8 +25,8 @@ async function main(): Promise<void> {
     const config = loadConfig();
     const connection = createDb(config.DATABASE_URL);
     close = connection.close;
-    const { invite } = await createAdmin(connection.db, config, input);
-    console.log(`Convite ${invite} para ${input.email}`);
+    const { convite } = await createAdmin(connection.db, config, input);
+    console.log(`Convite ${convite} para ${input.email}`);
   } catch (error) {
     console.error(error instanceof Error ? error.message : String(error));
     process.exitCode = 1;

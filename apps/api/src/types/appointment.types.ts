@@ -6,10 +6,6 @@ import type {
   AppointmentUpdateInput,
   IdParams,
 } from '@fixable/shared';
-import type { Config } from './config.types.ts';
-import type { Db } from './db.types.ts';
-
-export type AppointmentDeps = { db: Db; config: Pick<Config, 'APP_ORIGIN'> };
 
 export type AppointmentRow = {
   id: string;

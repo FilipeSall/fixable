@@ -250,6 +250,27 @@ describe('PATCH /api/appointments/:id', () => {
     });
   });
 
+  it('salvar o corpo completo sem mudança não enfileira e-mail; uma mudança real enfileira', async () => {
+    const id = await semear({ data: '2026-11-20', hora: '09:30', servico: 'Revisão elétrica' });
+    const cookie = await loginAs(t.app, engA.email, SENHA);
+    const corpo = {
+      propertyId: clienteA.propertyId,
+      servico: 'Revisão elétrica',
+      data: '2026-11-20',
+      hora: '09:30',
+      status: 'confirmado',
+      descricao: '',
+    };
+    const igual = await send('PATCH', `/api/appointments/${id}`, cookie, corpo);
+    expect(igual.statusCode).toBe(200);
+    expect(await emails()).toHaveLength(0);
+    const mudou = await send('PATCH', `/api/appointments/${id}`, cookie, { ...corpo, hora: '10:00' });
+    expect(mudou.statusCode).toBe(200);
+    const fila = await emails();
+    expect(fila).toHaveLength(1);
+    expect(fila[0]?.data).toMatchObject({ acao: 'atualizado', hora: '10:00' });
+  });
+
   it('admin muda data, hora, imóvel e limpa a descrição', async () => {
     const id = await semear({ data: '2026-11-20', hora: '09:30' });
     await t.db.update(appointments).set({ descricao: 'Levar escada' }).where(eq(appointments.id, id));

@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { eq, type SQL } from 'drizzle-orm';
 import { clients, properties } from '../models/index.ts';
 import type {
   AccessMode,
@@ -11,6 +11,11 @@ import { AppError, NOT_FOUND_MESSAGE } from '../utils/app-error.ts';
 
 /** Cria o erro 404 usado sempre que o recurso não existe ou o usuário não pode acessá-lo. */
 export const notFound = (): AppError => new AppError(404, 'not_found', NOT_FOUND_MESSAGE);
+
+/** Monta o filtro dos clientes visíveis à equipe: o admin vê todos e o engenheiro só os vinculados a ele. */
+export function visibleClients(viewer: Viewer): SQL | undefined {
+  return viewer.role === 'admin' ? undefined : eq(clients.engineerId, viewer.id);
+}
 
 /** Diz se o usuário enxerga o cliente: admin vê todos, engenheiro só os dele e cliente só o próprio cadastro. */
 function canRead(viewer: Viewer, client: { userId: string; engineerId: string | null }): boolean {

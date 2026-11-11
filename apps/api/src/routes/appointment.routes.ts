@@ -10,10 +10,10 @@ import {
   idParams,
 } from '@fixable/shared';
 import { createAppointmentController } from '../controllers/appointment.controller.ts';
-import type { AppointmentDeps } from '../types/appointment.types.ts';
+import type { PlatformMailDeps } from '../types/platform.types.ts';
 
 /** Declara as rotas dos agendamentos do cliente e do calendário da equipe. */
-export function appointmentRoutes(deps: AppointmentDeps) {
+export function appointmentRoutes(deps: PlatformMailDeps) {
   return (instance: FastifyInstance, _options: object, done: () => void): void => {
     const app = instance.withTypeProvider<ZodTypeProvider>();
     const controller = createAppointmentController(deps);

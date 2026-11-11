@@ -8,15 +8,16 @@ import {
   type EngineerAppointment,
 } from '@fixable/shared';
 import { appointments, clients, properties, users } from '../models/index.ts';
-import type { AppointmentDeps, AppointmentRow } from '../types/appointment.types.ts';
+import type { AppointmentRow } from '../types/appointment.types.ts';
 import type { Db, Tx } from '../types/db.types.ts';
 import type { AgendamentoData } from '../types/mail.types.ts';
-import type { Queryable, Viewer } from '../types/platform.types.ts';
-import { notFound, requireClientAccess } from './access-policy.service.ts';
+import type { PlatformMailDeps, Queryable, Viewer } from '../types/platform.types.ts';
+import { notFound, requireClientAccess, visibleClients } from './access-policy.service.ts';
 import { enqueueEmail } from './outbox.service.ts';
 import { assertPropertyOfClient } from './service-request.service.ts';
 
 const CLIENT_HOME_PATH = '/app/cliente';
+const VISIBLE_FIELDS = ['propertyId', 'servico', 'data', 'hora', 'status', 'descricao'] as const;
 
 const appointmentColumns = {
   id: appointments.id,
@@ -63,8 +64,8 @@ async function findAppointment(q: Queryable, appointmentId: string): Promise<App
   return row;
 }
 
-/** Confere a escrita no cliente dono do agendamento e trava a linha até o fim da transação. */
-async function lockAppointmentForWrite(tx: Tx, viewer: Viewer, appointmentId: string): Promise<{ clientId: string }> {
+/** Confere a escrita no cliente dono do agendamento, trava a linha até o fim da transação e devolve o estado atual. */
+async function lockAppointmentForWrite(tx: Tx, viewer: Viewer, appointmentId: string): Promise<AppointmentRow> {
   const [owner] = await tx
     .select({ clientId: appointments.clientId })
     .from(appointments)
@@ -72,18 +73,23 @@ async function lockAppointmentForWrite(tx: Tx, viewer: Viewer, appointmentId: st
   if (!owner) throw notFound();
   await requireClientAccess(tx, viewer, owner.clientId, 'write');
   const [locked] = await tx
-    .select({ clientId: appointments.clientId })
+    .select(appointmentColumns)
     .from(appointments)
+    .innerJoin(properties, eq(properties.id, appointments.propertyId))
     .where(eq(appointments.id, appointmentId))
-    .for('update');
+    .for('update', { of: appointments });
   if (!locked) throw notFound();
   return locked;
 }
 
+/** Diz se algum campo que o cliente vê mudou entre as duas versões do agendamento. */
+const hasVisibleChange = (before: AppointmentRow, after: AppointmentRow): boolean =>
+  VISIBLE_FIELDS.some((field) => before[field] !== after[field]);
+
 /** Enfileira, na transação corrente, o aviso ao cliente de que o agendamento foi criado ou atualizado. */
 async function notifyClient(
   tx: Tx,
-  config: AppointmentDeps['config'],
+  config: PlatformMailDeps['config'],
   row: AppointmentRow,
   acao: AgendamentoData['acao'],
 ): Promise<void> {
@@ -149,7 +155,7 @@ export async function listViewerAppointments(
     .innerJoin(users, eq(users.id, clients.userId))
     .where(
       and(
-        viewer.role === 'admin' ? undefined : eq(clients.engineerId, viewer.id),
+        visibleClients(viewer),
         gte(appointments.data, inicio),
         lt(appointments.data, fim),
         query.propertyId ? eq(appointments.propertyId, query.propertyId) : undefined,
@@ -161,7 +167,7 @@ export async function listViewerAppointments(
 
 /** Cria o agendamento num imóvel do cliente e avisa o cliente por e-mail na mesma transação. */
 export async function createAppointment(
-  { db, config }: AppointmentDeps,
+  { db, config }: PlatformMailDeps,
   viewer: Viewer,
   clientId: string,
   input: AppointmentInput,
@@ -179,19 +185,19 @@ export async function createAppointment(
   });
 }
 
-/** Edita só os campos enviados, inclusive o status, e avisa o cliente por e-mail na mesma transação. */
+/** Edita só os campos enviados, inclusive o status, e avisa o cliente por e-mail na mesma transação quando algo visível muda. */
 export async function updateAppointment(
-  { db, config }: AppointmentDeps,
+  { db, config }: PlatformMailDeps,
   viewer: Viewer,
   appointmentId: string,
   input: AppointmentUpdateInput,
 ): Promise<Appointment> {
   return db.transaction(async (tx) => {
-    const { clientId } = await lockAppointmentForWrite(tx, viewer, appointmentId);
-    if (input.propertyId) await assertPropertyOfClient(tx, clientId, input.propertyId);
+    const before = await lockAppointmentForWrite(tx, viewer, appointmentId);
+    if (input.propertyId) await assertPropertyOfClient(tx, before.clientId, input.propertyId);
     await tx.update(appointments).set(input).where(eq(appointments.id, appointmentId));
     const row = await findAppointment(tx, appointmentId);
-    await notifyClient(tx, config, row, 'atualizado');
+    if (hasVisibleChange(before, row)) await notifyClient(tx, config, row, 'atualizado');
     return toAppointment(row);
   });
 }

@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import type { AdminApplication, ApplicationArea, Role, TeamInviteInput, TeamInviteResult } from '@fixable/shared';
 import { applications, users } from '../models/index.ts';
-import type { AdminDeps } from '../types/admin.types.ts';
+import type { PlatformMailDeps } from '../types/platform.types.ts';
 import type { Tx } from '../types/db.types.ts';
 import { AppError } from '../utils/app-error.ts';
 import { notFound } from './access-policy.service.ts';
@@ -44,7 +44,7 @@ async function setApplicationStatus(
 
 /** Aprova a candidatura pendente criando a conta convidada do papel da área e enviando o convite, numa transação. */
 export async function approveApplication(
-  { db, config }: AdminDeps,
+  { db, config }: PlatformMailDeps,
   applicationId: string,
 ): Promise<AdminApplication> {
   return db.transaction(async (tx) => {
@@ -69,7 +69,7 @@ export async function approveApplication(
 }
 
 /** Recusa a candidatura pendente sem criar conta nem enviar e-mail. */
-export async function refuseApplication({ db }: AdminDeps, applicationId: string): Promise<AdminApplication> {
+export async function refuseApplication({ db }: PlatformMailDeps, applicationId: string): Promise<AdminApplication> {
   return db.transaction(async (tx) => {
     await lockPendingApplication(tx, applicationId);
     return setApplicationStatus(tx, applicationId, 'recusada');
@@ -77,7 +77,7 @@ export async function refuseApplication({ db }: AdminDeps, applicationId: string
 }
 
 /** Convida engenheiro ou admin; reenvia ao convidado do mesmo papel e recusa com 409 qualquer outra conta. */
-export async function inviteTeamMember({ db, config }: AdminDeps, input: TeamInviteInput): Promise<TeamInviteResult> {
+export async function inviteTeamMember({ db, config }: PlatformMailDeps, input: TeamInviteInput): Promise<TeamInviteResult> {
   return db.transaction(async (tx) => {
     const [created] = await tx
       .insert(users)

@@ -9,12 +9,6 @@ import type {
   PropertyType,
   TeamInviteInput,
 } from '@fixable/shared';
-import type { Config } from './config.types.ts';
-import type { Db } from './db.types.ts';
-
-export type InviteDelivery = 'enviado' | 'reenviado';
-
-export type AdminDeps = { db: Db; config: Pick<Config, 'APP_ORIGIN'> };
 
 export type LeadRow = {
   id: string;

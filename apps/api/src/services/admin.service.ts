@@ -1,10 +1,16 @@
 import { desc, eq, isNull } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
-import type { AdminApplication, AdminApplicationsQuery, AdminLead, AdminLeadsQuery } from '@fixable/shared';
+import type {
+  AdminApplication,
+  AdminApplicationsQuery,
+  AdminLead,
+  AdminLeadsQuery,
+  TeamInviteResult,
+} from '@fixable/shared';
 import type { Config } from '../types/config.types.ts';
 import type { Db } from '../types/db.types.ts';
 import { applications, diagnosticLeads, users } from '../models/index.ts';
-import type { ApplicationRow, InviteDelivery, LeadRow } from '../types/admin.types.ts';
+import type { ApplicationRow, LeadRow } from '../types/admin.types.ts';
 import { sendInvite } from './invite.service.ts';
 
 const DUPLICATE_MESSAGE = 'Já existe um usuário com este e-mail.';
@@ -40,7 +46,7 @@ export async function createAdmin(
   db: Db,
   config: Pick<Config, 'APP_ORIGIN'>,
   input: { nome: string; email: string },
-): Promise<{ userId: string; invite: InviteDelivery }> {
+): Promise<TeamInviteResult> {
   return db.transaction(async (tx) => {
     const [created] = await tx
       .insert(users)
@@ -49,12 +55,12 @@ export async function createAdmin(
       .returning({ id: users.id });
     if (created) {
       await sendInvite(tx, config, created.id);
-      return { userId: created.id, invite: 'enviado' };
+      return { userId: created.id, convite: 'enviado' };
     }
     const [existing] = await tx.select().from(users).where(eq(users.email, input.email)).for('update');
     if (existing?.role !== 'admin' || existing.status !== 'convidado') throw new Error(DUPLICATE_MESSAGE);
     await sendInvite(tx, config, existing.id);
-    return { userId: existing.id, invite: 'reenviado' };
+    return { userId: existing.id, convite: 'reenviado' };
   });
 }
 
