@@ -19,7 +19,13 @@ export function routes(deps: {
   clock: Clock;
   config: Pick<
     Config,
-    'COOKIE_SECURE' | 'APP_ORIGIN' | 'TEAM_EMAIL' | 'PUBLIC_FORM_RATE_LIMIT' | 'TOKEN_RATE_LIMIT' | 'LOGIN_RATE_LIMIT'
+    | 'COOKIE_SECURE'
+    | 'APP_ORIGIN'
+    | 'TEAM_EMAIL'
+    | 'PUBLIC_FORM_RATE_LIMIT'
+    | 'TOKEN_RATE_LIMIT'
+    | 'LOGIN_RATE_LIMIT'
+    | 'DEMO_MODE'
   >;
 }) {
   return (api: FastifyInstance, _options: object, done: () => void): void => {

@@ -3,7 +3,7 @@ import type { ApplicationInput, DiagnosticInput, UserStatus } from '@fixable/sha
 import type { Config } from './config.types.ts';
 import type { Db } from './db.types.ts';
 
-export type PublicConfig = Pick<Config, 'APP_ORIGIN' | 'TEAM_EMAIL' | 'PUBLIC_FORM_RATE_LIMIT'>;
+export type PublicConfig = Pick<Config, 'APP_ORIGIN' | 'TEAM_EMAIL' | 'PUBLIC_FORM_RATE_LIMIT' | 'DEMO_MODE'>;
 export type PublicDeps = { db: Db; config: PublicConfig };
 
 export type DiagnosticRequest = FastifyRequest<{ Body: DiagnosticInput }>;
