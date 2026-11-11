@@ -9,7 +9,7 @@ Kit de produção para um servidor Ubuntu com Docker. O `compose.prod.yml` sobe 
 | `web`    | `caddy:2`            | HTTPS automático (Let's Encrypt), site estático de `apps/site/dist` e proxy de `/api` para a API. | 80, 443 e 443/udp |
 | `backup` | `postgres:17`        | `pg_dump` diário no volume `backups`, com retenção de 7 dias.                                | nenhuma             |
 
-O banco e a API não publicam porta: só o Caddy fala com a API. Por isso `TRUST_PROXY_HOPS=1` é o valor certo, e ninguém de fora consegue forjar o IP pelo `X-Forwarded-For`.
+O banco e a API não publicam porta: só o Caddy fala com a API. O Caddy repassa à API, no `X-Forwarded-For`, só o IP do visitante (`{client_ip}`), e a API confia em um salto (`TRUST_PROXY_HOPS=1`, fixo no compose). Assim ninguém de fora consegue forjar o IP usado no rate limit.
 
 O que o `Caddyfile` faz:
 
@@ -17,7 +17,8 @@ O que o `Caddyfile` faz:
 - `/app/*` serve o arquivo pedido ou cai em `/app/index.html`, a SPA;
 - o resto serve o arquivo, ou `<caminho>/index.html`, ou responde 404 com a página `/404.html`;
 - comprime com zstd e gzip;
-- envia `X-Content-Type-Options: nosniff`, `Referrer-Policy: same-origin` e `X-Frame-Options: DENY` em toda resposta, inclusive no 404, e esconde o cabeçalho `Server`;
+- envia `Strict-Transport-Security: max-age=31536000` (HSTS de um ano, sem `includeSubDomains` e sem `preload`), `X-Content-Type-Options: nosniff`, `Referrer-Policy: same-origin` e `X-Frame-Options: DENY` em toda resposta, inclusive no 404, e esconde o cabeçalho `Server`;
+- usa o `ACME_EMAIL` como contato na conta do Let's Encrypt, que avisa por e-mail sobre problemas na renovação do certificado;
 - `Cache-Control: no-cache` no HTML e nos arquivos sem hash, e `public, max-age=31536000, immutable` em `/_astro/*`, que tem hash no nome;
 - grava o log de acesso sem a query string e sem `Referer`, `Cookie`, `Authorization` e `Set-Cookie`. Os tokens de convite e de redefinição de senha viajam no fragmento da URL (`#token=...`), que o navegador não envia, e a consulta do token é um POST. Então nenhum token chega ao log.
 
@@ -74,7 +75,8 @@ Edite `deploy/.env.prod`. Ele fica fora do git (`.gitignore`) e da imagem Docker
 
 | Variável                | Exemplo                                     | Observação                                                                                                   |
 | ----------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `DOMAIN`                | `fixable.com.br`                            | Sem `https://` e sem barra. Define o certificado e o `APP_ORIGIN` da API (`https://${DOMAIN}`).               |
+| `DOMAIN`                | `fixable.com.br`                            | Sem `https://` e sem barra. Define o certificado, o `APP_ORIGIN` da API (`https://${DOMAIN}`) e o `SITE_URL` do build do site. |
+| `ACME_EMAIL`            | `ti@fixable.com.br`                         | Contato da conta no Let's Encrypt. Use uma caixa lida por alguém: é para onde vão os avisos de certificado.   |
 | `POSTGRES_USER`         | `fixable`                                   |                                                                                                              |
 | `POSTGRES_PASSWORD`     | `openssl rand -hex 32`                      | Use só letras e números: a senha entra na `DATABASE_URL`.                                                    |
 | `POSTGRES_DB`           | `fixable`                                   |                                                                                                              |
@@ -82,7 +84,6 @@ Edite `deploy/.env.prod`. Ele fica fora do git (`.gitignore`) e da imagem Docker
 | `MAIL_FROM`             | `"Fixable <nao-responda@fixable.com.br>"`   | Entre aspas. O domínio precisa estar autorizado no provedor de SMTP (SPF e DKIM).                            |
 | `TEAM_EMAIL`            | `equipe@fixable.com.br`                     | Caixa da equipe que recebe os avisos de leads e cadastros. Obrigatório em produção.                          |
 | `PUBLIC_FORM_RATE_LIMIT`| `5`                                         | Envios por IP a cada 15 minutos em cada formulário público.                                                  |
-| `TRUST_PROXY_HOPS`      | `1` (padrão)                                | Use `2` só se houver uma CDN ou outro proxy na frente do Caddy (por exemplo, o proxy laranja do Cloudflare).  |
 | `BACKUP_TIME`           | `03:00`                                     | Horário do backup diário, no fuso `TZ`.                                                                      |
 | `BACKUP_RETENTION_DAYS` | `7`                                         | Dias que cada dump fica guardado.                                                                            |
 | `TZ`                    | `America/Sao_Paulo`                         | Fuso do serviço de backup.                                                                                   |
@@ -99,13 +100,15 @@ alias fx='docker compose --env-file deploy/.env.prod -f deploy/compose.prod.yml'
 
 ## 4. Gerar o site e subir
 
-O `SITE_URL` define o endereço usado no canonical, no sitemap e no `robots.txt`:
+O `deploy/build-site.sh` lê o `DOMAIN` do `deploy/.env.prod` e gera o site com `SITE_URL=https://<DOMAIN>`, o endereço usado no canonical, no sitemap e no `robots.txt`:
 
 ```sh
 pnpm install --frozen-lockfile
-SITE_URL=https://fixable.com.br pnpm build:site
+bash deploy/build-site.sh
 fx up -d --build
 ```
+
+O script gera o site numa pasta temporária e só depois sincroniza com `apps/site/dist` (com `rsync --delete-after`, ou cópia seguida da remoção dos arquivos que sobraram, quando não há `rsync`). A pasta `apps/site/dist` nunca é apagada nem recriada: o Caddy a monta em `/srv` e continua servindo o site antigo enquanto o build roda.
 
 Confira:
 
@@ -133,42 +136,91 @@ fx exec backup ls -lh /backups
 fx restart backup
 ```
 
-O `fx restart backup` gera um dump na hora, útil antes de uma atualização.
+O `fx restart backup` gera um dump na hora, útil antes de uma atualização. O dump leva alguns segundos: confira com o `ls` que apareceu um arquivo novo, com a hora de agora e um tamanho parecido com o dos anteriores.
 
-O volume fica no mesmo disco do banco. Copie os dumps para fora do servidor com regularidade:
+O primeiro dump da primeira subida sai praticamente vazio (menos de 1 KB), porque roda junto com as migrations da API, antes de as tabelas existirem. É esperado: os dumps seguintes saem completos.
+
+O volume fica no mesmo disco do banco. Copie os dumps para fora do servidor com regularidade, cada cópia numa pasta com a data:
 
 ```sh
-fx cp backup:/backups ./backups-copia
-scp -r ./backups-copia usuario@outra-maquina:/caminho/
+copia=~/fixable-backups/$(date +%Y%m%d-%H%M%S)
+mkdir -p "$copia"
+fx cp backup:/backups/. "$copia"
+scp -r "$copia" usuario@outra-maquina:/caminho/
 ```
+
+O serviço `backup` confere o `BACKUP_TIME` (formato `HH:MM`, de `00:00` a `23:59`) e o `BACKUP_RETENTION_DAYS` (inteiro, no mínimo `1`) ao iniciar. Com um valor inválido ele não sobe e explica o motivo em `fx logs backup`. Ao iniciar ele também apaga os `.partial` que um dump interrompido tenha deixado.
 
 ### Restaurar um backup
 
-A restauração apaga e recria as tabelas do banco. Pare a API antes, para ninguém gravar no meio:
+A restauração apaga o banco inteiro e o recria a partir do dump. Assim não sobra nada do estado atual, nem as tabelas que uma versão mais nova da API tenha criado depois do dump. Pare a API antes, para ninguém gravar no meio:
 
 ```sh
 fx stop api
-fx exec backup pg_restore --clean --if-exists --no-owner -d fixable /backups/fixable-20261111-030000.dump
+fx exec backup sh -c 'dropdb --force "$PGDATABASE"'
+fx exec backup sh -c 'createdb "$PGDATABASE"'
+fx exec backup sh -c 'pg_restore --no-owner --exit-on-error -d "$PGDATABASE" /backups/fixable-20261111-030000.dump'
 fx start api
+fx ps
 ```
 
-Troque `fixable` pelo `POSTGRES_DB`, se for outro. Para restaurar um arquivo que está fora do volume, copie-o antes com `fx cp ./arquivo.dump backup:/backups/`.
+- Troque o nome do arquivo pelo dump escolhido em `fx exec backup ls -lh /backups`.
+- O `$PGDATABASE` vem entre aspas simples de propósito: quem o expande é o container, que já tem o `POSTGRES_DB`.
+- O `--exit-on-error` para no primeiro erro. Se isso acontecer, o banco fica pela metade: corrija a causa e repita os três comandos, a partir do `dropdb`.
+- Para restaurar um arquivo que está fora do volume, copie-o antes com `fx cp ./arquivo.dump backup:/backups/`.
+- Depois do `fx start api`, confira `curl https://<DOMAIN>/api/health`.
 
 ## 7. Atualizar a versão
 
+Antes de tudo, gere um dump e confira que ele saiu:
+
 ```sh
 cd /opt/fixable
+git rev-parse --short HEAD
 fx restart backup
+fx exec backup ls -lh /backups
+```
+
+Anote o commit atual (o `git rev-parse`) e o nome do dump de agora: são eles que permitem voltar. Só continue se o dump novo apareceu no `ls`, com a hora de agora e um tamanho coerente. Guarde uma cópia fora do volume, como na seção 6:
+
+```sh
+copia=~/fixable-backups/$(date +%Y%m%d-%H%M%S)
+mkdir -p "$copia"
+fx cp backup:/backups/. "$copia"
+```
+
+Depois atualize:
+
+```sh
 git pull
 pnpm install --frozen-lockfile
-SITE_URL=https://fixable.com.br pnpm build:site
+bash deploy/build-site.sh
 fx up -d --build
+fx ps
+docker image prune -f
 ```
 
 - A API aplica as migrations novas ao iniciar.
-- O Caddy lê os arquivos do `apps/site/dist` a cada requisição, então o site novo vale assim que o build termina.
+- O site novo vale assim que o `build-site.sh` termina: o Caddy lê os arquivos de `apps/site/dist` a cada requisição.
 - Se o `Caddyfile` mudou, rode `fx restart web`.
-- Para voltar uma versão, faça `git checkout <commit-anterior>` e repita o build e o `up`. Se a versão nova já migrou o banco, restaure o dump feito antes da atualização.
+- O `docker image prune -f` apaga as imagens antigas da API que ficaram sem uso, para não encher o disco.
+
+### Voltar para a versão anterior
+
+Se a versão nova já migrou o banco, a versão antiga pode não funcionar com ele. Volte o banco para o dump feito antes da atualização e só então suba o código antigo:
+
+1. Faça a restauração da seção 6 com o dump anotado antes da atualização (do `fx stop api` até o `pg_restore`, sem o `fx start api`).
+2. Volte o código e suba:
+
+   ```sh
+   git checkout <commit-anotado>
+   pnpm install --frozen-lockfile
+   bash deploy/build-site.sh
+   fx up -d --build
+   fx ps
+   ```
+
+Tudo o que foi gravado depois do dump se perde. Para voltar à versão mais nova depois, faça `git checkout main` e repita a atualização.
 
 ## 8. Teste local do kit (`pnpm deploy:smoke`)
 
@@ -180,14 +232,35 @@ pnpm deploy:smoke
 
 O script `deploy/smoke.sh`:
 
-1. gera o site com `SITE_URL=https://localhost`;
+1. gera o site com `deploy/build-site.sh deploy/.env.smoke` (`SITE_URL=https://localhost`);
 2. sobe o `compose.prod.yml` no projeto `fixable-smoke` com o `.env.smoke` (`DOMAIN=localhost`, certificado da CA interna do Caddy) e o `compose.smoke.yml`, que acrescenta um Mailpit só para o smoke, com a interface numa porta aleatória de `127.0.0.1`;
 3. confere que a API e o banco não publicam porta no host;
 4. cria um admin com o CLI dentro do container da API e confere que o backup inicial foi gerado;
-5. roda o Playwright (`apps/site/playwright.caddy.config.ts`) contra `https://localhost`, ignorando o certificado: home, assets com cache imutável, página de serviço por cidade, 404, API e deep link da SPA, e o admin que aceita o convite, sai, entra de novo e chega a `/app/admin/leads`;
+5. roda o Playwright (`apps/site/playwright.caddy.config.ts`) contra `https://localhost`, ignorando o certificado: home com os cabeçalhos de segurança (HSTS inclusive), assets com cache imutável, página de serviço por cidade, 404, API e deep link da SPA, e o admin que aceita o convite, sai, entra de novo e chega a `/app/admin/leads`;
 6. derruba tudo com `down -v`, mesmo se algo falhar, e mostra os logs da API, do Caddy e do backup quando falha.
 
 O smoke não usa as portas do ambiente de desenvolvimento (5432, 3333, 4321, 1025 e 8025) e não toca nos containers e volumes do projeto `fixable`.
+
+## 9. Com uma CDN ou outro proxy na frente do Caddy
+
+O kit supõe que o visitante se conecta direto ao Caddy. Com uma CDN no meio (por exemplo, o proxy laranja do Cloudflare), a conexão que chega ao Caddy é da CDN, e por padrão o Caddy ignora o `X-Forwarded-For` que ela envia: a API veria o IP da CDN e todos os visitantes dividiriam o mesmo limite de tentativas.
+
+Mudar o `TRUST_PROXY_HOPS` não resolve, porque o IP do visitante nem chega à API. Ele continua em `1`. O que muda é o `Caddyfile`: diga ao Caddy em quais faixas de IP da CDN ele pode confiar, no bloco de opções globais do topo do arquivo:
+
+```
+{
+	email {$ACME_EMAIL}
+	servers {
+		trusted_proxies static <faixas da CDN>
+		trusted_proxies_strict
+	}
+}
+```
+
+- Troque `<faixas da CDN>` pelas faixas publicadas pela CDN, separadas por espaço (no Cloudflare, as listas de `https://www.cloudflare.com/ips-v4` e `https://www.cloudflare.com/ips-v6`). Revise de tempos em tempos, porque elas mudam.
+- Com isso o `{client_ip}` passa a ser o IP do visitante informado pela CDN, e o `header_up X-Forwarded-For {client_ip}` que já está no `handle /api/*` o entrega à API. O `trusted_proxies_strict` lê o cabeçalho da direita para a esquerda, então um `X-Forwarded-For` forjado pelo visitante é ignorado.
+- Aplique com `fx restart web`.
+- Nunca use faixas amplas como `private_ranges` ou `0.0.0.0/0` aqui: qualquer um nessas faixas poderia forjar o IP.
 
 ## Pendências que dependem da cliente
 
