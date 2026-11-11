@@ -240,6 +240,16 @@ describe('redefinição de senha', () => {
     expect((await lookup(previous)).statusCode).toBe(200);
   });
 
+  it('forgots simultâneos para o mesmo convidado emitem um único link e um único e-mail', async () => {
+    const user = await createUser(t.db, { role: 'cliente', status: 'convidado', email: 'a@fixable.com' });
+
+    const responses = await Promise.all(Array.from({ length: 4 }, () => forgot('a@fixable.com')));
+
+    expect(responses.map((response) => response.statusCode)).toEqual([204, 204, 204, 204]);
+    expect(await t.db.select().from(emailTokens).where(eq(emailTokens.userId, user.id))).toHaveLength(1);
+    expect(await t.db.select().from(emailOutbox)).toHaveLength(1);
+  });
+
   it('forgot de usuário convidado com convite de mais de 10 min reenvia o convite e invalida o anterior', async () => {
     const user = await createUser(t.db, { role: 'cliente', status: 'convidado', email: 'a@fixable.com' });
     await sendInvite(t.db, t.config, user.id);
