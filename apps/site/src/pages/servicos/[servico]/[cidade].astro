@@ -27,7 +27,7 @@ const jsonLd = [serviceJsonLd(servico, cidade, Astro.site)];
       <h1>{heading}</h1>
       <p class="page-lead">{description}</p>
       <div class="form-wrap">
-        <DiagnosticForm client:visible cidadeInicial={cidade.nome} />
+        <DiagnosticForm client:visible={{ rootMargin: '400px' }} cidadeInicial={cidade.nome} />
         <noscript>
           <p class="muted">Para enviar sem JavaScript, escreva para contato@fixable.com.br.</p>
         </noscript>

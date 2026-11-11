@@ -15,7 +15,7 @@ import { ApplicationForm } from '../../forms/ApplicationForm.tsx';
       </div>
     </div>
     <div class="form-wrap" id="application-form-root">
-      <ApplicationForm client:visible />
+      <ApplicationForm client:visible={{ rootMargin: '400px' }} />
       <noscript>
         <p class="muted">Para enviar sem JavaScript, escreva para contato@fixable.com.br.</p>
       </noscript>

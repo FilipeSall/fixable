@@ -53,6 +53,7 @@ export type PublicFormConfig = {
 };
 
 export type PublicFormState = {
+  hydrated: boolean;
   values: FormValues;
   errors: Record<string, string>;
   formError: string;

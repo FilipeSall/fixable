@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { aguardarHidratacao } from './hydration.ts';
+import { aguardarHidratacao, segurarIlha } from './hydration.ts';
 import { clearMailbox, readInviteLink } from './mailpit.ts';
 
 const senha = 'senha123';
@@ -71,4 +71,42 @@ test('home abre sem login e sem chamar /api/auth/me', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Solicitar diagnóstico' }).last()).toBeVisible();
   await page.waitForLoadState('networkidle');
   expect(chamadas).toEqual([]);
+});
+
+for (const caso of [
+  { titulo: 'na página de serviço por cidade', url: '/servicos/eletrica/santo-andre' },
+  { titulo: 'na home com ?plano=3m', url: '/?plano=3m' },
+]) {
+  test(`o que foi digitado antes da hidratação continua depois dela, ${caso.titulo}`, async ({ page }) => {
+    const liberar = await segurarIlha(page, /DiagnosticForm/);
+    await page.goto(caso.url);
+    const ilha = page.locator('astro-island:has(#diagnostic-form)');
+    const form = page.locator('#diagnostic-form');
+    const nome = form.getByLabel('Nome completo', { exact: true });
+    const tipo = form.getByLabel('Tipo de imóvel');
+    await nome.fill('Digitado Antes');
+    await tipo.selectOption('sobrado');
+    await expect(ilha).toHaveAttribute('ssr', /.*/);
+    liberar();
+    await aguardarHidratacao(page, '#diagnostic-form');
+    await form.getByLabel('E-mail', { exact: true }).fill('antes@fixable.local');
+    await expect(nome).toHaveValue('Digitado Antes');
+    await expect(tipo).toHaveValue('sobrado');
+    await form.getByRole('button', { name: 'Solicitar diagnóstico' }).click();
+    await expect(form.getByText('Informe um telefone válido.')).toBeVisible();
+    await expect(form.getByText('Informe seu nome completo.')).toHaveCount(0);
+    await expect(form.getByText('Selecione o tipo de imóvel.')).toHaveCount(0);
+    await expect(nome).toHaveValue('Digitado Antes');
+  });
+}
+
+test('o botão de envio fica desabilitado até a ilha hidratar', async ({ page }) => {
+  const liberar = await segurarIlha(page, /DiagnosticForm/);
+  await page.goto('/servicos/eletrica/santo-andre');
+  const botao = page.locator('#diagnostic-form').getByRole('button', { name: 'Solicitar diagnóstico' });
+  await expect(page.locator('astro-island:has(#diagnostic-form)')).toHaveAttribute('ssr', /.*/);
+  await expect(botao).toBeDisabled();
+  liberar();
+  await aguardarHidratacao(page, '#diagnostic-form');
+  await expect(botao).toBeEnabled();
 });

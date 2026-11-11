@@ -8,7 +8,8 @@ import {
   diagnosticInput,
   planName,
 } from '@fixable/shared';
-import { useState, useSyncExternalStore } from 'react';
+import { useRef, useState, useSyncExternalStore } from 'react';
+import { subscribeNothing } from '../../lib/hydration.ts';
 import type { DiagnosticFormProps, FormFieldOption } from '../../types/public-forms.types.ts';
 import { ConsentField } from './ConsentField.tsx';
 import { FormField } from './FormField.tsx';
@@ -30,11 +31,6 @@ function planSnapshot(): string {
   return PLANS.some((plan) => plan.id === id) ? id : '';
 }
 
-/** Não há assinatura: a URL só é lida na montagem. */
-function subscribeNothing() {
-  return () => undefined;
-}
-
 /** Valor da URL no servidor, onde não há ?plano=. */
 function serverPlan() {
   return '';
@@ -49,6 +45,7 @@ export function DiagnosticForm({ cidadeInicial = '' }: Readonly<DiagnosticFormPr
   }
   const fromUrl = useSyncExternalStore(subscribeNothing, planSnapshot, serverPlan);
   const plano = dismissed ? '' : fromUrl;
+  const formRef = useRef<HTMLFormElement>(null);
   const form = usePublicForm({
     schema: diagnosticInput,
     url: API.publicDiagnostics,
@@ -57,7 +54,7 @@ export function DiagnosticForm({ cidadeInicial = '' }: Readonly<DiagnosticFormPr
     initial: { ...EMPTY, cidade: cidadeInicial },
     onSuccess: clearPlan,
     extraBody: () => (plano ? { plano } : {}),
-  });
+  }, formRef);
   const { values, errors, setValue } = form;
 
   /** Atualiza o campo de texto ou seleção pelo nome. */
@@ -84,7 +81,7 @@ export function DiagnosticForm({ cidadeInicial = '' }: Readonly<DiagnosticFormPr
   }
 
   return (
-    <form id="diagnostic-form" method="post" noValidate onSubmit={form.submit}>
+    <form ref={formRef} id="diagnostic-form" method="post" noValidate onSubmit={form.submit}>
       {plano ? (
         <div className="plan-chip show">
           <span>
@@ -111,7 +108,7 @@ export function DiagnosticForm({ cidadeInicial = '' }: Readonly<DiagnosticFormPr
           {form.formError}
         </p>
       ) : null}
-      <button type="submit" className="btn btn-primary btn-block" disabled={form.sending}>
+      <button type="submit" className="btn btn-primary btn-block" disabled={form.sending || !form.hydrated}>
         {form.sending ? 'Enviando...' : 'Solicitar diagnóstico'}
       </button>
     </form>

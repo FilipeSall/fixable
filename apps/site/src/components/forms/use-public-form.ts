@@ -1,15 +1,41 @@
-import { useState } from 'react';
+import { useLayoutEffect, useState, type RefObject } from 'react';
 import { fieldErrorsOf } from '../../lib/form-errors.ts';
+import { useHydrated } from '../../lib/hydration.ts';
 import type { FormValues, PublicFormConfig, PublicFormState } from '../../types/public-forms.types.ts';
 import { submitPublicForm } from './public-submit.ts';
 
-/** Controla valores, validação com Zod, envio à API e estado de sucesso de um formulário público. */
-export function usePublicForm(config: PublicFormConfig): PublicFormState {
+/** Lê no formulário do servidor o que o visitante digitou antes da hidratação e devolve só o que difere do valor inicial. */
+function typedBeforeHydration(form: HTMLFormElement | null, initial: FormValues): FormValues {
+  const typed: FormValues = {};
+  if (!form) return typed;
+  for (const [name, initialValue] of Object.entries(initial)) {
+    const element = form.elements.namedItem(name);
+    if (element instanceof HTMLInputElement && typeof initialValue === 'boolean') {
+      if (element.checked !== initialValue) typed[name] = element.checked;
+    } else if (
+      (element instanceof HTMLInputElement || element instanceof HTMLSelectElement || element instanceof HTMLTextAreaElement) &&
+      element.value !== initialValue
+    ) {
+      typed[name] = element.value;
+    }
+  }
+  return typed;
+}
+
+/** Controla valores, validação com Zod, envio à API e estado de sucesso de um formulário público ligado ao formRef. */
+export function usePublicForm(config: PublicFormConfig, formRef: RefObject<HTMLFormElement | null>): PublicFormState {
   const [values, setValues] = useState<FormValues>(config.initial);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState('');
   const [sending, setSending] = useState(false);
   const [done, setDone] = useState(false);
+  const [initial] = useState(config.initial);
+  const hydrated = useHydrated();
+
+  useLayoutEffect(() => {
+    const typed = typedBeforeHydration(formRef.current, initial);
+    if (Object.keys(typed).length > 0) setValues((current) => ({ ...current, ...typed }));
+  }, [formRef, initial]);
 
   /** Atualiza um campo e limpa o erro dele. */
   function setValue(name: string, value: string | boolean) {
@@ -59,5 +85,5 @@ export function usePublicForm(config: PublicFormConfig): PublicFormState {
     setDone(false);
   }
 
-  return { values, errors, formError, sending, done, setValue, submit, reset };
+  return { hydrated, values, errors, formError, sending, done, setValue, submit, reset };
 }

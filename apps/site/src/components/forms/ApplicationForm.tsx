@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { API, APPLICATION_AREAS, APPLICATION_AREA_LABELS, applicationInput } from '@fixable/shared';
 import type { FormFieldOption } from '../../types/public-forms.types.ts';
 import { ConsentField } from './ConsentField.tsx';
@@ -12,13 +13,14 @@ const EMPTY = { nome: '', email: '', telefone: '', cidade: '', area: '', aceiteT
 
 /** Formulário "Faça parte do time": valida a candidatura com Zod e envia para a API pública. */
 export function ApplicationForm() {
+  const formRef = useRef<HTMLFormElement>(null);
   const form = usePublicForm({
     schema: applicationInput,
     url: API.publicApplications,
     idPrefix: 't',
     order: FIELD_ORDER,
     initial: EMPTY,
-  });
+  }, formRef);
   const { values, errors, setValue } = form;
 
   /** Atualiza o campo de texto ou seleção pelo nome. */
@@ -45,7 +47,7 @@ export function ApplicationForm() {
   }
 
   return (
-    <form id="team-form" method="post" noValidate onSubmit={form.submit}>
+    <form ref={formRef} id="team-form" method="post" noValidate onSubmit={form.submit}>
       <div className="form-grid">
         <FormField id="t-nome" name="nome" label="Nome completo" placeholder="Seu nome" autoComplete="name" value={values.nome as string} error={errors.nome} onChange={handleChange} />
         <FormField id="t-email" name="email" label="E-mail" type="email" placeholder="voce@email.com" autoComplete="email" value={values.email as string} error={errors.email} onChange={handleChange} />
@@ -60,7 +62,7 @@ export function ApplicationForm() {
           {form.formError}
         </p>
       ) : null}
-      <button type="submit" className="btn btn-primary btn-block" disabled={form.sending}>
+      <button type="submit" className="btn btn-primary btn-block" disabled={form.sending || !form.hydrated}>
         {form.sending ? 'Enviando...' : 'Fazer meu cadastro'}
       </button>
     </form>
