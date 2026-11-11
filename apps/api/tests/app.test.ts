@@ -126,3 +126,34 @@ describe('erros padronizados', () => {
     expect(res.json()).toEqual({ error: { code: 'internal', message: 'Algo deu errado. Tente de novo.' } });
   });
 });
+
+describe('TRUST_PROXY_HOPS', () => {
+  const ipVia = async (hops: number) => {
+    const proxied = await testApp({ TRUST_PROXY_HOPS: hops });
+    try {
+      proxied.app.get('/api/_test/ip', (request) => ({ ip: request.ip }));
+      await proxied.app.ready();
+      const res = await proxied.app.inject({
+        method: 'GET',
+        url: '/api/_test/ip',
+        remoteAddress: '192.0.2.2',
+        headers: { 'x-forwarded-for': '198.51.100.7, 192.0.2.1' },
+      });
+      return res.json<{ ip: string }>().ip;
+    } finally {
+      await proxied.close();
+    }
+  };
+
+  it('com 2 saltos o IP é o do cliente, antes dos dois proxies', async () => {
+    expect(await ipVia(2)).toBe('198.51.100.7');
+  });
+
+  it('com 1 salto o IP é o do proxy que falou com o último proxy', async () => {
+    expect(await ipVia(1)).toBe('192.0.2.1');
+  });
+
+  it('com 0 saltos ignora X-Forwarded-For e usa o endereço da conexão', async () => {
+    expect(await ipVia(0)).toBe('192.0.2.2');
+  });
+});

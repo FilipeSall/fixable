@@ -9,11 +9,15 @@ import { routes } from './routes/index.ts';
 import type { AppDeps } from './types/app.types.ts';
 import { serializeError, serializeRequest } from './utils/log-redaction.ts';
 
+/** Confia nos `hops` saltos mais próximos da API (a conexão e os proxies seguintes) para achar o IP real do visitante. */
+function trustProxyHops(hops: number) {
+  return hops > 0 ? (_address: string, hop: number) => hop < hops : false;
+}
+
 /** Monta a aplicação Fastify com validação, erros, cookies, rate limit, checagem de Origin, autenticação e rotas sob /api. */
 export async function buildApp({ config, db }: AppDeps): Promise<FastifyInstance> {
-  const trustProxy = config.TRUST_PROXY ? (_address: string, hop: number) => hop === 0 : false;
   const logger = config.NODE_ENV === 'test' ? false : { serializers: { req: serializeRequest, err: serializeError } };
-  const app = Fastify({ logger, trustProxy });
+  const app = Fastify({ logger, trustProxy: trustProxyHops(config.TRUST_PROXY_HOPS) });
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
   registerErrorHandler(app);

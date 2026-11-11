@@ -49,6 +49,16 @@ pnpm --filter api create-admin --nome "Ana Souza" --email ana@exemplo.com
 
 O convite chega no Mailpit. Se o e-mail já for de um administrador que ainda não aceitou o convite, o comando envia um novo convite e invalida o anterior.
 
+## Proxy reverso
+
+A API descobre o IP do visitante, usado no rate limit, pelo `X-Forwarded-For`, confiando em `TRUST_PROXY_HOPS` saltos:
+
+- `0` (padrão, desenvolvimento): ignora o cabeçalho e usa o endereço da conexão;
+- `1`: só o nginx fica na frente da API. É o padrão da imagem Docker;
+- `2`: há mais um proxy antes do nginx, como um terminador TLS ou uma CDN.
+
+Um valor maior que o número real de proxies deixa o visitante forjar o IP. Um valor menor faz todos os visitantes dividirem o mesmo limite.
+
 ## Testes
 
 ```sh

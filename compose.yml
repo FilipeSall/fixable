@@ -37,7 +37,7 @@ services:
       DATABASE_URL: postgres://fixable:fixable@db:5432/fixable
       APP_ORIGIN: http://localhost:4321
       COOKIE_SECURE: "false"
-      TRUST_PROXY: "false"
+      TRUST_PROXY_HOPS: "0"
       MAIL_DRIVER: smtp
       SMTP_URL: smtp://mailpit:1025
       MAIL_FROM: Fixable <nao-responda@fixable.local>

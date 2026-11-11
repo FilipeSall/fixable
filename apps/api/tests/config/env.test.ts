@@ -38,4 +38,13 @@ describe('loadConfig', () => {
   it('rejeita TEAM_EMAIL que não seja e-mail', () => {
     expect(() => loadConfig({ ...production, TEAM_EMAIL: 'nao-e-email' })).toThrow(/TEAM_EMAIL/);
   });
+
+  it('TRUST_PROXY_HOPS é um inteiro >= 0 com padrão 0', () => {
+    const dev = { ...base, MAIL_DRIVER: 'memory' };
+    expect(loadConfig(dev).TRUST_PROXY_HOPS).toBe(0);
+    expect(loadConfig({ ...dev, TRUST_PROXY_HOPS: '2' }).TRUST_PROXY_HOPS).toBe(2);
+    expect(() => loadConfig({ ...dev, TRUST_PROXY_HOPS: '-1' })).toThrow(/TRUST_PROXY_HOPS/);
+    expect(() => loadConfig({ ...dev, TRUST_PROXY_HOPS: 'true' })).toThrow(/TRUST_PROXY_HOPS/);
+    expect(() => loadConfig({ ...dev, TRUST_PROXY_HOPS: '1.5' })).toThrow(/TRUST_PROXY_HOPS/);
+  });
 });

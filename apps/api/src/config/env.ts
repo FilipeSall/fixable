@@ -11,7 +11,7 @@ export const configSchema = z
     DATABASE_URL: z.string().min(1),
     APP_ORIGIN: z.url(),
     COOKIE_SECURE: booleanString.default(true),
-    TRUST_PROXY: booleanString.default(false),
+    TRUST_PROXY_HOPS: z.coerce.number().int().min(0).default(0),
     MAIL_DRIVER: z.enum(['smtp', 'memory']).default('smtp'),
     SMTP_URL: z.string().min(1).optional(),
     MAIL_FROM: z.string().min(1),

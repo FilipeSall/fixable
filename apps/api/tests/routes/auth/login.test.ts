@@ -234,9 +234,9 @@ describe('requireRole', () => {
   });
 });
 
-describe('TRUST_PROXY', () => {
-  it('com TRUST_PROXY=true o rate limit usa o IP do último salto e ignora X-Forwarded-For forjado', async () => {
-    const proxied = await testApp({ TRUST_PROXY: true });
+describe('TRUST_PROXY_HOPS', () => {
+  it('com TRUST_PROXY_HOPS=1 o rate limit usa o IP do último salto e ignora X-Forwarded-For forjado', async () => {
+    const proxied = await testApp({ TRUST_PROXY_HOPS: 1 });
     try {
       await proxied.app.ready();
       const attempt = (fake: string) =>
