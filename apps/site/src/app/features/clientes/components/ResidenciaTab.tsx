@@ -60,7 +60,6 @@ export function ResidenciaTab({ property, editable }: Readonly<ClientTabProps>) 
           Dados enviados no formulário “Solicite seu diagnóstico” e atualizados pelo seu engenheiro.
         </p>
       )}
-      {remove.error ? <p role="alert">{errorMessage(remove.error)}</p> : null}
       {editing ? (
         <AttributeModal propertyId={property.id} attribute={editing === 'new' ? null : editing} onClose={() => setEditing(null)} />
       ) : null}
@@ -70,8 +69,12 @@ export function ResidenciaTab({ property, editable }: Readonly<ClientTabProps>) 
           text={`Remover “${removing.chave}” dos dados da residência?`}
           confirmLabel="Excluir"
           busy={remove.isPending}
+          error={remove.error ? errorMessage(remove.error) : ''}
           onConfirm={() => remove.mutate(removing)}
-          onCancel={() => setRemoving(null)}
+          onCancel={() => {
+            remove.reset();
+            setRemoving(null);
+          }}
         />
       ) : null}
     </>

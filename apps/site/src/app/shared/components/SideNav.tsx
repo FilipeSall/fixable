@@ -1,8 +1,8 @@
 import { NavLink } from 'react-router';
-import type { SideNavSection } from '../../../types/platform-ui.types.ts';
+import type { SideNavProps } from '../../../types/platform-ui.types.ts';
 
 /** Barra lateral do modelo (.app-side) com o item da rota atual destacado. */
-export function SideNav({ section }: Readonly<{ section: SideNavSection }>) {
+export function SideNav({ section }: Readonly<SideNavProps>) {
   return (
     <aside className="app-side" aria-label="Navegação da plataforma">
       <p className="side-label">{section.label}</p>

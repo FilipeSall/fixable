@@ -10,10 +10,14 @@ export function ConfirmDialog({
   onCancel,
   danger = true,
   busy = false,
+  error = '',
 }: Readonly<ConfirmDialogProps>) {
   return (
     <Modal title={title} onClose={onCancel}>
       <p>{text}</p>
+      <p className="err" role="alert">
+        {error}
+      </p>
       <div className="fx-dialog-foot">
         <button type="button" className="b-sm" onClick={onCancel}>
           Cancelar

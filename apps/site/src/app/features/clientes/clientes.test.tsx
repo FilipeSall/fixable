@@ -53,7 +53,13 @@ function stubApi(me: Me, overrides: Record<string, (init: Init) => unknown> = {}
   mockedFetch.mockImplementation((path: string, init?: Init) => {
     const key = `${init?.method ?? 'GET'} ${path}`;
     const handler = overrides[key];
-    if (handler) return Promise.resolve(handler(init));
+    if (handler) {
+      try {
+        return Promise.resolve(handler(init));
+      } catch (error) {
+        return Promise.reject(error instanceof Error ? error : new Error(String(error)));
+      }
+    }
     const routes: Record<string, unknown> = {
       [`GET ${API.me}`]: me,
       [`GET ${API.clients}`]: list,
@@ -90,12 +96,12 @@ describe('clientes', () => {
     stubApi(rafael);
     renderAt('/clientes');
     expect(await screen.findByText('Clientes vinculados')).toBeInTheDocument();
-    const card = screen.getByRole('link', { name: 'Abrir a página de Ana Souza' });
+    const card = screen.getByRole('link', { name: /^Ana Souza/ });
     expect(within(card).getByText('Sobrado · Santo André')).toBeInTheDocument();
     expect(within(card).getByText('Novo cliente')).toBeInTheDocument();
     expect(within(card).getByText('1 serviço ativo')).toBeInTheDocument();
     expect(within(card).getByText('2 solicitações abertas')).toBeInTheDocument();
-    expect(within(screen.getByRole('link', { name: 'Abrir a página de Carlos Mendes' })).getByText('Sem serviços ativos')).toBeInTheDocument();
+    expect(within(screen.getByRole('link', { name: /Carlos Mendes/ })).getByText('Sem serviços ativos')).toBeInTheDocument();
   });
 
   it('mostra o estado vazio quando não há clientes', async () => {
@@ -162,5 +168,80 @@ describe('clientes', () => {
     await userEvent.setup().click(screen.getByRole('tab', { name: 'Dados da residência' }));
     expect(await screen.findByText('180 m²')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Editar' })).not.toBeInTheDocument();
+  });
+
+  it('engenheiro edita e exclui uma solicitação', async () => {
+    const patched = vi.fn(() => requests[0]);
+    const removed = vi.fn(() => undefined);
+    stubApi(rafael, { [`PATCH ${API.request('r1')}`]: patched, [`DELETE ${API.request('r1')}`]: removed });
+    renderAt(`/clientes/${CLIENT_ID}`);
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: /Diagnóstico inicial — Sobrado/ }));
+    await user.selectOptions(screen.getByLabelText('Status da atividade'), 'agendado');
+    await user.selectOptions(screen.getByLabelText('Imóvel'), '');
+    await user.click(screen.getByRole('button', { name: 'Salvar' }));
+    expect(await screen.findByText('Solicitação atualizada.')).toBeInTheDocument();
+    expect(patched).toHaveBeenCalledWith({ method: 'PATCH', body: { descricao: 'Diagnóstico inicial — Sobrado', status: 'agendado', propertyId: null } });
+    await user.click(screen.getByRole('button', { name: /Diagnóstico inicial — Sobrado/ }));
+    await user.click(screen.getByRole('button', { name: 'Excluir' }));
+    await user.click(within(screen.getByRole('dialog', { name: 'Excluir solicitação' })).getByRole('button', { name: 'Excluir' }));
+    expect(await screen.findByText('Solicitação excluída.')).toBeInTheDocument();
+    expect(removed).toHaveBeenCalled();
+  });
+
+  it('engenheiro adiciona, edita e exclui uma informação da residência', async () => {
+    const created = vi.fn(() => ({ id: 'a9', chave: 'Ano de construção', valor: '1998' }));
+    const patched = vi.fn(() => ({ id: 'a1', chave: 'Área construída', valor: '200 m²' }));
+    const removed = vi.fn(() => undefined);
+    stubApi(rafael, {
+      [`POST ${API.propertyAttributes('p1')}`]: created,
+      [`PATCH ${API.propertyAttribute('p1', 'a1')}`]: patched,
+      [`DELETE ${API.propertyAttribute('p1', 'a1')}`]: removed,
+    });
+    renderAt(`/clientes/${CLIENT_ID}`);
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('tab', { name: 'Dados da residência' }));
+    await user.click(await screen.findByRole('button', { name: /Adicionar informação/ }));
+    await user.type(screen.getByLabelText('Informação'), 'Ano de construção');
+    await user.type(screen.getByLabelText('Valor'), '1998');
+    await user.click(screen.getByRole('button', { name: 'Adicionar' }));
+    expect(await screen.findByText('Informação adicionada.')).toBeInTheDocument();
+    expect(created).toHaveBeenCalledWith({ method: 'POST', body: { chave: 'Ano de construção', valor: '1998' } });
+    await user.click(screen.getByRole('button', { name: 'Editar' }));
+    const valor = screen.getByLabelText('Valor');
+    await user.clear(valor);
+    await user.type(valor, '200 m²');
+    await user.click(screen.getByRole('button', { name: 'Salvar' }));
+    expect(await screen.findByText('Dados da residência atualizados.')).toBeInTheDocument();
+    expect(patched).toHaveBeenCalledWith({ method: 'PATCH', body: { chave: 'Área construída', valor: '200 m²' } });
+    await user.click(screen.getByRole('button', { name: 'Excluir' }));
+    await user.click(within(screen.getByRole('dialog', { name: 'Excluir informação' })).getByRole('button', { name: 'Excluir' }));
+    expect(await screen.findByText('Informação removida.')).toBeInTheDocument();
+    expect(removed).toHaveBeenCalled();
+  });
+
+  it('erro ao excluir aparece dentro da confirmação', async () => {
+    stubApi(rafael, {
+      [`DELETE ${API.propertyAttribute('p1', 'a1')}`]: () => {
+        throw new ApiRequestError(500, 'internal', 'Algo deu errado. Tente de novo.');
+      },
+    });
+    renderAt(`/clientes/${CLIENT_ID}`);
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('tab', { name: 'Dados da residência' }));
+    await user.click(await screen.findByRole('button', { name: 'Excluir' }));
+    const dialog = screen.getByRole('dialog', { name: 'Excluir informação' });
+    await user.click(within(dialog).getByRole('button', { name: 'Excluir' }));
+    expect(await within(dialog).findByText('Algo deu errado. Tente de novo.')).toBeInTheDocument();
+  });
+
+  it('identificador inválido mostra "Página não encontrada."', async () => {
+    stubApi(rafael, {
+      [`GET ${API.client('abc')}`]: () => {
+        throw new ApiRequestError(400, 'validation', 'Dados inválidos.');
+      },
+    });
+    renderAt('/clientes/abc');
+    expect(await screen.findByText('Página não encontrada.')).toBeInTheDocument();
   });
 });

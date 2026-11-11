@@ -1,3 +1,4 @@
+import { APPOINTMENT_STATUS_LABELS } from '@fixable/shared';
 import type { CalendarMonthProps } from '../../../../types/agenda-ui.types.ts';
 import { dayStatus, monthCells, monthTitle, shiftMonth, WEEKDAYS } from '../lib/calendar.ts';
 
@@ -36,7 +37,7 @@ export function CalendarMonth({ monthKey, todayKey, appointments, selectedDay, o
             return (
               <div key={day} className={dayClass(events.length > 0, day === todayKey, day === selectedDay)} data-day={day}>
                 {events.length > 0 ? (
-                  <button type="button" className={`n ev-${dayStatus(events)}`} style={{ border: 0 }} aria-label={`Dia ${number}: ${label}`} onClick={() => onDaySelect(day)}>
+                  <button type="button" className={`n ev-${dayStatus(events)}`} style={{ border: 0 }} aria-label={`Dia ${number}: ${label}, ${APPOINTMENT_STATUS_LABELS[dayStatus(events)]}`} onClick={() => onDaySelect(day)}>
                     {number}
                   </button>
                 ) : (

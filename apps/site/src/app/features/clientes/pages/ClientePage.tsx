@@ -1,7 +1,7 @@
 import { useParams } from 'react-router';
 import { NotFoundPage } from '../../../NotFoundPage.tsx';
 import { Crumbs } from '../../../shared/components/Crumbs.tsx';
-import { errorMessage, isNotFound } from '../../../shared/lib/errors.ts';
+import { errorMessage, isMissing } from '../../../shared/lib/errors.ts';
 import { ClientWorkspace } from '../components/ClientWorkspace.tsx';
 import { useClient } from '../hooks/useClientes.ts';
 
@@ -9,7 +9,7 @@ import { useClient } from '../hooks/useClientes.ts';
 export function ClientePage() {
   const { clientId = '' } = useParams();
   const { data, error, isPending } = useClient(clientId);
-  if (isNotFound(error)) return <NotFoundPage />;
+  if (isMissing(error)) return <NotFoundPage embedded />;
   if (isPending) return <p role="status">Carregando...</p>;
   if (!data) return <p role="alert">{errorMessage(error)}</p>;
   return (

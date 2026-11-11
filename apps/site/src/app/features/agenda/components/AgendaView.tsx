@@ -9,16 +9,14 @@ import { dayKeyOf, monthTitle } from '../lib/calendar.ts';
 import { AppointmentCard } from './AppointmentCard.tsx';
 import { CalendarMonth } from './CalendarMonth.tsx';
 
-
 /** Calendário do mês com a lista de agendamentos, as ações de status e a exclusão. */
-export function AgendaView({ monthKey, appointments, editable, onMonthChange, onEdit, emptyHint = '' }: Readonly<AgendaViewProps>) {
+export function AgendaView({ monthKey, appointments, editable, onMonthChange, onEdit, emptyHint = '', actions = null }: Readonly<AgendaViewProps>) {
   const [todayKey] = useState(() => dayKeyOf(new Date()));
   const [openId, setOpenId] = useState<string | null>(null);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [removing, setRemoving] = useState<AgendaItem | null>(null);
   const { changeStatus, remove } = useAppointmentActions();
   const sorted = [...appointments].sort((a, b) => `${a.data} ${a.hora}`.localeCompare(`${b.data} ${b.hora}`));
-  const actionError = changeStatus.error ?? remove.error;
 
   /** Destaca o dia e abre o primeiro agendamento dele. */
   function selectDay(day: string) {
@@ -40,7 +38,8 @@ export function AgendaView({ monthKey, appointments, editable, onMonthChange, on
         onDaySelect={selectDay}
       />
       <h3 className="ag-list-title">Agendamentos de {monthTitle(monthKey).split(' de ')[0]?.toLowerCase()}</h3>
-      {actionError ? <p role="alert">{errorMessage(actionError)}</p> : null}
+      {actions}
+      {changeStatus.error ? <p role="alert">{errorMessage(changeStatus.error)}</p> : null}
       {sorted.length === 0 ? <EmptyState>Nenhum serviço agendado neste mês.{emptyHint}</EmptyState> : null}
       {sorted.map((appointment) => (
         <AppointmentCard
@@ -48,6 +47,7 @@ export function AgendaView({ monthKey, appointments, editable, onMonthChange, on
           appointment={appointment}
           open={appointment.id === openId}
           editable={editable}
+          busy={changeStatus.isPending}
           onToggle={() => setOpenId(appointment.id === openId ? null : appointment.id)}
           onStatus={(status) => changeStatus.mutate({ id: appointment.id, status })}
           onEdit={onEdit ? () => onEdit(appointment) : undefined}
@@ -60,8 +60,12 @@ export function AgendaView({ monthKey, appointments, editable, onMonthChange, on
           text={`“${removing.servico}” em ${formatDate(removing.data)} será removido do calendário do cliente.`}
           confirmLabel="Excluir"
           busy={remove.isPending}
+          error={remove.error ? errorMessage(remove.error) : ''}
           onConfirm={() => remove.mutate(removing.id, { onSuccess: () => setRemoving(null) })}
-          onCancel={() => setRemoving(null)}
+          onCancel={() => {
+            remove.reset();
+            setRemoving(null);
+          }}
         />
       ) : null}
     </>

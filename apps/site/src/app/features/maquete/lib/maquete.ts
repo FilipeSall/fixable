@@ -1,4 +1,4 @@
-import { MAQUETE_COLUMNS, type Floor, type Room, type Service, type ServiceStatus } from '@fixable/shared';
+import { MAQUETE_COLUMNS, SERVICE_STATUS_LABELS, type Floor, type Room, type Service, type ServiceStatus } from '@fixable/shared';
 import type { RoomPlacement } from '../../../../types/maquete.types.ts';
 import type { PillColor } from '../../../../types/platform-ui.types.ts';
 
@@ -58,6 +58,13 @@ export function hoursLeft(concludedAt: string, now: number): number {
 /** Pluraliza "N serviço(s)". */
 export function serviceCountLabel(count: number): string {
   return `${count} ${count === 1 ? 'serviço' : 'serviços'}`;
+}
+
+/** Nome acessível do cômodo: nome, quantidade e status dos serviços (a cor do ponto não basta). */
+export function roomLabel(nome: string, services: readonly Service[]): string {
+  const base = `${nome} — ${serviceCountLabel(services.length)}`;
+  if (services.length === 0) return base;
+  return `${base}: ${services.map((service) => SERVICE_STATUS_LABELS[service.status]).join(', ')}`;
 }
 
 /** Descreve onde o serviço está ("Andar 1 · Cozinha"). */

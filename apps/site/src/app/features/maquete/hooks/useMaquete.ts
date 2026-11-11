@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
+import { clientKeys } from '../../clientes/api.ts';
 import { fetchFloorplan, fetchHistory, maqueteKeys } from '../api.ts';
 
 /** Andares, cômodos e serviços visíveis do imóvel. */
@@ -19,7 +20,7 @@ export function useRefreshMaquete(propertyId: string) {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: maqueteKeys.floorplan(propertyId) }),
       queryClient.invalidateQueries({ queryKey: maqueteKeys.history(propertyId) }),
-      queryClient.invalidateQueries({ queryKey: ['clients'] }),
+      queryClient.invalidateQueries({ queryKey: clientKeys.list }),
     ]);
   }, [queryClient, propertyId]);
 }

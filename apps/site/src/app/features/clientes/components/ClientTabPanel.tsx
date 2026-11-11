@@ -1,4 +1,4 @@
-import type { ClientTabKey, ClientTabProps } from '../../../../types/clientes.types.ts';
+import type { ClientTabPanelProps } from '../../../../types/clientes.types.ts';
 import { EmptyState } from '../../../shared/components/EmptyState.tsx';
 import { AgendamentosTab } from '../../agenda/components/AgendamentosTab.tsx';
 import { HistoricoTab } from '../../maquete/components/HistoricoTab.tsx';
@@ -7,7 +7,7 @@ import { ResidenciaTab } from './ResidenciaTab.tsx';
 import { SolicitacoesTab } from './SolicitacoesTab.tsx';
 
 /** Conteúdo da aba escolhida da página do cliente, para o imóvel selecionado. */
-export function ClientTabPanel({ tab, ...props }: Readonly<ClientTabProps & { tab: ClientTabKey }>) {
+export function ClientTabPanel({ tab, ...props }: Readonly<ClientTabPanelProps>) {
   const key = props.property.id;
   switch (tab) {
     case 'solicitacoes':

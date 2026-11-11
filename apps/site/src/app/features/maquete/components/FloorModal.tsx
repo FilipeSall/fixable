@@ -37,7 +37,8 @@ export function FloorModal({ propertyId, floor, canDelete, onClose, onDeleted }:
     return (
       <ConfirmDialog
         title="Excluir andar"
-        text={remove.error ? errorMessage(remove.error) : `Remover “${floor.nome}” e os cômodos dele da maquete?`}
+        text={`Remover “${floor.nome}” e os cômodos dele da maquete?`}
+        error={remove.error ? errorMessage(remove.error) : ''}
         confirmLabel="Excluir andar"
         busy={remove.isPending}
         onConfirm={() => remove.mutate()}

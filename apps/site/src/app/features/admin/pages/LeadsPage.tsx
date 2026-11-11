@@ -6,7 +6,7 @@ import { EmptyState } from '../../../shared/components/EmptyState.tsx';
 import { Pill } from '../../../shared/components/Pill.tsx';
 import { RowCard } from '../../../shared/components/RowCard.tsx';
 import { StatRow } from '../../../shared/components/StatRow.tsx';
-import { Tabs } from '../../../shared/components/Tabs.tsx';
+import { TabPanel, Tabs } from '../../../shared/components/Tabs.tsx';
 import { errorMessage } from '../../../shared/lib/errors.ts';
 import { formatDateTime } from '../../../shared/lib/format.ts';
 import { useLeads } from '../hooks/useAdmin.ts';
@@ -41,7 +41,8 @@ export function LeadsPage() {
           ]}
         />
       ) : null}
-      <Tabs items={FILTERS} active={filter} onChange={setFilter} label="Filtro de leads" />
+      <Tabs items={FILTERS} active={filter} onChange={setFilter} label="Filtro de leads" idPrefix="leads" />
+      <TabPanel idPrefix="leads" active={filter}>
       {current.isPending ? <p role="status">Carregando...</p> : null}
       {current.error ? <p role="alert">{errorMessage(current.error)}</p> : null}
       {current.data?.length === 0 ? <EmptyState>Nenhum lead neste filtro.</EmptyState> : null}
@@ -55,6 +56,7 @@ export function LeadsPage() {
           />
         ))}
       </div>
+      </TabPanel>
     </>
   );
 }

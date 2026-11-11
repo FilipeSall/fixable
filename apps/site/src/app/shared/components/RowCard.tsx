@@ -4,11 +4,11 @@ import type { RowCardProps } from '../../../types/platform-ui.types.ts';
 export function RowCard({ title, subtitle, right, onClick }: Readonly<RowCardProps>) {
   const content = (
     <>
-      <div className="l">
+      <span className="l">
         <strong>{title}</strong>
         {subtitle ? <small>{subtitle}</small> : null}
-      </div>
-      {right ? <div className="r">{right}</div> : null}
+      </span>
+      {right ? <span className="r">{right}</span> : null}
     </>
   );
   if (!onClick) return <div className="row-card">{content}</div>;

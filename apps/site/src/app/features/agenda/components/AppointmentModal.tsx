@@ -5,6 +5,7 @@ import type { AppointmentModalProps } from '../../../../types/agenda-ui.types.ts
 import { FormModal } from '../../../shared/components/FormModal.tsx';
 import { useToast } from '../../../shared/hooks/useToast.ts';
 import { errorMessage } from '../../../shared/lib/errors.ts';
+import { clientKeys } from '../../clientes/api.ts';
 import { agendaKeys, createAppointment, updateAppointment } from '../api.ts';
 import { daysFromToday } from '../lib/calendar.ts';
 
@@ -30,7 +31,7 @@ export function AppointmentModal({ clientId, properties, defaultPropertyId, appo
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: agendaKeys.all });
-      await queryClient.invalidateQueries({ queryKey: ['clients'] });
+      await queryClient.invalidateQueries({ queryKey: clientKeys.list });
       show('Agendamento salvo. Ele já aparece no calendário do cliente.');
       onClose();
     },

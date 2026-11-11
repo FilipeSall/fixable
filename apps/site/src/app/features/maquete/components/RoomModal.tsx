@@ -55,7 +55,8 @@ export function RoomModal({ propertyId, floor, room, onClose }: Readonly<RoomMod
     return (
       <ConfirmDialog
         title="Excluir cômodo"
-        text={remove.error ? errorMessage(remove.error) : `Remover “${room.nome}” da maquete?`}
+        text={`Remover “${room.nome}” da maquete?`}
+        error={remove.error ? errorMessage(remove.error) : ''}
         confirmLabel="Excluir cômodo"
         busy={remove.isPending}
         onConfirm={() => remove.mutate()}

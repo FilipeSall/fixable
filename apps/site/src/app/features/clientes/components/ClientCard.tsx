@@ -1,4 +1,5 @@
 import { PROPERTY_TYPE_LABELS, type ClientListItem } from '@fixable/shared';
+import type { ClientCardProps } from '../../../../types/clientes.types.ts';
 import { Link } from 'react-router';
 import { Avatar } from '../../../shared/components/Avatar.tsx';
 import { Pill } from '../../../shared/components/Pill.tsx';
@@ -15,9 +16,9 @@ function plural(count: number, singular: string, pluralForm: string): string {
 }
 
 /** Cartão do cliente na lista do engenheiro, com selo de novo e contadores. */
-export function ClientCard({ client }: Readonly<{ client: ClientListItem }>) {
+export function ClientCard({ client }: Readonly<ClientCardProps>) {
   return (
-    <Link to={`/clientes/${client.id}`} className="client-card" aria-label={`Abrir a página de ${client.nome}`}>
+    <Link to={`/clientes/${client.id}`} className="client-card">
       <span className="top">
         <Avatar nome={client.nome} />
         <span>

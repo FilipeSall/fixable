@@ -119,7 +119,7 @@ describe('Tabs', () => {
       { key: 'a', label: 'Solicitações' },
       { key: 'b', label: 'Agendamentos' },
     ] as const;
-    render(<Tabs items={items} active="a" onChange={onChange} label="Abas do cliente" />);
+    render(<Tabs items={items} active="a" onChange={onChange} label="Abas do cliente" idPrefix="t" />);
     const user = userEvent.setup();
     expect(screen.getByRole('tab', { name: 'Solicitações' })).toHaveAttribute('aria-selected', 'true');
     await user.click(screen.getByRole('tab', { name: 'Agendamentos' }));
@@ -127,5 +127,7 @@ describe('Tabs', () => {
     screen.getByRole('tab', { name: 'Solicitações' }).focus();
     await user.keyboard('{ArrowLeft}');
     expect(onChange).toHaveBeenLastCalledWith('b');
+    expect(screen.getByRole('tab', { name: 'Agendamentos' })).toHaveFocus();
+    expect(screen.getByRole('tab', { name: 'Solicitações' })).toHaveAttribute('aria-controls', 't-panel');
   });
 });

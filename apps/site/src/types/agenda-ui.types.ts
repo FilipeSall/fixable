@@ -1,6 +1,7 @@
-import type { Appointment, AppointmentStatus, PropertySummary } from '@fixable/shared';
+import type { Appointment, AppointmentStatus, EngineerAppointment, PropertySummary } from '@fixable/shared';
+import type { ReactNode } from 'react';
 
-export type AgendaItem = Appointment & { clientNome?: string; clientId?: string };
+export type AgendaItem = Appointment | EngineerAppointment;
 
 export type CalendarMonthProps = {
   monthKey: string;
@@ -19,6 +20,7 @@ export type AppointmentCardProps = {
   onStatus?: (status: AppointmentStatus) => void;
   onEdit?: () => void;
   onDelete?: () => void;
+  busy?: boolean;
 };
 
 export type AppointmentModalProps = {
@@ -43,4 +45,12 @@ export type AgendaViewProps = {
   onMonthChange: (monthKey: string) => void;
   onEdit?: (appointment: Appointment) => void;
   emptyHint?: string;
+  actions?: ReactNode;
+};
+
+export type AppointmentActionsProps = {
+  busy: boolean;
+  onStatus: (status: AppointmentStatus) => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
 };

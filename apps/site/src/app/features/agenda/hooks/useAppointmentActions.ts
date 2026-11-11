@@ -1,6 +1,7 @@
 import { APPOINTMENT_STATUS_LABELS, type AppointmentStatus } from '@fixable/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '../../../shared/hooks/useToast.ts';
+import { clientKeys } from '../../clientes/api.ts';
 import { agendaKeys, deleteAppointment, updateAppointment } from '../api.ts';
 
 /** Rótulo curto do status para o aviso ("pendente" em vez de "Pendente · requer confirmação"). */
@@ -16,7 +17,7 @@ export function useAppointmentActions() {
   /** Recarrega agendamentos e contadores. */
   async function refresh() {
     await queryClient.invalidateQueries({ queryKey: agendaKeys.all });
-    await queryClient.invalidateQueries({ queryKey: ['clients'] });
+    await queryClient.invalidateQueries({ queryKey: clientKeys.list });
   }
 
   const changeStatus = useMutation({

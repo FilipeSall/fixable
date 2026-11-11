@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { ClientTabKey, ClientWorkspaceProps } from '../../../../types/clientes.types.ts';
 import type { TabItem } from '../../../../types/platform-ui.types.ts';
 import { EmptyState } from '../../../shared/components/EmptyState.tsx';
-import { Tabs } from '../../../shared/components/Tabs.tsx';
+import { TabPanel, Tabs } from '../../../shared/components/Tabs.tsx';
 import { ClientTabPanel } from './ClientTabPanel.tsx';
 import { NewPropertyModal } from './NewPropertyModal.tsx';
 import { PropertySwitcher } from './PropertySwitcher.tsx';
@@ -21,7 +21,6 @@ export function ClientWorkspace({ client, editable }: Readonly<ClientWorkspacePr
   const [chosenId, setChosenId] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const property = client.properties.find((item) => item.id === chosenId) ?? client.properties[0];
-  const tabLabel = TABS.find((item) => item.key === tab)?.label;
 
   /** Seleciona o imóvel recém-criado e fecha o modal. */
   function handleCreated(id: string) {
@@ -37,11 +36,11 @@ export function ClientWorkspace({ client, editable }: Readonly<ClientWorkspacePr
         onChange={setChosenId}
         onAdd={editable ? () => setAdding(true) : undefined}
       />
-      <Tabs items={TABS} active={tab} onChange={setTab} label="Abas do cliente" />
+      <Tabs items={TABS} active={tab} onChange={setTab} label="Abas do cliente" idPrefix="cliente" />
       {property ? (
-        <div role="tabpanel" aria-label={tabLabel}>
+        <TabPanel idPrefix="cliente" active={tab}>
           <ClientTabPanel tab={tab} clientId={client.id} property={property} properties={client.properties} editable={editable} />
-        </div>
+        </TabPanel>
       ) : (
         <EmptyState>Nenhum imóvel cadastrado.</EmptyState>
       )}

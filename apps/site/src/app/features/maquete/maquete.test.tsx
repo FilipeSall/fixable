@@ -98,7 +98,7 @@ describe('maquete', () => {
   it('mostra os cômodos com os pontos de status e os serviços do andar', async () => {
     stubApi(rafael);
     await openTab('/clientes/c1', 'Serviços em andamento');
-    const cozinha = await screen.findByRole('button', { name: 'Cozinha — 2 serviços' });
+    const cozinha = await screen.findByRole('button', { name: /^Cozinha — 2 serviços/ });
     expect(cozinha).toHaveStyle({ gridColumn: '4 / span 2' });
     expect(cozinha.querySelector('.mq-dot.prioridade')).not.toBeNull();
     expect(cozinha.querySelector('.mq-dot.concluido')).not.toBeNull();
@@ -127,7 +127,7 @@ describe('maquete', () => {
       },
     });
     const user = await openTab('/clientes/c1', 'Serviços em andamento');
-    await user.click(await screen.findByRole('button', { name: 'Cozinha — 2 serviços' }));
+    await user.click(await screen.findByRole('button', { name: /^Cozinha — 2 serviços/ }));
     await user.click(screen.getByRole('button', { name: 'Editar cômodo' }));
     const coluna = screen.getByLabelText('Coluna na planta (1 a 6)');
     await user.clear(coluna);
@@ -141,7 +141,7 @@ describe('maquete', () => {
     const completed = vi.fn(() => ({ ...plan.services[0], status: 'concluido' }));
     stubApi(rafael, { [`POST ${API.propertyServices('p1')}`]: created, [`POST ${API.serviceComplete('s1')}`]: completed });
     const user = await openTab('/clientes/c1', 'Serviços em andamento');
-    await user.click(await screen.findByRole('button', { name: 'Cozinha — 2 serviços' }));
+    await user.click(await screen.findByRole('button', { name: /^Cozinha — 2 serviços/ }));
     await user.click(screen.getByRole('button', { name: '+ Adicionar serviço' }));
     await user.type(screen.getByLabelText('Tarefa'), 'Revisar disjuntor');
     await user.click(screen.getByRole('button', { name: 'Adicionar serviço' }));
@@ -166,11 +166,28 @@ describe('maquete', () => {
   it('cliente vê a maquete sem botões de edição', async () => {
     stubApi(ana);
     const user = await openTab('/cliente', 'Serviços em andamento');
-    await user.click(await screen.findByRole('button', { name: 'Cozinha — 2 serviços' }));
+    await user.click(await screen.findByRole('button', { name: /^Cozinha — 2 serviços/ }));
     expect(screen.getByText(/Toque em um cômodo para ver o andamento/)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: '+ Adicionar cômodo' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: '+ Adicionar serviço' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Marcar como concluído' })).not.toBeInTheDocument();
   });
-});
 
+  it('engenheiro edita um serviço, limpando prazo e descrição', async () => {
+    const patched = vi.fn(() => plan.services[0]);
+    stubApi(rafael, { [`PATCH ${API.service('s1')}`]: patched });
+    const user = await openTab('/clientes/c1', 'Serviços em andamento');
+    await user.click(await screen.findByRole('button', { name: /^Cozinha — 2 serviços/ }));
+    const pop = screen.getByRole('region', { name: 'Cômodo Cozinha' });
+    await user.click(within(pop).getByRole('button', { name: 'Editar' }));
+    await user.clear(screen.getByLabelText('Prazo'));
+    await user.clear(screen.getByLabelText('Descrição da tarefa'));
+    await user.selectOptions(screen.getByLabelText('Status e prioridade'), 'execucao');
+    await user.click(screen.getByRole('button', { name: 'Salvar' }));
+    expect(await screen.findByText('Serviço salvo na maquete.')).toBeInTheDocument();
+    expect(patched).toHaveBeenCalledWith({
+      method: 'PATCH',
+      body: { roomId: 'r2', titulo: 'Trocar torneira', status: 'execucao', percentual: 30, descricao: '', prazo: null },
+    });
+  });
+});

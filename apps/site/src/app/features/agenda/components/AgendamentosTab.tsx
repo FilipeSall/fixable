@@ -19,6 +19,7 @@ export function AgendamentosTab({ clientId, property, properties, editable }: Re
       {isPending ? <p role="status">Carregando...</p> : null}
       {error ? <p role="alert">{errorMessage(error)}</p> : null}
       <AgendaView
+        actions={editable ? <AddBox label="Novo agendamento" onClick={() => setEditing('new')} /> : null}
         monthKey={monthKey}
         appointments={data ?? []}
         editable={editable}
@@ -26,7 +27,6 @@ export function AgendamentosTab({ clientId, property, properties, editable }: Re
         onEdit={editable ? setEditing : undefined}
         emptyHint={editable ? ' Use “Novo agendamento” para criar o primeiro.' : ''}
       />
-      {editable ? <AddBox label="Novo agendamento" below onClick={() => setEditing('new')} /> : null}
       {editing ? (
         <AppointmentModal
           clientId={clientId}

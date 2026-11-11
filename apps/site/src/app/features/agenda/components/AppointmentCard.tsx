@@ -3,11 +3,13 @@ import type { AppointmentCardProps } from '../../../../types/agenda-ui.types.ts'
 import { Pill } from '../../../shared/components/Pill.tsx';
 import { formatDate } from '../../../shared/lib/format.ts';
 import { MONTH_ABBR, STATUS_PILL } from '../lib/calendar.ts';
+import { AppointmentActions } from './AppointmentActions.tsx';
 
 /** Cartão expansível de agendamento, com as ações de status e edição para o engenheiro. */
-export function AppointmentCard({ appointment, open, editable, onToggle, onStatus, onEdit, onDelete }: Readonly<AppointmentCardProps>) {
+export function AppointmentCard({ appointment, open, editable, onToggle, onStatus, onEdit, onDelete, busy = false }: Readonly<AppointmentCardProps>) {
   const month = MONTH_ABBR[Number(appointment.data.slice(5, 7)) - 1] ?? '';
-  const who = appointment.clientNome ?? appointment.propertyApelido ?? '';
+  const clientNome = 'clientNome' in appointment ? appointment.clientNome : null;
+  const who = clientNome ?? appointment.propertyApelido ?? '';
   return (
     <div className={open ? 'ag-card sel' : 'ag-card'}>
       <div className="ag-main">
@@ -41,10 +43,10 @@ export function AppointmentCard({ appointment, open, editable, onToggle, onStatu
               </div>
             </div>
             <div>
-              {appointment.clientNome ? (
+              {clientNome ? (
                 <div className="det-block">
                   <h5>Cliente atendido</h5>
-                  <p>{appointment.clientNome}</p>
+                  <p>{clientNome}</p>
                 </div>
               ) : null}
               <div className="det-block">
@@ -53,29 +55,7 @@ export function AppointmentCard({ appointment, open, editable, onToggle, onStatu
               </div>
             </div>
           </div>
-          {editable && onStatus ? (
-            <div className="btn-row">
-              <button type="button" className="b-sm green" onClick={() => onStatus('confirmado')}>
-                Confirmar
-              </button>
-              <button type="button" className="b-sm yellow" onClick={() => onStatus('pendente')}>
-                Marcar pendente
-              </button>
-              <button type="button" className="b-sm danger" onClick={() => onStatus('adiado')}>
-                Adiar
-              </button>
-              {onEdit ? (
-                <button type="button" className="b-sm" onClick={onEdit}>
-                  Editar
-                </button>
-              ) : null}
-              {onDelete ? (
-                <button type="button" className="b-sm danger" onClick={onDelete}>
-                  Excluir
-                </button>
-              ) : null}
-            </div>
-          ) : null}
+          {editable && onStatus ? <AppointmentActions busy={busy} onStatus={onStatus} onEdit={onEdit} onDelete={onDelete} /> : null}
         </div>
       ) : null}
     </div>

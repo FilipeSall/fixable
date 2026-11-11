@@ -32,11 +32,11 @@ const base: Appointment = {
   propertyApelido: 'Sobrado · Santo André',
   servico: 'Visita técnica',
   data: '2026-11-12',
-  hora: '09:00:00',
+  hora: '09:00',
   status: 'confirmado',
   descricao: 'Avaliar a infiltração',
 };
-const appointments: Appointment[] = [base, { ...base, id: 'ag2', servico: 'Revisão elétrica', hora: '14:00:00', status: 'adiado' }];
+const appointments: Appointment[] = [base, { ...base, id: 'ag2', servico: 'Revisão elétrica', hora: '14:00', status: 'adiado' }];
 
 type Init = { method?: string; body?: unknown } | undefined;
 
@@ -104,7 +104,7 @@ describe('agendamentos', () => {
     stubApi(rafael);
     await openAgenda('/clientes/c1');
     expect(await screen.findByRole('heading', { name: 'Novembro de 2026' })).toBeInTheDocument();
-    const dia = await screen.findByRole('button', { name: 'Dia 12: 2 serviços' });
+    const dia = await screen.findByRole('button', { name: 'Dia 12: 2 serviços, Adiado' });
     expect(dia).toHaveClass('ev-adiado');
     expect(screen.getByRole('heading', { name: 'Agendamentos de novembro' })).toBeInTheDocument();
     const titles = screen.getAllByText(/Visita técnica|Revisão elétrica/, { selector: 'strong' }).map((node) => node.textContent);
@@ -141,7 +141,7 @@ describe('agendamentos', () => {
   it('cliente vê o calendário sem ações de edição', async () => {
     stubApi(ana);
     const user = await openAgenda('/cliente');
-    await user.click(await screen.findByRole('button', { name: 'Dia 12: 2 serviços' }));
+    await user.click(await screen.findByRole('button', { name: 'Dia 12: 2 serviços, Adiado' }));
     expect(screen.getByText('Avaliar a infiltração')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Novo agendamento/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Confirmar' })).not.toBeInTheDocument();

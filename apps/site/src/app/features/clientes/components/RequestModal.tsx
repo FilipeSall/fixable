@@ -45,6 +45,7 @@ export function RequestModal({ clientId, properties, request, onClose }: Readonl
         text={`Remover “${request.descricao}”?`}
         confirmLabel="Excluir"
         busy={remove.isPending}
+        error={remove.error ? errorMessage(remove.error) : ''}
         onConfirm={() => remove.mutate()}
         onCancel={() => setConfirming(false)}
       />

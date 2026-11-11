@@ -1,6 +1,5 @@
-import { API, type Appointment, type AppointmentInput, type AppointmentUpdateInput } from '@fixable/shared';
+import { API, type Appointment, type AppointmentInput, type AppointmentUpdateInput, type EngineerAppointment } from '@fixable/shared';
 import { apiFetch } from '../../api.ts';
-import type { AgendaItem } from '../../../types/agenda-ui.types.ts';
 
 export const agendaKeys = {
   client: (clientId: string, mes: string, propertyId: string) => ['appointments', clientId, mes, propertyId] as const,
@@ -15,8 +14,8 @@ export function fetchClientAppointments(clientId: string, mes: string, propertyI
 }
 
 /** Agendamentos de todos os clientes do engenheiro no mês (AAAA-MM). */
-export function fetchEngineerAppointments(mes: string): Promise<AgendaItem[]> {
-  return apiFetch<AgendaItem[]>(`/api/appointments?${new URLSearchParams({ mes }).toString()}`);
+export function fetchEngineerAppointments(mes: string): Promise<EngineerAppointment[]> {
+  return apiFetch<EngineerAppointment[]>(`${API.appointments}?${new URLSearchParams({ mes }).toString()}`);
 }
 
 /** Cria um agendamento para o cliente. */

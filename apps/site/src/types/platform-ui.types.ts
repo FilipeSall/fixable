@@ -17,6 +17,13 @@ export type TabsProps<K extends string = string> = {
   active: K;
   onChange: (key: K) => void;
   label: string;
+  idPrefix: string;
+};
+
+export type TabPanelProps = {
+  idPrefix: string;
+  active: string;
+  children: ReactNode;
 };
 
 export type ModalProps = {
@@ -46,6 +53,7 @@ export type ConfirmDialogProps = {
   onCancel: () => void;
   danger?: boolean;
   busy?: boolean;
+  error?: string;
 };
 
 export type ToastContextValue = {
@@ -95,6 +103,18 @@ export type CrumbsProps = {
 export type SideNavItem = {
   to: string;
   label: string;
+};
+
+export type SideNavProps = {
+  section: SideNavSection;
+};
+
+export type ToastProviderProps = {
+  children: ReactNode;
+};
+
+export type NotFoundPageProps = {
+  embedded?: boolean;
 };
 
 export type SideNavSection = {

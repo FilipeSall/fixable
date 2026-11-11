@@ -6,7 +6,7 @@ import type { TabItem } from '../../../../types/platform-ui.types.ts';
 import { ConfirmDialog } from '../../../shared/components/ConfirmDialog.tsx';
 import { EmptyState } from '../../../shared/components/EmptyState.tsx';
 import { RowCard } from '../../../shared/components/RowCard.tsx';
-import { Tabs } from '../../../shared/components/Tabs.tsx';
+import { TabPanel, Tabs } from '../../../shared/components/Tabs.tsx';
 import { useToast } from '../../../shared/hooks/useToast.ts';
 import { errorMessage } from '../../../shared/lib/errors.ts';
 import { formatDateTime } from '../../../shared/lib/format.ts';
@@ -40,9 +40,10 @@ export function CandidaturasPage() {
       show(next.kind === 'approve' ? `Candidatura aprovada. Convite enviado para ${next.application.email}.` : 'Candidatura recusada.');
       setAction(null);
     },
-    onError: (failure) => {
+    onError: async (failure) => {
       show(errorMessage(failure));
       setAction(null);
+      await queryClient.invalidateQueries({ queryKey: adminKeys.all });
     },
   });
 
@@ -50,7 +51,8 @@ export function CandidaturasPage() {
     <>
       <h1 className="app-h">Candidaturas</h1>
       <p className="app-sub">Profissionais e engenheiros que se cadastraram pelo site. Aprovar cria a conta e envia o convite.</p>
-      <Tabs items={TABS} active={status} onChange={setStatus} label="Status das candidaturas" />
+      <Tabs items={TABS} active={status} onChange={setStatus} label="Status das candidaturas" idPrefix="candidaturas" />
+      <TabPanel idPrefix="candidaturas" active={status}>
       {isPending ? <p role="status">Carregando...</p> : null}
       {error ? <p role="alert">{errorMessage(error)}</p> : null}
       {data?.length === 0 ? <EmptyState>Nenhuma candidatura neste status.</EmptyState> : null}
@@ -75,6 +77,7 @@ export function CandidaturasPage() {
           />
         ))}
       </div>
+      </TabPanel>
       {action ? (
         <ConfirmDialog
           title={action.kind === 'approve' ? 'Aprovar candidatura' : 'Recusar candidatura'}

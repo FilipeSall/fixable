@@ -31,18 +31,19 @@ export function MaqueteDialogs({ dialog, property, floors, floor, selectedRoomId
     return <ServiceModal propertyId={property.id} floors={floors} service={dialog.service} defaultRoomId={selectedRoomId} onClose={onClose} />;
   }
   if (dialog?.kind !== 'complete') return null;
-  const text = complete.error
-    ? errorMessage(complete.error)
-    : `“${dialog.service.titulo}” vai para o histórico de manutenção agora e continua visível em Serviços em andamento por 24 horas.`;
   return (
     <ConfirmDialog
       title="Concluir serviço"
-      text={text}
+      text={`“${dialog.service.titulo}” vai para o histórico de manutenção agora e continua visível em Serviços em andamento por 24 horas.`}
+      error={complete.error ? errorMessage(complete.error) : ''}
       confirmLabel="Marcar como concluído"
       danger={false}
       busy={complete.isPending}
       onConfirm={() => complete.mutate(dialog.service)}
-      onCancel={onClose}
+      onCancel={() => {
+        complete.reset();
+        onClose();
+      }}
     />
   );
 }

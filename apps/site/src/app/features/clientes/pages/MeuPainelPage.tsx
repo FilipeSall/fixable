@@ -1,5 +1,6 @@
 import { errorMessage } from '../../../shared/lib/errors.ts';
 import { firstName } from '../../../shared/lib/format.ts';
+import type { ClientPainelProps } from '../../../../types/clientes.types.ts';
 import { ClientWorkspace } from '../components/ClientWorkspace.tsx';
 import { useClient, useMeClient } from '../hooks/useClientes.ts';
 
@@ -11,7 +12,7 @@ function subtitleOf(engenheiro: string | undefined): string {
 }
 
 /** Conteúdo do painel quando o id do cliente já é conhecido. */
-function Painel({ clientId }: Readonly<{ clientId: string }>) {
+function Painel({ clientId }: Readonly<ClientPainelProps>) {
   const { data, error, isPending } = useClient(clientId);
   if (isPending) return <p role="status">Carregando...</p>;
   if (!data) return <p role="alert">{errorMessage(error)}</p>;

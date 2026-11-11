@@ -1,7 +1,6 @@
 import type { RoomPopoverProps } from '../../../../types/maquete.types.ts';
 import { EmptyState } from '../../../shared/components/EmptyState.tsx';
 
-
 /** Painel do cômodo selecionado, com a lista de serviços dele e as ações do engenheiro. */
 export function RoomPopover({ room, services, editable, renderCards, onAddService, onEditRoom, onClose }: Readonly<RoomPopoverProps>) {
   return (

@@ -1,6 +1,6 @@
 import { SERVICE_STATUS_LABELS } from '@fixable/shared';
 import type { RoomGridProps } from '../../../../types/maquete.types.ts';
-import { placementOf, rowCountOf, serviceCountLabel, servicesOfRoom } from '../lib/maquete.ts';
+import { placementOf, roomLabel, rowCountOf, servicesOfRoom } from '../lib/maquete.ts';
 
 /** Planta do andar: grade de 6 colunas com os cômodos e um ponto colorido por serviço. */
 export function RoomGrid({ floor, services, selectedRoomId, editable, onSelect }: Readonly<RoomGridProps>) {
@@ -17,7 +17,7 @@ export function RoomGrid({ floor, services, selectedRoomId, editable, onSelect }
             type="button"
             className={room.id === selectedRoomId ? 'mq-room sel' : 'mq-room'}
             style={placementOf(room)}
-            aria-label={`${room.nome} — ${serviceCountLabel(roomServices.length)}`}
+            aria-label={roomLabel(room.nome, roomServices)}
             aria-pressed={room.id === selectedRoomId}
             onClick={() => onSelect(room.id)}
           >
