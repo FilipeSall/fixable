@@ -44,6 +44,18 @@ describe('GET /api/health', () => {
   });
 });
 
+describe('Cache-Control', () => {
+  it.each([
+    ['/api/health', 200],
+    ['/api/auth/me', 401],
+    ['/api/nao-existe', 404],
+  ])('%s responde %i com Cache-Control: no-store', async (url, status) => {
+    const res = await ctx.app.inject({ method: 'GET', url });
+    expect(res.statusCode).toBe(status);
+    expect(res.headers['cache-control']).toBe('no-store');
+  });
+});
+
 describe('erros padronizados', () => {
   it('erro de validação do type provider vira 400 validation com fields', async () => {
     const res = await ctx.app.inject({

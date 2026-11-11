@@ -27,6 +27,10 @@ export type PreHandler = (request: FastifyRequest, reply: FastifyReply, done: (e
 
 export type UserRow = typeof users.$inferSelect;
 
+export type EmailBody = { email: string };
+
+export type EmailRateLimitOptions = { prefix: string; max: number; timeWindowMs: number };
+
 export type VerifiedLogin = { user: UserRow; passwordHash: string };
 
 export type SessionGrant = { user: Me; session: { token: string; expiresAt: Date } };

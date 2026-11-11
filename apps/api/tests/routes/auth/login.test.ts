@@ -149,6 +149,17 @@ describe('GET /api/auth/me', () => {
     expect(response.headers['set-cookie']).toBeUndefined();
   });
 
+  it('sessão criada há mais de 90 dias devolve 401 mesmo dentro da validade renovada', async () => {
+    const user = await createUser(t.db, { role: 'cliente', email: 'ana@fixable.com', senha: SENHA });
+    const cookie = await loginAs(t.app, 'ana@fixable.com', SENHA);
+    await t.db
+      .update(sessions)
+      .set({ createdAt: new Date(Date.now() - 91 * 24 * 60 * 60 * 1000) })
+      .where(eq(sessions.userId, user.id));
+    const response = await t.app.inject({ method: 'GET', url: '/api/auth/me', headers: { cookie } });
+    expect(response.statusCode).toBe(401);
+  });
+
   it('sessão expirada devolve 401', async () => {
     const user = await createUser(t.db, { role: 'cliente', email: 'ana@fixable.com', senha: SENHA });
     const cookie = await loginAs(t.app, 'ana@fixable.com', SENHA);
@@ -252,6 +263,34 @@ describe('TRUST_PROXY_HOPS', () => {
       expect((await attempt('203.0.113.200')).statusCode).toBe(429);
     } finally {
       await proxied.close();
+    }
+  });
+});
+
+describe('limite por e-mail', () => {
+  it('com LOGIN_RATE_LIMIT=3, a 7ª tentativa no mesmo e-mail é 429 mesmo vindo de IPs diferentes', async () => {
+    const limitado = await testApp({ LOGIN_RATE_LIMIT: 3 });
+    try {
+      await limitado.app.ready();
+      const attempt = (ip: string, email = 'alvo@fixable.com') =>
+        limitado.app.inject({
+          method: 'POST',
+          url: '/api/auth/login',
+          remoteAddress: ip,
+          headers: { origin: ORIGIN },
+          payload: { email, senha: SENHA },
+        });
+      for (let i = 0; i < 6; i++) {
+        expect((await attempt(`203.0.113.${i + 1}`)).statusCode).toBe(401);
+      }
+      const bloqueada = await attempt('203.0.113.50');
+      expect(bloqueada.statusCode).toBe(429);
+      expect(bloqueada.json()).toEqual({
+        error: { code: 'rate_limited', message: 'Muitas tentativas. Aguarde alguns minutos e tente de novo.' },
+      });
+      expect((await attempt('203.0.113.51', 'outro@fixable.com')).statusCode).toBe(401);
+    } finally {
+      await limitado.close();
     }
   });
 });

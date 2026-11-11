@@ -10,9 +10,12 @@ import {
 } from '@fixable/shared';
 import type { Config } from '../types/config.types.ts';
 import { createAuthController } from '../controllers/auth.controller.ts';
+import { emailRateLimit } from '../middlewares/email-rate-limit.middleware.ts';
 import type { Db } from '../types/db.types.ts';
 
 const LOGIN_WINDOW = '15 minutes';
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+const EMAIL_LIMIT_FACTOR = 2;
 const TOKEN_WINDOW = '15 minutes';
 const FORGOT_WINDOW = '1 hour';
 const FORGOT_MAX_REQUESTS = 5;
@@ -37,6 +40,13 @@ export function authRoutes(deps: {
     app.post(
       '/auth/login',
       {
+        preHandler: [
+          emailRateLimit(instance, {
+            prefix: 'login',
+            max: deps.config.LOGIN_RATE_LIMIT * EMAIL_LIMIT_FACTOR,
+            timeWindowMs: LOGIN_WINDOW_MS,
+          }),
+        ],
         config: {
           rateLimit: {
             max: deps.config.LOGIN_RATE_LIMIT,

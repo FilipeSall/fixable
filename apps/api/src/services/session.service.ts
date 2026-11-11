@@ -8,6 +8,7 @@ import { hashToken } from '../utils/token.ts';
 const DAY_MS = 24 * 60 * 60 * 1000;
 const SESSION_TTL_MS = 30 * DAY_MS;
 const RENEW_BELOW_MS = 15 * DAY_MS;
+const MAX_SESSION_AGE_MS = 90 * DAY_MS;
 
 /** Cria uma sessão para o usuário e devolve o token em claro e a data de expiração. */
 export async function createSession(
@@ -21,7 +22,7 @@ export async function createSession(
   return { token, expiresAt };
 }
 
-/** Busca o usuário ativo da sessão (conta demo só no modo demo) e renova a validade perto do fim. */
+/** Busca o usuário ativo da sessão (conta demo só no modo demo) e renova a validade perto do fim, até 90 dias do login. */
 export async function findSessionUser(
   db: Db,
   token: string,
@@ -31,6 +32,7 @@ export async function findSessionUser(
   const conditions: SQL[] = [
     eq(sessions.tokenHash, hashToken(token)),
     gt(sessions.expiresAt, now),
+    gt(sessions.createdAt, new Date(now.getTime() - MAX_SESSION_AGE_MS)),
     eq(users.status, 'ativo'),
   ];
   if (!demoMode) conditions.push(eq(users.isDemo, false));
