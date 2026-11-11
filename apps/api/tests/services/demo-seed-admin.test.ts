@@ -75,7 +75,7 @@ describe('seedDemo: leads e candidaturas para as telas do admin', () => {
     await seedDemo(ctx.db, ON);
     const rows = await ctx.db.select({ status: applications.status, area: applications.area }).from(applications);
     const pendentes = rows.filter((row) => row.status === 'pendente').map((row) => row.area);
-    expect(pendentes.sort((a, b) => a.localeCompare(b))).toEqual(['engenheiro', 'outro']);
+    expect(pendentes.toSorted((a, b) => a.localeCompare(b))).toEqual(['engenheiro', 'outro']);
     expect(rows.filter((row) => row.status === 'aprovada')).toHaveLength(1);
     expect(rows.filter((row) => row.status === 'recusada')).toHaveLength(1);
   });
