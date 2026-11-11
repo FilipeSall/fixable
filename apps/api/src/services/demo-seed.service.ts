@@ -63,8 +63,8 @@ async function clearDemoExtras(tx: Tx, keepEmails: string[]): Promise<number> {
   return removed.length;
 }
 
-/** Cria ou atualiza pelo e-mail uma conta demo ativa, com a senha conhecida, e devolve o id. */
-async function upsertAccount(tx: Tx, account: DemoAccountSeed, passwordHash: string): Promise<string> {
+/** Cria ou atualiza pelo e-mail uma conta demo ativa e devolve o id; recusa se o e-mail for de uma conta real. */
+export async function upsertAccount(tx: Tx, account: DemoAccountSeed, passwordHash: string): Promise<string> {
   const values = {
     role: account.role,
     status: 'ativo' as const,
@@ -77,9 +77,10 @@ async function upsertAccount(tx: Tx, account: DemoAccountSeed, passwordHash: str
   const [row] = await tx
     .insert(users)
     .values({ ...values, email: account.email })
-    .onConflictDoUpdate({ target: users.email, set: values })
+    .onConflictDoUpdate({ target: users.email, set: values, setWhere: eq(users.isDemo, true) })
     .returning({ id: users.id });
-  return row!.id;
+  if (!row) throw new Error(`Este e-mail já pertence a uma conta real e não será alterado: ${account.email}`);
+  return row.id;
 }
 
 /** Converte a data relativa do agendamento em YYYY-MM-DD, no mês atual ou no próximo. */

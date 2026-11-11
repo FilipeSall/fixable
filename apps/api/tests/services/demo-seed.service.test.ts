@@ -14,7 +14,8 @@ import {
   services,
   users,
 } from '../../src/models/index.ts';
-import { removeDemo, seedDemo } from '../../src/services/demo-seed.service.ts';
+import { DEMO_CLIENTS } from '../../src/db/demo-data.ts';
+import { removeDemo, seedDemo, upsertAccount } from '../../src/services/demo-seed.service.ts';
 import type { Db } from '../../src/types/db.types.ts';
 import {
   createClientWithProperty,
@@ -193,6 +194,17 @@ describe('seedDemo', () => {
     const [ana] = await ctx.db.select().from(users).where(eq(users.email, 'ana.demo@fixable.com.br'));
     expect(ana).toMatchObject({ nome: 'Ana de verdade', isDemo: false });
     expect((await tableCounts(ctx.db)).users).toBe(1);
+  });
+});
+
+describe('upsertAccount', () => {
+  it('nunca sobrescreve uma conta real que já use o e-mail, mesmo se ela surgir depois da checagem', async () => {
+    const ana = DEMO_CLIENTS[0]!;
+    await createUser(ctx.db, { role: 'cliente', email: ana.email, nome: 'Ana de verdade', senha: 'senha-forte-123' });
+    await expect(ctx.db.transaction((tx) => upsertAccount(tx, ana, 'hash-demo'))).rejects.toThrow(ana.email);
+    const [conta] = await ctx.db.select().from(users).where(eq(users.email, ana.email));
+    expect(conta).toMatchObject({ nome: 'Ana de verdade', isDemo: false });
+    expect(conta?.passwordHash).not.toBe('hash-demo');
   });
 });
 
