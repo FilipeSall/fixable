@@ -2,7 +2,7 @@ import { passwordSchema } from '@fixable/shared';
 import { useState } from 'react';
 import type { SubmitEvent } from 'react';
 import { Field } from './Field.tsx';
-import type { SetPasswordFormProps } from '../../types/auth-screens.types.ts';
+import type { SetPasswordFormProps } from '../../../types/auth-screens.types.ts';
 import { messageOf, serverFieldErrors } from './form-errors.ts';
 
 const MISMATCH_MESSAGE = 'As senhas não conferem.';

@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from './App.tsx';
-import { mockedFetch, unauthenticated } from './auth/test-utils.tsx';
+import { mockedFetch, unauthenticated } from './features/auth/test-utils.tsx';
 
 vi.mock('./api.ts', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./api.ts')>()),

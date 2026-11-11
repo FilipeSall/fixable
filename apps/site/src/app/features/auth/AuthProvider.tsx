@@ -2,9 +2,9 @@ import { API } from '@fixable/shared';
 import type { Me } from '@fixable/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createContext, useContext, useMemo } from 'react';
-import { ApiRequestError, apiFetch } from '../api.ts';
+import { ApiRequestError, apiFetch } from '../../api.ts';
 import { ME_KEY } from './me-key.ts';
-import type { AuthContextValue, AuthProviderProps, AuthStatus } from '../../types/auth-screens.types.ts';
+import type { AuthContextValue, AuthProviderProps, AuthStatus } from '../../../types/auth-screens.types.ts';
 
 const HTTP_UNAUTHORIZED = 401;
 

@@ -1,5 +1,5 @@
 import { Navigate, Outlet, useLocation } from 'react-router';
-import type { RequireAuthProps } from '../../types/auth-screens.types.ts';
+import type { RequireAuthProps } from '../../../types/auth-screens.types.ts';
 import { useAuth } from './AuthProvider.tsx';
 import { homeFor } from './paths.ts';
 import { SessionError } from './SessionError.tsx';

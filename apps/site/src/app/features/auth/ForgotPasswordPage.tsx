@@ -2,9 +2,9 @@ import { API, forgotPasswordInput } from '@fixable/shared';
 import { useState } from 'react';
 import type { SubmitEvent } from 'react';
 import { Link } from 'react-router';
-import { apiFetch } from '../api.ts';
+import { apiFetch } from '../../api.ts';
 import { Field } from './Field.tsx';
-import { fieldErrorsOf } from '../../lib/form-errors.ts';
+import { fieldErrorsOf } from '../../../lib/form-errors.ts';
 import { messageOf } from './form-errors.ts';
 
 const CONFIRMATION = 'Se houver uma conta com este e-mail, enviamos um link para você criar ou redefinir sua senha.';

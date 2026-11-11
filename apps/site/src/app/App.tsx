@@ -1,23 +1,18 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
-import { BrowserRouter, Route, Routes } from 'react-router';
-import { AuthProvider } from './auth/AuthProvider.tsx';
-import { ForgotPasswordPage } from './auth/ForgotPasswordPage.tsx';
-import { InvitePage } from './auth/InvitePage.tsx';
-import { LoginPage } from './auth/LoginPage.tsx';
-import { RequireAuth } from './auth/RequireAuth.tsx';
-import { ResetPasswordPage } from './auth/ResetPasswordPage.tsx';
-import { RootRedirect } from './auth/RootRedirect.tsx';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
+import { AuthProvider } from './features/auth/AuthProvider.tsx';
+import { ForgotPasswordPage } from './features/auth/ForgotPasswordPage.tsx';
+import { InvitePage } from './features/auth/InvitePage.tsx';
+import { LoginPage } from './features/auth/LoginPage.tsx';
+import { RequireAuth } from './features/auth/RequireAuth.tsx';
+import { ResetPasswordPage } from './features/auth/ResetPasswordPage.tsx';
+import { RootRedirect } from './features/auth/RootRedirect.tsx';
 import { HomeScreen } from './home/HomeScreen.tsx';
 import { NotFoundPage } from './NotFoundPage.tsx';
 import { createQueryClient } from './query-client.ts';
-
-const HOME_ROUTES = [
-  { path: '/cliente', role: 'cliente' },
-  { path: '/clientes', role: 'engenheiro' },
-  { path: '/projetos', role: 'profissional' },
-  { path: '/admin', role: 'admin' },
-] as const;
+import { AppShell } from './shared/components/AppShell.tsx';
+import { PlaceholderPage } from './shared/components/PlaceholderPage.tsx';
 
 /** Raiz do app: provê o React Query, o roteador e a autenticação e declara as rotas. */
 export function App() {
@@ -32,11 +27,29 @@ export function App() {
             <Route path="/convite" element={<InvitePage />} />
             <Route path="/esqueci-senha" element={<ForgotPasswordPage />} />
             <Route path="/redefinir-senha" element={<ResetPasswordPage />} />
-            {HOME_ROUTES.map(({ path, role }) => (
-              <Route key={path} element={<RequireAuth roles={[role]} />}>
-                <Route path={path} element={<HomeScreen />} />
+            <Route element={<RequireAuth roles={['profissional']} />}>
+              <Route path="/projetos" element={<HomeScreen />} />
+            </Route>
+            <Route element={<RequireAuth roles={['cliente']} />}>
+              <Route element={<AppShell />}>
+                <Route path="/cliente" element={<PlaceholderPage title="Meu painel" />} />
               </Route>
-            ))}
+            </Route>
+            <Route element={<RequireAuth roles={['engenheiro']} />}>
+              <Route element={<AppShell />}>
+                <Route path="/clientes" element={<PlaceholderPage title="Clientes" />} />
+                <Route path="/clientes/:clientId" element={<PlaceholderPage title="Cliente" />} />
+                <Route path="/calendario" element={<PlaceholderPage title="Calendário" />} />
+              </Route>
+            </Route>
+            <Route element={<RequireAuth roles={['admin']} />}>
+              <Route element={<AppShell />}>
+                <Route path="/admin" element={<Navigate to="/admin/leads" replace />} />
+                <Route path="/admin/leads" element={<PlaceholderPage title="Leads" />} />
+                <Route path="/admin/candidaturas" element={<PlaceholderPage title="Candidaturas" />} />
+                <Route path="/admin/equipe" element={<PlaceholderPage title="Equipe" />} />
+              </Route>
+            </Route>
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </AuthProvider>

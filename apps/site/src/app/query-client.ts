@@ -1,6 +1,6 @@
 import { QueryClient } from '@tanstack/react-query';
 import { ApiRequestError } from './api.ts';
-import { ME_KEY } from './auth/me-key.ts';
+import { ME_KEY } from './features/auth/me-key.ts';
 
 const HTTP_CLIENT_ERROR_MIN = 400;
 const HTTP_SERVER_ERROR_MIN = 500;

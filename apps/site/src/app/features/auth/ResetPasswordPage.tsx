@@ -1,7 +1,7 @@
 import { API } from '@fixable/shared';
 import { useState } from 'react';
 import { Navigate } from 'react-router';
-import { apiFetch } from '../api.ts';
+import { apiFetch } from '../../api.ts';
 import { useAuth } from './AuthProvider.tsx';
 import { SetPasswordForm } from './SetPasswordForm.tsx';
 import { TokenGate } from './TokenGate.tsx';

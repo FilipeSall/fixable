@@ -25,8 +25,8 @@ test('admin recebe convite, cria senha, entra, sai e entra de novo', async ({ pa
   await page.getByLabel('Confirmar senha').fill(senha);
   await page.getByRole('button', { name: 'Criar senha' }).click();
 
-  await expect(page).toHaveURL(/\/app\/admin$/);
-  await expect(page.getByText('Olá,')).toBeVisible();
+  await expect(page).toHaveURL(/\/app\/admin\/leads$/);
+  await expect(page.getByRole('heading', { name: 'Leads' })).toBeVisible();
 
   await page.getByRole('button', { name: 'Sair' }).click();
   await expect(page).toHaveURL(/\/app\/login/);
@@ -34,8 +34,8 @@ test('admin recebe convite, cria senha, entra, sai e entra de novo', async ({ pa
   await page.getByLabel('E-mail').fill(email);
   await page.getByLabel('Senha').fill(senha);
   await page.getByRole('button', { name: 'Entrar' }).click();
-  await expect(page).toHaveURL(/\/app\/admin$/);
-  await expect(page.getByText('Olá,')).toBeVisible();
+  await expect(page).toHaveURL(/\/app\/admin\/leads$/);
+  await expect(page.getByRole('heading', { name: 'Leads' })).toBeVisible();
 });
 
 test('deep link de redefinição carrega a SPA', async ({ page }) => {

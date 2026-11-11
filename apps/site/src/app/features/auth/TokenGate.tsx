@@ -2,8 +2,8 @@ import { API } from '@fixable/shared';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router';
-import { ApiRequestError, apiFetch } from '../api.ts';
-import type { TokenGateProps, TokenInfo, TokenLookupProps } from '../../types/auth-screens.types.ts';
+import { ApiRequestError, apiFetch } from '../../api.ts';
+import type { TokenGateProps, TokenInfo, TokenLookupProps } from '../../../types/auth-screens.types.ts';
 import { messageOf } from './form-errors.ts';
 import { clearTokenFromUrl, tokenFromHash } from './token-url.ts';
 

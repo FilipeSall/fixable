@@ -4,7 +4,7 @@ import { render } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { MemoryRouter, useLocation } from 'react-router';
 import { vi } from 'vitest';
-import { ApiRequestError, apiFetch } from '../api.ts';
+import { ApiRequestError, apiFetch } from '../../api.ts';
 import { AuthProvider } from './AuthProvider.tsx';
 
 export const ana: Me = {

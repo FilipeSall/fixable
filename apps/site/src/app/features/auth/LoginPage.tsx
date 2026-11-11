@@ -2,10 +2,10 @@ import { loginInput } from '@fixable/shared';
 import { useState } from 'react';
 import type { SubmitEvent } from 'react';
 import { Link, Navigate, useLocation, useSearchParams } from 'react-router';
-import type { LocationState } from '../../types/auth-screens.types.ts';
+import type { LocationState } from '../../../types/auth-screens.types.ts';
 import { useAuth } from './AuthProvider.tsx';
 import { Field } from './Field.tsx';
-import { fieldErrorsOf } from '../../lib/form-errors.ts';
+import { fieldErrorsOf } from '../../../lib/form-errors.ts';
 import { messageOf, serverFieldErrors } from './form-errors.ts';
 import { destinationAfterLogin } from './paths.ts';
 

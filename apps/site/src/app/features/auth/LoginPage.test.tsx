@@ -3,13 +3,13 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ApiRequestError } from '../api.ts';
+import { ApiRequestError } from '../../api.ts';
 import { useAuth } from './AuthProvider.tsx';
 import { LoginPage } from './LoginPage.tsx';
 import { ana, mockedFetch, renderApp, unauthenticated } from './test-utils.tsx';
 
-vi.mock('../api.ts', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../api.ts')>()),
+vi.mock('../../api.ts', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../api.ts')>()),
   apiFetch: vi.fn(),
 }));
 

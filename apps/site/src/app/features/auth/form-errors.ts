@@ -1,4 +1,4 @@
-import { ApiRequestError } from '../api.ts';
+import { ApiRequestError } from '../../api.ts';
 
 export const GENERIC_ERROR = 'Algo deu errado. Tente de novo.';
 

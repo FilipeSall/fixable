@@ -1,7 +1,7 @@
 import { API } from '@fixable/shared';
 import type { Me } from '@fixable/shared';
 import { useNavigate } from 'react-router';
-import { apiFetch } from '../api.ts';
+import { apiFetch } from '../../api.ts';
 import { useAuth } from './AuthProvider.tsx';
 import { homeFor } from './paths.ts';
 import { SetPasswordForm } from './SetPasswordForm.tsx';

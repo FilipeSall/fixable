@@ -1,5 +1,5 @@
 import type { ChangeEvent } from 'react';
-import type { FieldProps } from '../../types/auth-screens.types.ts';
+import type { FieldProps } from '../../../types/auth-screens.types.ts';
 
 /** Campo de formulário com rótulo, mensagem de erro e atributos de acessibilidade. */
 export function Field({ id, label, type, autoComplete, value, onChange, error, placeholder }: Readonly<FieldProps>) {

@@ -3,7 +3,7 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ana, mockedFetch, renderApp, unauthenticated } from '../auth/test-utils.tsx';
+import { ana, mockedFetch, renderApp, unauthenticated } from '../features/auth/test-utils.tsx';
 import { HomeScreen } from './HomeScreen.tsx';
 
 vi.mock('../api.ts', async (importOriginal) => ({

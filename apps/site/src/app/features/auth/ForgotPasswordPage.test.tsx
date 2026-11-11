@@ -6,8 +6,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ForgotPasswordPage } from './ForgotPasswordPage.tsx';
 import { mockedFetch, renderApp, unauthenticated } from './test-utils.tsx';
 
-vi.mock('../api.ts', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../api.ts')>()),
+vi.mock('../../api.ts', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../api.ts')>()),
   apiFetch: vi.fn(),
 }));
 

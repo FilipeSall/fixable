@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ApiRequestError } from './api.ts';
-import { ME_KEY } from './auth/me-key.ts';
+import { ME_KEY } from './features/auth/me-key.ts';
 import { createQueryClient } from './query-client.ts';
 
 type RetryFn = (failureCount: number, error: unknown) => boolean;
