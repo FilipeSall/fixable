@@ -45,6 +45,7 @@ services:
       SMTP_URL: smtp://mailpit:1025
       MAIL_FROM: Fixable <nao-responda@fixable.local>
       TEAM_EMAIL: equipe@fixable.local
+      DEMO_MODE: "true"
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://localhost:3333/api/health').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
       interval: 5s

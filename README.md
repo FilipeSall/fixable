@@ -50,6 +50,36 @@ pnpm --filter api create-admin --nome "Ana Souza" --email ana@exemplo.com
 
 O convite chega no Mailpit. Se o e-mail já for de um administrador que ainda não aceitou o convite, o comando envia um novo convite e invalida o anterior.
 
+## Modo demonstração
+
+Com `DEMO_MODE=true` (ligado no compose de desenvolvimento e no `.env.example`; o padrão do código é `false`), a API publica em `GET /api/public/demo-accounts` a lista das contas de demonstração, que a tela de login mostra para entrar com um clique. Com `DEMO_MODE=false` a rota responde 404 e as contas demo não entram, mesmo que ainda existam no banco.
+
+Para criar ou restaurar os dados de demonstração com a API rodando no compose:
+
+```sh
+docker compose exec -T api node src/cli/seed-demo.ts
+```
+
+Fora do Docker (lendo o `.env`): `pnpm --filter api seed-demo`.
+
+O comando cria as contas abaixo, todas com a senha `fixable123`, e os dados do modelo para cada cliente: imóvel, dados da residência, planta padrão, serviços nos cômodos (um concluído há poucas horas, para mostrar a regra das 24 h), solicitações e agendamentos no mês atual e no próximo. As datas são relativas ao dia em que o comando roda; rode de novo antes de uma apresentação para a demo parecer atual.
+
+| Perfil | E-mail |
+|---|---|
+| Admin | `admin.demo@fixable.com.br` |
+| Engenheiro (Rafael Lima) | `rafael.demo@fixable.com.br` |
+| Cliente (Ana Souza, sobrado) | `ana.demo@fixable.com.br` |
+| Cliente (Carlos Mendes, apartamento) | `carlos.demo@fixable.com.br` |
+| Cliente (Juliana Prado, casa térrea) | `juliana.demo@fixable.com.br` |
+
+Rodar de novo apaga e recria só os clientes demo, numa transação; nada de outras contas é alterado. O comando recusa rodar sem `DEMO_MODE=true` e recusa se um desses e-mails já for de uma conta real. Contas demo nunca recebem leads reais: a atribuição automática ignora o engenheiro demo.
+
+Para usar a plataforma de verdade, desligue o modo demo (`DEMO_MODE=false` e reinicie a API) e apague as contas demo com os dados delas:
+
+```sh
+docker compose exec -T api node src/cli/seed-demo.ts --remove
+```
+
 ## Proxy reverso
 
 A API descobre o IP do visitante, usado no rate limit, pelo `X-Forwarded-For`, confiando em `TRUST_PROXY_HOPS` saltos:
