@@ -1,5 +1,5 @@
 import { API, type DemoAccount, type Me } from '@fixable/shared';
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -19,11 +19,12 @@ const contas: DemoAccount[] = [
   { nome: 'Ana Souza', email: 'ana.demo@fixable.com.br', role: 'cliente', descricao: 'Sobrado em Santo André' },
 ];
 
-function stub(demo: DemoAccount[] | null, me: Me | null = null) {
+function stub(demo: DemoAccount[] | null | 'pendente', me: Me | null = null) {
   let current = me;
   mockedFetch.mockImplementation((path: string) => {
     if (path === API.me) return current ? Promise.resolve(current) : Promise.reject(unauthenticated());
     if (path === API.demoAccounts) {
+      if (demo === 'pendente') return new Promise(() => undefined);
       return demo ? Promise.resolve(demo) : Promise.reject(new ApiRequestError(404, 'not_found', 'Recurso não encontrado.'));
     }
     if (path === API.logout) {
@@ -43,10 +44,23 @@ describe('tela de login', () => {
     stub(contas);
     renderApp(<LoginPage />, '/login');
     expect(await screen.findByRole('heading', { name: 'Contas de demonstração' })).toBeInTheDocument();
-    await userEvent.setup().click(screen.getByRole('button', { name: 'Entrar como Rafael Lima (Engenheiro responsável)' }));
+    const aviso = within(screen.getByRole('complementary')).getByRole('status');
+    expect(aviso).toBeEmptyDOMElement();
+    await userEvent
+      .setup()
+      .click(screen.getByRole('button', { name: 'Preencher acesso de Rafael Lima (Engenheiro responsável)' }));
     expect(screen.getByLabelText('E-mail')).toHaveValue('rafael.demo@fixable.com.br');
     expect(screen.getByLabelText('Senha')).toHaveValue('fixable123');
     expect(screen.getByRole('button', { name: 'Entrar' })).toHaveFocus();
+    expect(aviso).toHaveTextContent('Acesso de Rafael Lima preenchido. Clique em Entrar.');
+  });
+
+  it('enquanto as contas carregam não mostra nenhum dos dois cartões', async () => {
+    stub('pendente');
+    renderApp(<LoginPage />, '/login');
+    expect(await screen.findByRole('heading', { name: 'Entrar na plataforma' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Como ter acesso' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Contas de demonstração' })).not.toBeInTheDocument();
   });
 
   it('sem modo demo mostra como ter acesso', async () => {
