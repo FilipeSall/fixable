@@ -1,4 +1,4 @@
-import { and, asc, eq } from 'drizzle-orm';
+import { and, asc, eq, sql } from 'drizzle-orm';
 import type { ApiError, Floor, Floorplan, HistoryItem } from '@fixable/shared';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { floors, rooms, services } from '../../src/models/index.ts';
@@ -301,6 +301,25 @@ describe('POST /api/floors/:id/rooms', () => {
   });
 });
 
+async function esperarBloqueio() {
+  for (let tentativa = 0; tentativa < 200; tentativa++) {
+    const [row] = await t.db.execute<{ total: number }>(
+      sql`SELECT count(*)::int AS total FROM pg_stat_activity WHERE wait_event_type = 'Lock' AND datname = current_database()`,
+    );
+    if (row!.total > 0) return;
+    await new Promise((resolve) => setTimeout(resolve, 20));
+  }
+  throw new Error('a requisição não ficou esperando o lock do andar');
+}
+
+function sinal() {
+  let liberar: () => void = () => undefined;
+  const promise = new Promise<void>((resolve) => {
+    liberar = resolve;
+  });
+  return { promise, resolve: () => liberar() };
+}
+
 describe('PATCH /api/rooms/:id', () => {
   it('cômodo movido para uma posição que encosta em outro é recusado com a mensagem do modelo', async () => {
     const lavabo = await comodo(clienteA.propertyId, 'Lavabo');
@@ -345,6 +364,28 @@ describe('PATCH /api/rooms/:id', () => {
     const response = await send('PATCH', `/api/rooms/${cozinha.id}`, cookie, { nome: 'Cozinha gourmet', largura: 2, altura: 1 });
     expect(response.statusCode).toBe(200);
     expect(response.json()).toMatchObject({ nome: 'Cozinha gourmet', x: 3, y: 0 });
+  });
+
+  it('edição sem posição que espera um movimento concorrente mantém a posição nova', async () => {
+    const lavabo = await comodo(clienteA.propertyId, 'Lavabo');
+    const cookie = await loginAs(t.app, engA.email, SENHA);
+    const portao = sinal();
+    const movido = sinal();
+    const movimento = t.db.transaction(async (tx) => {
+      await tx.select({ id: floors.id }).from(floors).where(eq(floors.id, lavabo.floorId)).for('no key update');
+      await tx.update(rooms).set({ x: 0, y: 2 }).where(eq(rooms.id, lavabo.id));
+      movido.resolve();
+      await portao.promise;
+    });
+    await movido.promise;
+    const edicao = send('PATCH', `/api/rooms/${lavabo.id}`, cookie, { nome: 'Lavabo social', largura: 1, altura: 1 });
+    await esperarBloqueio();
+    portao.resolve();
+    await movimento;
+    const response = await edicao;
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({ id: lavabo.id, nome: 'Lavabo social', x: 0, y: 2, largura: 1, altura: 1 });
+    expect(await comodo(clienteA.propertyId, 'Lavabo social')).toMatchObject({ x: 0, y: 2 });
   });
 
   it('cliente e engenheiro de outro cliente recebem 404', async () => {

@@ -82,6 +82,13 @@ async function lockFloor(tx: Tx, floorId: string): Promise<void> {
   await tx.select({ id: floors.id }).from(floors).where(eq(floors.id, floorId)).for('no key update');
 }
 
+/** Relê o cômodo travando a linha, depois do lock do andar, para partir da posição gravada por quem segurava o lock; 404 se sumiu. */
+async function lockedRoom(tx: Tx, roomId: string): Promise<Room> {
+  const [room] = await tx.select(roomColumns).from(rooms).where(eq(rooms.id, roomId)).for('update');
+  if (!room) throw notFound();
+  return room;
+}
+
 /** Recusa com 400 a posição que passa da sexta coluna ou se sobrepõe a algum dos outros cômodos do andar. */
 function assertFits(alvo: Retangulo, outros: Retangulo[]): void {
   const foraDaGrade = alvo.x + alvo.largura > MAQUETE_COLUMNS;
@@ -195,10 +202,11 @@ export async function createRoom(db: Db, viewer: Viewer, floorId: string, input:
 /** Edita nome, tamanho e posição do cômodo; sem coluna e linha mantém a posição atual. */
 export async function updateRoom(db: Db, viewer: Viewer, roomId: string, input: RoomFieldsInput): Promise<Room> {
   return db.transaction(async (tx) => {
-    const current = await requireRoomWrite(tx, viewer, roomId);
-    await lockFloor(tx, current.floorId);
+    const { floorId } = await requireRoomWrite(tx, viewer, roomId);
+    await lockFloor(tx, floorId);
+    const current = await lockedRoom(tx, roomId);
     const alvo = { x: input.x ?? current.x, y: input.y ?? current.y, largura: input.largura, altura: input.altura };
-    assertFits(alvo, await otherRooms(tx, current.floorId, roomId));
+    assertFits(alvo, await otherRooms(tx, floorId, roomId));
     const [updated] = await tx
       .update(rooms)
       .set({ nome: input.nome, ...alvo })
