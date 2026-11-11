@@ -11,3 +11,5 @@
 docs
 assets
 *.html
+deploy/.site-build
+deploy/.site-build.*

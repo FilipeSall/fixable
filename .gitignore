@@ -5,3 +5,5 @@ dist
 playwright-report
 test-results
 .env.prod
+deploy/.site-build
+deploy/.site-build.*

@@ -5,11 +5,13 @@ cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
 compose=(docker compose -p fixable-smoke --env-file deploy/.env.smoke -f deploy/compose.prod.yml -f deploy/compose.smoke.yml)
 admin_email="admin-smoke-$(date +%s)@fixable.local"
+sentinel="apps/site/dist/.smoke-antes-da-publicacao"
 
 bash deploy/check-compose.sh
 
 cleanup() {
   local status=$?
+  rm -f "$sentinel"
   if (( status != 0 )); then
     "${compose[@]}" logs --tail 80 api web backup || true
   fi
@@ -18,8 +20,21 @@ cleanup() {
 }
 trap cleanup EXIT
 
+mkdir -p apps/site/dist
+touch "$sentinel"
 bash deploy/build-site.sh deploy/.env.smoke
+if [[ ! -e "$sentinel" ]]; then
+  echo "o build-site.sh mexeu no site publicado em apps/site/dist" >&2
+  exit 1
+fi
+
 "${compose[@]}" up -d --build --wait --wait-timeout 300
+
+bash deploy/publish-site.sh
+if [[ -e "$sentinel" || -e deploy/.site-build ]]; then
+  echo "o publish-site.sh não sincronizou apps/site/dist com o build" >&2
+  exit 1
+fi
 
 if "${compose[@]}" ps --format '{{.Ports}}' api db | grep -q -- '->'; then
   echo "a API e o banco não podem publicar portas no host" >&2

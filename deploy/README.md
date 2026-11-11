@@ -102,15 +102,19 @@ alias fx='docker compose --env-file deploy/.env.prod -f deploy/compose.prod.yml'
 
 ## 4. Gerar o site e subir
 
-O `deploy/build-site.sh` lê o `DOMAIN` do `deploy/.env.prod` e gera o site com `SITE_URL=https://<DOMAIN>`, o endereço usado no canonical, no sitemap e no `robots.txt`:
+O site sai em dois passos, para que nada chegue ao ar antes da hora:
+
+- `deploy/build-site.sh` lê o `DOMAIN` do `deploy/.env.prod` e gera o site com `SITE_URL=https://<DOMAIN>`, o endereço usado no canonical, no sitemap e no `robots.txt`. O resultado fica em `deploy/.site-build`, que o Caddy não serve. O build roda numa pasta temporária e só substitui o `deploy/.site-build` quando termina sem erro.
+- `deploy/publish-site.sh` sincroniza o `deploy/.site-build` com `apps/site/dist`, a pasta que o Caddy serve, e apaga o `deploy/.site-build`. Usa `rsync --delete-after` ou, sem `rsync`, cópia seguida da remoção dos arquivos que sobraram. A pasta `apps/site/dist` nunca é apagada nem recriada, porque o Caddy a monta em `/srv`.
+
+Na primeira subida ainda não há API antiga com que o site novo possa conflitar, então publique antes de subir. Assim a pasta `apps/site/dist` já existe com o seu usuário como dono quando o Docker a monta:
 
 ```sh
 pnpm install --frozen-lockfile
 bash deploy/build-site.sh
+bash deploy/publish-site.sh
 fx up -d --build
 ```
-
-O script gera o site numa pasta temporária e só depois sincroniza com `apps/site/dist` (com `rsync --delete-after`, ou cópia seguida da remoção dos arquivos que sobraram, quando não há `rsync`). A pasta `apps/site/dist` nunca é apagada nem recriada: o Caddy a monta em `/srv` e continua servindo o site antigo enquanto o build roda.
 
 Confira:
 
@@ -191,21 +195,28 @@ mkdir -p "$copia"
 fx cp backup:/backups/. "$copia"
 ```
 
-Depois atualize:
+Depois atualize nesta ordem: gerar o site sem publicar, subir a API nova, esperar a API ficar saudável e só então publicar o site. Assim o site novo nunca chama uma API antiga.
 
 ```sh
 git pull
 pnpm install --frozen-lockfile
 bash deploy/build-site.sh
-fx up -d --build
+fx up -d --build --wait --wait-timeout 300 api
+curl -fsS https://fixable.com.br/api/health
+bash deploy/publish-site.sh
+fx up -d
 fx ps
 docker image prune -f
 ```
 
-- A API aplica as migrations novas ao iniciar.
-- O site novo vale assim que o `build-site.sh` termina: o Caddy lê os arquivos de `apps/site/dist` a cada requisição.
-- Se o `Caddyfile` mudou, rode `fx restart web`.
+- O `build-site.sh` não mexe no site no ar: o Caddy continua servindo a versão antiga até o `publish-site.sh`.
+- O `fx up -d --build --wait --wait-timeout 300 api` reconstrói só a API (e sobe o banco, se estiver parado) e espera o healthcheck dela passar. A API aplica as migrations novas ao iniciar.
+- O `curl` precisa responder `{"status":"ok","db":"ok"}` antes da publicação.
+- O site novo vale assim que o `publish-site.sh` termina: o Caddy lê os arquivos de `apps/site/dist` a cada requisição.
+- O `fx up -d` final aplica mudanças do `compose.prod.yml` nos outros serviços. Se o `Caddyfile` mudou, rode também `fx restart web`.
 - O `docker image prune -f` apaga as imagens antigas da API que ficaram sem uso, para não encher o disco.
+
+Se o `fx up --wait` falhar ou o `curl` não responder `ok`, **não publique o site**. O Caddy continua com o site antigo, mas a API nova não está de pé. Veja o motivo em `fx logs api`, descarte o site gerado com `rm -rf deploy/.site-build` e volte para a versão anterior, como abaixo.
 
 ### Voltar para a versão anterior
 
@@ -218,7 +229,10 @@ Se a versão nova já migrou o banco, a versão antiga pode não funcionar com e
    git checkout <commit-anotado>
    pnpm install --frozen-lockfile
    bash deploy/build-site.sh
-   fx up -d --build
+   fx up -d --build --wait --wait-timeout 300 api
+   curl -fsS https://fixable.com.br/api/health
+   bash deploy/publish-site.sh
+   fx up -d
    fx ps
    ```
 
@@ -235,12 +249,13 @@ pnpm deploy:smoke
 O script `deploy/smoke.sh`:
 
 1. roda o `deploy/check-compose.sh`, que lê o `docker compose config` e confere os limites que chegam à API: `TOKEN_RATE_LIMIT=20` e `LOGIN_RATE_LIMIT=10` em produção, com ou sem as variáveis no `.env`, e `1000` nos dois no smoke;
-2. gera o site com `deploy/build-site.sh deploy/.env.smoke` (`SITE_URL=https://localhost`);
-3. sobe o `compose.prod.yml` no projeto `fixable-smoke` com o `.env.smoke` (`DOMAIN=localhost`, certificado da CA interna do Caddy) e o `compose.smoke.yml`, que acrescenta um Mailpit só para o smoke, com a interface numa porta aleatória de `127.0.0.1`;
-4. confere que a API e o banco não publicam porta no host;
-5. cria um admin com o CLI dentro do container da API e confere que o backup inicial foi gerado;
-6. roda o Playwright (`apps/site/playwright.caddy.config.ts`) contra `https://localhost`, ignorando o certificado: home com os cabeçalhos de segurança (HSTS inclusive), assets com cache imutável, página de serviço por cidade, 404, API e deep link da SPA, e o admin que aceita o convite, sai, entra de novo e chega a `/app/admin/leads`;
-7. derruba tudo com `down -v`, mesmo se algo falhar, e mostra os logs da API, do Caddy e do backup quando falha.
+2. gera o site com `deploy/build-site.sh deploy/.env.smoke` (`SITE_URL=https://localhost`) e confere que o build não mexeu em `apps/site/dist`;
+3. sobe o `compose.prod.yml` no projeto `fixable-smoke` com o `.env.smoke` (`DOMAIN=localhost`, certificado da CA interna do Caddy) e o `compose.smoke.yml`, que acrescenta um Mailpit só para o smoke, com a interface numa porta aleatória de `127.0.0.1`, e espera todos os serviços ficarem saudáveis;
+4. publica o site com `deploy/publish-site.sh` e confere que `apps/site/dist` ficou igual ao build;
+5. confere que a API e o banco não publicam porta no host;
+6. cria um admin com o CLI dentro do container da API e confere que o backup inicial foi gerado;
+7. roda o Playwright (`apps/site/playwright.caddy.config.ts`) contra `https://localhost`, ignorando o certificado: home com os cabeçalhos de segurança (HSTS inclusive), assets com cache imutável, página de serviço por cidade, 404, API e deep link da SPA, e o admin que aceita o convite, sai, entra de novo e chega a `/app/admin/leads`;
+8. derruba tudo com `down -v`, mesmo se algo falhar, e mostra os logs da API, do Caddy e do backup quando falha.
 
 O smoke não usa as portas do ambiente de desenvolvimento (5432, 3333, 4321, 1025 e 8025) e não toca nos containers e volumes do projeto `fixable`.
 
