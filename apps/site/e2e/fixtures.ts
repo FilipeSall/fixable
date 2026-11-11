@@ -35,7 +35,7 @@ export async function entrar(page: Page, email: string): Promise<void> {
   await page.goto('/app/login');
   await page.getByLabel('E-mail').fill(email);
   await page.getByLabel('Senha').fill(senha);
-  await page.getByRole('button', { name: 'Entrar' }).click();
+  await page.getByRole('button', { name: 'Entrar', exact: true }).click();
 }
 
 /** Abre o select customizado pelo rótulo e escolhe a opção pelo nome. */

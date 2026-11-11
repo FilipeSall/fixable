@@ -94,7 +94,7 @@ test('o admin criado pelo CLI aceita o convite, entra e chega aos leads', async 
 
   await page.getByLabel('E-mail').fill(adminEmail);
   await page.getByLabel('Senha').fill(senha);
-  await page.getByRole('button', { name: 'Entrar' }).click();
+  await page.getByRole('button', { name: 'Entrar', exact: true }).click();
   await expect(page).toHaveURL(/\/app\/admin\/leads$/);
   await expect(page.getByRole('heading', { name: 'Leads' })).toBeVisible();
 });

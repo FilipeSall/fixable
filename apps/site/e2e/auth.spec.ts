@@ -33,7 +33,7 @@ test('admin recebe convite, cria senha, entra, sai e entra de novo', async ({ pa
 
   await page.getByLabel('E-mail').fill(email);
   await page.getByLabel('Senha').fill(senha);
-  await page.getByRole('button', { name: 'Entrar' }).click();
+  await page.getByRole('button', { name: 'Entrar', exact: true }).click();
   await expect(page).toHaveURL(/\/app\/admin\/leads$/);
   await expect(page.getByRole('heading', { name: 'Leads' })).toBeVisible();
 });
