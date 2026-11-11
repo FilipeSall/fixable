@@ -46,7 +46,10 @@ test('diagnóstico do visitante é atribuído ao engenheiro novo e aparece nos l
   await expect(page).toHaveURL(/\/app\/admin\/leads$/);
   const lead = page.locator('.row-card', { hasText: cliente.email });
   await expect(lead).toBeVisible();
-  await expect(lead).toContainText(engenheiro.nome);
+  await expect(
+    lead,
+    'o lead foi para outro engenheiro: há um engenheiro ativo sem clientes no banco de dev (veja "O e2e e os engenheiros que já estão no banco de dev" no README)',
+  ).toContainText(engenheiro.nome);
 });
 
 test('engenheiro adiciona cômodo, serviço, agendamento e muda a solicitação do cliente', async ({ page }) => {
