@@ -1,5 +1,5 @@
 import { randomBytes } from 'node:crypto';
-import { and, eq, gt, lt } from 'drizzle-orm';
+import { and, eq, gt, lt, type SQL } from 'drizzle-orm';
 import type { Db, Tx } from '../types/db.types.ts';
 import { sessions, users } from '../models/index.ts';
 import type { SessionLookup, SessionUser } from '../types/auth.types.ts';
@@ -21,12 +21,19 @@ export async function createSession(
   return { token, expiresAt };
 }
 
-/** Busca o usuário ativo da sessão pelo token e renova a validade quando ela está perto do fim. */
+/** Busca o usuário ativo da sessão (conta demo só no modo demo) e renova a validade perto do fim. */
 export async function findSessionUser(
   db: Db,
   token: string,
+  demoMode: boolean,
   now: Date = new Date(),
 ): Promise<SessionLookup | null> {
+  const conditions: SQL[] = [
+    eq(sessions.tokenHash, hashToken(token)),
+    gt(sessions.expiresAt, now),
+    eq(users.status, 'ativo'),
+  ];
+  if (!demoMode) conditions.push(eq(users.isDemo, false));
   const [row] = await db
     .select({
       sessionId: sessions.id,
@@ -38,7 +45,7 @@ export async function findSessionUser(
     })
     .from(sessions)
     .innerJoin(users, eq(users.id, sessions.userId))
-    .where(and(eq(sessions.tokenHash, hashToken(token)), gt(sessions.expiresAt, now), eq(users.status, 'ativo')))
+    .where(and(...conditions))
     .limit(1);
   if (!row) return null;
 

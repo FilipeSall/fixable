@@ -19,6 +19,7 @@ export function createAuthController({ db, config }: AuthDeps) {
         email,
         senha,
         previousToken: request.cookies[SESSION_COOKIE],
+        demoMode: config.DEMO_MODE,
       });
       setSessionCookie(reply, session.token, session.expiresAt, config.COOKIE_SECURE);
       return user;

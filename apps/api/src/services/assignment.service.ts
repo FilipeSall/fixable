@@ -4,7 +4,7 @@ import { clients, users } from '../models/index.ts';
 
 const ENGINEER_ASSIGNMENT_LOCK = 7_301_001;
 
-/** Escolhe o engenheiro ativo e real (fora da demonstração) com menos clientes, serializando a escolha até o commit. */
+/** Escolhe o engenheiro ativo e não demo com menos clientes, serializando a escolha até o commit. */
 export async function pickEngineer(tx: Tx): Promise<{ id: string; nome: string } | null> {
   await tx.execute(sql`SELECT pg_advisory_xact_lock(${ENGINEER_ASSIGNMENT_LOCK}::bigint)`);
   const [engineer] = await tx

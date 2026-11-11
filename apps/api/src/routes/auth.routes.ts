@@ -27,7 +27,7 @@ function tokenRateLimit(max: number) {
 /** Declara as rotas de autenticação com schema, rate limit e o controller correspondente. */
 export function authRoutes(deps: {
   db: Db;
-  config: Pick<Config, 'COOKIE_SECURE' | 'APP_ORIGIN' | 'TOKEN_RATE_LIMIT' | 'LOGIN_RATE_LIMIT'>;
+  config: Pick<Config, 'COOKIE_SECURE' | 'APP_ORIGIN' | 'TOKEN_RATE_LIMIT' | 'LOGIN_RATE_LIMIT' | 'DEMO_MODE'>;
 }) {
   return (instance: FastifyInstance, _options: object, done: () => void): void => {
     const app = instance.withTypeProvider<ZodTypeProvider>();

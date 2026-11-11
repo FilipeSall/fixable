@@ -30,7 +30,7 @@ export type VerifiedLogin = { user: UserRow; passwordHash: string };
 
 export type SessionGrant = { user: Me; session: { token: string; expiresAt: Date } };
 
-export type AuthDeps = { db: Db; config: Pick<Config, 'COOKIE_SECURE' | 'APP_ORIGIN'> };
+export type AuthDeps = { db: Db; config: Pick<Config, 'COOKIE_SECURE' | 'APP_ORIGIN' | 'DEMO_MODE'> };
 export type LoginRequest = FastifyRequest<{ Body: z.infer<typeof loginInput> }>;
 export type SetPasswordRequest = FastifyRequest<{ Body: z.infer<typeof setPasswordInput> }>;
 export type ForgotPasswordRequest = FastifyRequest<{ Body: z.infer<typeof forgotPasswordInput> }>;

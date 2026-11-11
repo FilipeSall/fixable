@@ -45,12 +45,16 @@ async function lockUserAndConsume(
   return consumed ? user : null;
 }
 
-/** Confere e-mail, senha e situação da conta, para só então emitir a sessão. */
-export async function verifyLoginCredentials(db: Db, input: { email: string; senha: string }): Promise<VerifiedLogin> {
+/** Confere e-mail, senha e situação da conta (conta demo só entra no modo demo), para só então emitir a sessão. */
+export async function verifyLoginCredentials(
+  db: Db,
+  input: { email: string; senha: string; demoMode?: boolean },
+): Promise<VerifiedLogin> {
   const [user] = await db.select().from(users).where(eq(users.email, input.email)).limit(1);
 
   const passwordMatches = await verifyPassword(user?.passwordHash ?? DUMMY_PASSWORD_HASH, input.senha);
   if (!user?.passwordHash || !passwordMatches) throw invalidCredentials();
+  if (user.isDemo && !input.demoMode) throw invalidCredentials();
   if (user.status === 'bloqueado') throw accountBlocked();
   if (user.status !== 'ativo') throw invalidCredentials();
   return { user, passwordHash: user.passwordHash };
@@ -81,7 +85,7 @@ export async function issueLoginSession(
 /** Autentica por e-mail e senha e devolve o usuário com a nova sessão. */
 export async function login(
   db: Db,
-  input: { email: string; senha: string; previousToken: string | undefined },
+  input: { email: string; senha: string; previousToken: string | undefined; demoMode: boolean },
 ): Promise<SessionGrant> {
   const verified = await verifyLoginCredentials(db, input);
   return issueLoginSession(db, verified, input.previousToken);

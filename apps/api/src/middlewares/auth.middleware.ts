@@ -13,13 +13,16 @@ const UNAUTHENTICATED = () => new AppError(401, 'unauthorized', UNAUTHORIZED_MES
 const FORBIDDEN = () => new AppError(403, 'forbidden', FORBIDDEN_MESSAGE);
 
 /** Registra a leitura da sessão pelo cookie e os decorators requireAuth e requireRole. */
-export function registerAuth(app: FastifyInstance, deps: { db: Db; config: Pick<Config, 'COOKIE_SECURE'> }): void {
+export function registerAuth(
+  app: FastifyInstance,
+  deps: { db: Db; config: Pick<Config, 'COOKIE_SECURE' | 'DEMO_MODE'> },
+): void {
   app.decorateRequest('user', null);
 
   app.addHook('onRequest', async (request, reply) => {
     const token = request.cookies[SESSION_COOKIE];
     if (!token) return;
-    const lookup = await findSessionUser(deps.db, token);
+    const lookup = await findSessionUser(deps.db, token, deps.config.DEMO_MODE);
     if (!lookup) return;
     request.user = lookup.user;
     if (lookup.renewedExpiresAt) {

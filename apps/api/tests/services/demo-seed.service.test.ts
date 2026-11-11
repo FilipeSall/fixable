@@ -14,7 +14,15 @@ import {
 } from '../../src/models/index.ts';
 import { removeDemo, seedDemo } from '../../src/services/demo-seed.service.ts';
 import type { Db } from '../../src/types/db.types.ts';
-import { createClientWithProperty, createEngineer, createUser, loginAs, resetDb, testApp, type TestApp } from '../helpers.ts';
+import {
+  createClientWithProperty,
+  createEngineer,
+  createUser,
+  loginAs,
+  resetDb,
+  testApp,
+  type TestApp,
+} from '../helpers.ts';
 
 let ctx: TestApp;
 const ON = { DEMO_MODE: true };
@@ -30,7 +38,17 @@ const DEMO_EMAILS = [
 ];
 
 async function tableCounts(db: Db) {
-  const tables = { users, clients, properties, propertyAttributes, floors, rooms, services, serviceRequests, appointments };
+  const tables = {
+    users,
+    clients,
+    properties,
+    propertyAttributes,
+    floors,
+    rooms,
+    services,
+    serviceRequests,
+    appointments,
+  };
   const entries = await Promise.all(
     Object.entries(tables).map(async ([name, table]) => {
       const [row] = await db.select({ total: count() }).from(table);
@@ -50,7 +68,7 @@ async function clientIdOf(db: Db, email: string): Promise<string> {
 }
 
 beforeEach(async () => {
-  ctx ??= await testApp();
+  ctx ??= await testApp(ON);
   await resetDb(ctx.db);
 });
 
@@ -100,7 +118,11 @@ describe('seedDemo', () => {
       .innerJoin(floors, eq(rooms.floorId, floors.id))
       .where(eq(properties.clientId, anaId));
     expect(rows).toContainEqual({ titulo: 'Infiltração no box da suíte', comodo: 'Suíte', andar: 'Andar 2' });
-    expect(rows).toContainEqual({ titulo: 'Adequação do quadro elétrico', comodo: 'Área de serviço', andar: 'Andar 1' });
+    expect(rows).toContainEqual({
+      titulo: 'Adequação do quadro elétrico',
+      comodo: 'Área de serviço',
+      andar: 'Andar 1',
+    });
 
     const concluidos = await ctx.db
       .select({ concludedAt: services.concludedAt })
