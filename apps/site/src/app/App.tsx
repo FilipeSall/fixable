@@ -1,6 +1,9 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
+import { ClientePage } from './features/clientes/pages/ClientePage.tsx';
+import { ClientesPage } from './features/clientes/pages/ClientesPage.tsx';
+import { MeuPainelPage } from './features/clientes/pages/MeuPainelPage.tsx';
 import { AuthProvider } from './features/auth/AuthProvider.tsx';
 import { ForgotPasswordPage } from './features/auth/ForgotPasswordPage.tsx';
 import { InvitePage } from './features/auth/InvitePage.tsx';
@@ -32,13 +35,13 @@ export function App() {
             </Route>
             <Route element={<RequireAuth roles={['cliente']} />}>
               <Route element={<AppShell />}>
-                <Route path="/cliente" element={<PlaceholderPage title="Meu painel" />} />
+                <Route path="/cliente" element={<MeuPainelPage />} />
               </Route>
             </Route>
             <Route element={<RequireAuth roles={['engenheiro']} />}>
               <Route element={<AppShell />}>
-                <Route path="/clientes" element={<PlaceholderPage title="Clientes" />} />
-                <Route path="/clientes/:clientId" element={<PlaceholderPage title="Cliente" />} />
+                <Route path="/clientes" element={<ClientesPage />} />
+                <Route path="/clientes/:clientId" element={<ClientePage />} />
                 <Route path="/calendario" element={<PlaceholderPage title="Calendário" />} />
               </Route>
             </Route>
