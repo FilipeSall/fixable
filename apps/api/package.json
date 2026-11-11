@@ -12,6 +12,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "node --env-file-if-exists=../../.env src/db/migrate.ts",
     "create-admin": "node --env-file-if-exists=../../.env src/cli/create-admin.ts",
+    "seed-demo": "node --env-file-if-exists=../../.env src/cli/seed-demo.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
