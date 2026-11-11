@@ -48,6 +48,7 @@ services:
       SMTP_URL: ${SMTP_URL:?defina SMTP_URL no .env.prod}
       MAIL_FROM: ${MAIL_FROM:?defina MAIL_FROM no .env.prod}
       TEAM_EMAIL: ${TEAM_EMAIL:?defina TEAM_EMAIL no .env.prod}
+      DEMO_MODE: ${DEMO_MODE:-false}
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://localhost:3333/api/health').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
       interval: 10s

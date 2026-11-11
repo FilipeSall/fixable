@@ -86,6 +86,7 @@ Edite `deploy/.env.prod`. Ele fica fora do git (`.gitignore`) e da imagem Docker
 | `PUBLIC_FORM_RATE_LIMIT`| `5`                                         | Envios por IP a cada 15 minutos em cada formulário público.                                                  |
 | `TOKEN_RATE_LIMIT`      | `20`                                        | Requisições por IP a cada 15 minutos em cada rota de token (aceitar convite, redefinir senha e consultar o token). Sem a variável, vale `20`. |
 | `LOGIN_RATE_LIMIT`      | `10`                                        | Tentativas de login por IP a cada 15 minutos. Sem a variável, vale `10`.                                     |
+| `DEMO_MODE`             | `true`                                      | Liga as contas de demonstração na tela de login (seção 5.1). O exemplo vem ligado para a apresentação; sem a variável, vale `false`. |
 | `BACKUP_TIME`           | `03:00`                                     | Horário do backup diário, no fuso `TZ`.                                                                      |
 | `BACKUP_RETENTION_DAYS` | `7`                                         | Dias que cada dump fica guardado.                                                                            |
 | `TZ`                    | `America/Sao_Paulo`                         | Fuso do serviço de backup.                                                                                   |
@@ -132,6 +133,24 @@ fx exec api node src/cli/create-admin.ts --nome "Ana Souza" --email ana@exemplo.
 ```
 
 O convite chega no e-mail informado. O link abre `/app/convite`, onde o admin cria a senha e cai em `/app/admin/leads`. Se o e-mail não chegar, veja `fx logs api` e as credenciais do SMTP.
+
+### 5.1 Dados de demonstração
+
+Com `DEMO_MODE=true`, crie (ou restaure, antes de cada apresentação) as contas e os dados de demonstração:
+
+```sh
+fx exec -T api node src/cli/seed-demo.ts
+```
+
+As contas (`admin.demo`, `rafael.demo`, `ana.demo`, `carlos.demo` e `juliana.demo`, todas `@fixable.com.br`) usam a senha pública `fixable123` e aparecem na tela de login. Enquanto o modo demo estiver ligado, quem abrir o site entra como o admin demo e vê os leads e candidaturas reais que chegarem.
+
+Para usar a plataforma de verdade, mude `DEMO_MODE=false` no `deploy/.env.prod`, recrie a API com `fx up -d api` e apague as contas demo com os dados delas:
+
+```sh
+fx exec -T api node src/cli/seed-demo.ts --remove
+```
+
+Com o modo demo desligado as contas demo já não entram, mesmo antes da remoção.
 
 ## 6. Backups
 
