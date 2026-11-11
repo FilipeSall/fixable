@@ -1,0 +1,52 @@
+(cabecalhos_de_seguranca) {
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy same-origin
+		X-Frame-Options DENY
+		-Server
+	}
+}
+
+{$DOMAIN} {
+	encode zstd gzip
+
+	import cabecalhos_de_seguranca
+
+	log {
+		output stdout
+		format filter {
+			request>uri regexp \?.*$ ""
+			request>headers>Referer delete
+			request>headers>Cookie delete
+			request>headers>Authorization delete
+			resp_headers>Set-Cookie delete
+		}
+	}
+
+	@astro path /_astro/*
+	@pagina not path /_astro/*
+
+	handle /api/* {
+		reverse_proxy api:3333
+	}
+
+	handle /app/* {
+		header Cache-Control no-cache
+		try_files {path} /app/index.html
+		file_server
+	}
+
+	handle {
+		header @pagina Cache-Control no-cache
+		header @astro Cache-Control "public, max-age=31536000, immutable"
+		try_files {path} {path}/index.html
+		file_server
+	}
+
+	handle_errors 404 {
+		import cabecalhos_de_seguranca
+		header Cache-Control no-cache
+		rewrite * /404.html
+		file_server
+	}
+}

@@ -5,7 +5,8 @@ Monorepo pnpm da plataforma Fixable:
 - `packages/shared`: schemas Zod, papéis e rotas compartilhados entre API e site.
 - `apps/api`: API Fastify + Drizzle + Postgres (rotas sob `/api`).
 - `apps/site`: site Astro com a SPA React da plataforma em `/app`.
-- `infra/nginx/fixable.conf`: nginx de referência para produção.
+- `deploy/`: kit de produção (Compose com Caddy, HTTPS automático e backup diário). Veja `deploy/README.md`.
+- `infra/nginx/fixable.conf`: nginx antigo, mantido só como referência das regras de roteamento.
 
 ## Requisitos
 
@@ -54,10 +55,20 @@ O convite chega no Mailpit. Se o e-mail já for de um administrador que ainda n�
 A API descobre o IP do visitante, usado no rate limit, pelo `X-Forwarded-For`, confiando em `TRUST_PROXY_HOPS` saltos:
 
 - `0` (padrão, desenvolvimento): ignora o cabeçalho e usa o endereço da conexão;
-- `1`: só o nginx fica na frente da API. É o padrão da imagem Docker;
-- `2`: há mais um proxy antes do nginx, como um terminador TLS ou uma CDN.
+- `1`: só um proxy fica na frente da API, como o Caddy do `deploy/compose.prod.yml`. É o padrão da imagem Docker e do compose de produção;
+- `2`: há mais um proxy antes do Caddy, como uma CDN.
 
 Um valor maior que o número real de proxies deixa o visitante forjar o IP. Um valor menor faz todos os visitantes dividirem o mesmo limite.
+
+## Deploy
+
+O passo a passo para um servidor Ubuntu limpo está em `deploy/README.md`. Para validar o kit localmente, com as portas 80 e 443 livres:
+
+```sh
+pnpm deploy:smoke
+```
+
+O smoke gera o site, sobe o compose de produção no projeto `fixable-smoke` com `https://localhost`, roda o Playwright de `apps/site/playwright.caddy.config.ts` e derruba tudo no final.
 
 ## Testes
 

@@ -3,6 +3,7 @@ import { apiEnv } from './e2e/env.ts';
 
 export default defineConfig({
   testDir: './e2e',
+  testIgnore: 'caddy-smoke.spec.ts',
   timeout: 60_000,
   fullyParallel: false,
   workers: 1,

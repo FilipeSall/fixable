@@ -1,0 +1,101 @@
+name: fixable-prod
+
+x-logging: &logging
+  driver: local
+  options:
+    max-size: 10m
+    max-file: "5"
+
+x-postgres-env: &postgres-env
+  POSTGRES_USER: ${POSTGRES_USER:?defina POSTGRES_USER no .env.prod}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env.prod}
+  POSTGRES_DB: ${POSTGRES_DB:?defina POSTGRES_DB no .env.prod}
+
+services:
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment: *postgres-env
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    stop_grace_period: 30s
+    logging: *logging
+
+  api:
+    build:
+      context: ..
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: "3333"
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      APP_ORIGIN: https://${DOMAIN:?defina DOMAIN no .env.prod}
+      COOKIE_SECURE: "true"
+      TRUST_PROXY_HOPS: ${TRUST_PROXY_HOPS:-1}
+      PUBLIC_FORM_RATE_LIMIT: ${PUBLIC_FORM_RATE_LIMIT:-5}
+      MAIL_DRIVER: smtp
+      SMTP_URL: ${SMTP_URL:?defina SMTP_URL no .env.prod}
+      MAIL_FROM: ${MAIL_FROM:?defina MAIL_FROM no .env.prod}
+      TEAM_EMAIL: ${TEAM_EMAIL:?defina TEAM_EMAIL no .env.prod}
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3333/api/health').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
+      interval: 10s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
+    stop_grace_period: 30s
+    logging: *logging
+
+  web:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_started
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ../apps/site/dist:/srv:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    logging: *logging
+
+  backup:
+    image: postgres:17
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    entrypoint: ["bash", "/usr/local/bin/pg-backup.sh"]
+    environment:
+      PGHOST: db
+      PGUSER: ${POSTGRES_USER}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: ${POSTGRES_DB}
+      BACKUP_TIME: ${BACKUP_TIME:-03:00}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-7}
+      TZ: ${TZ:-America/Sao_Paulo}
+    volumes:
+      - ./backup/pg-backup.sh:/usr/local/bin/pg-backup.sh:ro
+      - backups:/backups
+    logging: *logging
+
+volumes:
+  db-data:
+  caddy-data:
+  caddy-config:
+  backups:

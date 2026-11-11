@@ -12,7 +12,9 @@
     "lint": "eslint .",
     "typecheck": "pnpm -r typecheck",
     "e2e": "pnpm --filter site exec playwright test",
-    "test": "pnpm -r test"
+    "test": "pnpm -r test",
+    "build:site": "pnpm --filter site build",
+    "deploy:smoke": "bash deploy/smoke.sh"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
