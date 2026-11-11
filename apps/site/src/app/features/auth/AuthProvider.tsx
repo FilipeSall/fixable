@@ -1,7 +1,7 @@
 import { API } from '@fixable/shared';
 import type { Me } from '@fixable/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { createContext, useContext, useEffect, useMemo, useRef } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { ApiRequestError, apiFetch } from '../../api.ts';
 import { ME_KEY } from './me-key.ts';
 import { changesUser, clearPrivateQueries } from './session-cache.ts';
@@ -28,32 +28,48 @@ function statusOf(me: Me | null | undefined, isError: boolean, isFetching: boole
   return isError && !isFetching ? 'error' : 'loading';
 }
 
-/** Provê o usuário atual e as ações de login e logout para o app. */
+/** Provê o usuário atual e as ações de login e logout; ao trocar de usuário, esconde a tela até descartar os dados do anterior. */
 export function AuthProvider({ children }: Readonly<AuthProviderProps>) {
   const queryClient = useQueryClient();
   const { data, isError, isFetching, refetch } = useQuery({ queryKey: ME_KEY, queryFn: fetchMe });
-  const identityRef = useRef<string | null | undefined>(undefined);
+  const ownerRef = useRef<string | null | undefined>(undefined);
+  const [owner, setOwnerState] = useState<string | null | undefined>(undefined);
   const loggedOutRef = useRef(false);
+  const identity = data === undefined ? undefined : (data?.id ?? null);
+  const swapping = Boolean(identity) && changesUser(owner, identity ?? null);
+
+  /** Marca de qual usuário são os dados privados em cache. */
+  const setOwner = useCallback((next: string | null) => {
+    ownerRef.current = next;
+    setOwnerState(next);
+  }, []);
 
   useEffect(() => {
-    if (data === undefined) return;
-    if (data) loggedOutRef.current = false;
-    const identity = data?.id ?? null;
-    const previous = identityRef.current;
-    identityRef.current = identity;
-    if (changesUser(previous, identity)) void clearPrivateQueries(queryClient);
-  }, [data, queryClient]);
+    if (identity === undefined) return;
+    if (identity) loggedOutRef.current = false;
+    if (!changesUser(ownerRef.current, identity)) {
+      setOwner(identity);
+      return;
+    }
+    let active = true;
+    void clearPrivateQueries(queryClient).then(() => {
+      if (active) setOwner(identity);
+    });
+    return () => {
+      active = false;
+    };
+  }, [identity, queryClient, setOwner]);
 
   const value = useMemo<AuthContextValue>(() => {
     /** Atualiza o usuário em cache, descartando os dados do usuário anterior quando a sessão muda de dono. */
     async function setMe(me: Me | null) {
       const identity = me?.id ?? null;
-      const previous = queryClient.getQueryData<Me | null>(ME_KEY)?.id ?? identityRef.current;
+      const previous = queryClient.getQueryData<Me | null>(ME_KEY)?.id ?? ownerRef.current;
       if (changesUser(previous, identity)) await clearPrivateQueries(queryClient);
       else await queryClient.cancelQueries({ queryKey: ME_KEY });
-      identityRef.current = identity;
       if (me) loggedOutRef.current = false;
       queryClient.setQueryData(ME_KEY, me);
+      setOwner(identity);
     }
     /** Faz login pela API e guarda o usuário. */
     async function login(email: string, senha: string) {
@@ -76,9 +92,9 @@ export function AuthProvider({ children }: Readonly<AuthProviderProps>) {
       return loggedOutRef.current;
     }
     return { me: data ?? null, status: statusOf(data, isError, isFetching), retry, login, logout, setMe, endedByLogout };
-  }, [queryClient, data, isError, isFetching, refetch]);
+  }, [queryClient, data, isError, isFetching, refetch, setOwner]);
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={value}>{swapping ? null : children}</AuthContext.Provider>;
 }
 
 /** Lê o contexto de autenticação e falha fora do AuthProvider. */

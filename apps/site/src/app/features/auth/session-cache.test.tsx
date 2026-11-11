@@ -1,6 +1,6 @@
 import { API, type ClientDetail, type Me } from '@fixable/shared';
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Outlet, Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -118,6 +118,53 @@ describe('cache por sessão', () => {
     expect(await screen.findByText('Bruno Costa')).toBeInTheDocument();
     expect(screen.queryByText(/Ana/)).not.toBeInTheDocument();
     expect(screen.getByText('Carregando...')).toBeInTheDocument();
+  });
+
+  it('quando a reconsulta da sessão volta com outro usuário, nunca mostra os dados do anterior sob o novo', async () => {
+    let current: Me = ana;
+    const atrasadas: { dono: string; resolver: (valor: string) => void }[] = [];
+    const vazamentos: string[] = [];
+    mockedFetch.mockImplementation((path: string) =>
+      path === API.me ? Promise.resolve(current) : Promise.reject(unauthenticated()),
+    );
+    const buscarSegredo = vi.fn(() => {
+      const dono = current.nome;
+      return new Promise<string>((resolve) => {
+        atrasadas.push({ dono, resolver: resolve });
+      });
+    });
+    function SessionProbe() {
+      const { me } = useAuth();
+      const { data } = useQuery({ queryKey: ['segredo'], queryFn: buscarSegredo, enabled: Boolean(me) });
+      if (me && data && !data.endsWith(me.nome)) vazamentos.push(`${me.nome} viu ${data}`);
+      return <p>{me ? `${me.nome}: ${data ?? 'carregando'}` : 'sem sessão'}</p>;
+    }
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <AuthProvider>
+            <SessionProbe />
+          </AuthProvider>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+    await waitFor(() => expect(atrasadas).toHaveLength(1));
+    act(() => atrasadas[0]!.resolver('dado de Ana Souza'));
+    expect(await screen.findByText('Ana Souza: dado de Ana Souza')).toBeInTheDocument();
+
+    void queryClient.invalidateQueries({ queryKey: ['segredo'] });
+    await waitFor(() => expect(atrasadas).toHaveLength(2));
+    current = bruno;
+    await act(() => queryClient.invalidateQueries({ queryKey: ME_KEY }));
+    await waitFor(() => expect(atrasadas).toHaveLength(3));
+    expect(atrasadas[2]!.dono).toBe('Bruno Costa');
+
+    act(() => atrasadas[1]!.resolver('dado de Ana Souza'));
+    expect(await screen.findByText('Bruno Costa: carregando')).toBeInTheDocument();
+    act(() => atrasadas[2]!.resolver('dado de Bruno Costa'));
+    expect(await screen.findByText('Bruno Costa: dado de Bruno Costa')).toBeInTheDocument();
+    expect(vazamentos).toEqual([]);
   });
 
   it('quando a sessão cai sem logout, descarta as consultas privadas e mantém só a sessão', async () => {
