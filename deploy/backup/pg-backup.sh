@@ -28,6 +28,20 @@ seconds_until_next_run() {
   echo $(( next - now ))
 }
 
+validate_settings() {
+  if [[ ! "${retention_days}" =~ ^[1-9][0-9]*$ ]]; then
+    echo "BACKUP_RETENTION_DAYS precisa ser um número inteiro maior ou igual a 1 (recebido: '${retention_days}')" >&2
+    exit 1
+  fi
+  if [[ ! "${backup_time}" =~ ^([01][0-9]|2[0-3]):[0-5][0-9]$ ]]; then
+    echo "BACKUP_TIME precisa estar no formato HH:MM, de 00:00 a 23:59 (recebido: '${backup_time}')" >&2
+    exit 1
+  fi
+}
+
+validate_settings
+rm -f "${backup_dir}"/*.partial
+
 trap 'exit 0' TERM INT
 
 until pg_isready --quiet; do

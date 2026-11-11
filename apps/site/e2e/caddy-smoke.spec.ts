@@ -12,6 +12,7 @@ test.describe.configure({ mode: 'serial' });
 /** Confere os cabeçalhos de segurança que o Caddy acrescenta em toda resposta. */
 function expectSecurityHeaders(res: APIResponse): void {
   const headers = res.headers();
+  expect(headers['strict-transport-security']).toBe('max-age=31536000');
   expect(headers['x-content-type-options']).toBe('nosniff');
   expect(headers['referrer-policy']).toBe('same-origin');
   expect(headers['x-frame-options']).toBe('DENY');

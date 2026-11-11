@@ -1,5 +1,10 @@
+{
+	email {$ACME_EMAIL}
+}
+
 (cabecalhos_de_seguranca) {
 	header {
+		Strict-Transport-Security "max-age=31536000"
 		X-Content-Type-Options nosniff
 		Referrer-Policy same-origin
 		X-Frame-Options DENY
@@ -27,7 +32,9 @@
 	@pagina not path /_astro/*
 
 	handle /api/* {
-		reverse_proxy api:3333
+		reverse_proxy api:3333 {
+			header_up X-Forwarded-For {client_ip}
+		}
 	}
 
 	handle /app/* {

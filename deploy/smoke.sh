@@ -16,7 +16,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-SITE_URL=https://localhost pnpm build:site
+bash deploy/build-site.sh deploy/.env.smoke
 "${compose[@]}" up -d --build --wait --wait-timeout 300
 
 if "${compose[@]}" ps --format '{{.Ports}}' api db | grep -q -- '->'; then
