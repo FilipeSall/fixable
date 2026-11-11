@@ -20,6 +20,16 @@ export type NovoLeadData = {
 
 export type NovaCandidaturaData = { nome: string; email: string; telefone: string; cidade: string; area: string };
 export type DiagnosticoRecebidoData = { nome: string; loginUrl: string };
+export type AgendamentoData = {
+  nome: string;
+  acao: 'criado' | 'atualizado';
+  servico: string;
+  imovel: string;
+  data: string;
+  hora: string;
+  status: string;
+  link: string;
+};
 
 export type TemplateDataMap = {
   convite: LinkData;
@@ -27,6 +37,7 @@ export type TemplateDataMap = {
   'novo-lead': NovoLeadData;
   'nova-candidatura': NovaCandidaturaData;
   'diagnostico-recebido': DiagnosticoRecebidoData;
+  agendamento: AgendamentoData;
 };
 
 export type TemplateName = keyof TemplateDataMap;

@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import type { Config } from '../types/config.types.ts';
 import type { Db } from '../types/db.types.ts';
 import type { Clock } from '../types/maquete.types.ts';
+import { appointmentRoutes } from './appointment.routes.ts';
 import { authRoutes } from './auth.routes.ts';
 import { clientRoutes } from './client.routes.ts';
 import { healthRoutes } from './health.routes.ts';
@@ -9,6 +10,7 @@ import { maqueteRoutes } from './maquete.routes.ts';
 import { propertyRoutes } from './property.routes.ts';
 import { publicRoutes } from './public.routes.ts';
 import { roomServiceRoutes } from './room-service.routes.ts';
+import { serviceRequestRoutes } from './service-request.routes.ts';
 
 /** Registra todas as rotas da API. */
 export function routes(deps: {
@@ -24,6 +26,8 @@ export function routes(deps: {
     void api.register(propertyRoutes(deps));
     void api.register(maqueteRoutes(deps));
     void api.register(roomServiceRoutes(deps));
+    void api.register(serviceRequestRoutes(deps));
+    void api.register(appointmentRoutes(deps));
     done();
   };
 }

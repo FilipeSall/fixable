@@ -1,5 +1,6 @@
 import type { EmailBlock, EmailTemplate, Mail, TemplateDataMap, TemplateName } from '../../types/mail.types.ts';
 import { escapeHtml } from '../../utils/html.ts';
+import { agendamento } from './agendamento.ts';
 import { convite } from './convite.ts';
 import { diagnosticoRecebido } from './diagnostico-recebido.ts';
 import { novaCandidatura } from './nova-candidatura.ts';
@@ -12,6 +13,7 @@ const templates: { [N in TemplateName]: EmailTemplate<N> } = {
   'novo-lead': novoLead,
   'nova-candidatura': novaCandidatura,
   'diagnostico-recebido': diagnosticoRecebido,
+  agendamento,
 };
 
 /** Converte um bloco de conteúdo em texto simples. */
