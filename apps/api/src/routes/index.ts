@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import type { Config } from '../types/config.types.ts';
 import type { Db } from '../types/db.types.ts';
 import type { Clock } from '../types/maquete.types.ts';
+import { adminRoutes } from './admin.routes.ts';
 import { appointmentRoutes } from './appointment.routes.ts';
 import { authRoutes } from './auth.routes.ts';
 import { clientRoutes } from './client.routes.ts';
@@ -28,6 +29,7 @@ export function routes(deps: {
     void api.register(roomServiceRoutes(deps));
     void api.register(serviceRequestRoutes(deps));
     void api.register(appointmentRoutes(deps));
+    void api.register(adminRoutes(deps));
     done();
   };
 }

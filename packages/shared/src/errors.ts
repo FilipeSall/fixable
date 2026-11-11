@@ -9,6 +9,7 @@ export const ERROR_CODES = [
   'token_invalid',
   'rate_limited',
   'not_found',
+  'conflict',
   'internal',
 ] as const;
 

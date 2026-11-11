@@ -1,11 +1,39 @@
-import { eq } from 'drizzle-orm';
+import { desc, eq, isNull } from 'drizzle-orm';
+import { alias } from 'drizzle-orm/pg-core';
+import type { AdminApplication, AdminApplicationsQuery, AdminLead, AdminLeadsQuery } from '@fixable/shared';
 import type { Config } from '../types/config.types.ts';
 import type { Db } from '../types/db.types.ts';
-import { users } from '../models/index.ts';
-import type { InviteDelivery } from '../types/admin.types.ts';
+import { applications, diagnosticLeads, users } from '../models/index.ts';
+import type { ApplicationRow, InviteDelivery, LeadRow } from '../types/admin.types.ts';
 import { sendInvite } from './invite.service.ts';
 
 const DUPLICATE_MESSAGE = 'Já existe um usuário com este e-mail.';
+
+const engineers = alias(users, 'engineers');
+
+export const applicationColumns = {
+  id: applications.id,
+  nome: applications.nome,
+  email: applications.email,
+  telefone: applications.telefone,
+  cidade: applications.cidade,
+  area: applications.area,
+  status: applications.status,
+  createdAt: applications.createdAt,
+};
+
+/** Converte a candidatura do banco no formato da API, com a data em ISO. */
+export const toAdminApplication = (row: ApplicationRow): AdminApplication => ({
+  ...row,
+  createdAt: row.createdAt.toISOString(),
+});
+
+/** Converte o lead do banco no formato da API, com o engenheiro como objeto e a data em ISO. */
+const toAdminLead = ({ engenheiro, ...row }: LeadRow): AdminLead => ({
+  ...row,
+  engenheiro: engenheiro === null ? null : { nome: engenheiro },
+  createdAt: row.createdAt.toISOString(),
+});
 
 /** Cria o admin convidado e envia o convite, ou reenvia se ele ainda não aceitou, tudo numa transação. */
 export async function createAdmin(
@@ -28,4 +56,35 @@ export async function createAdmin(
     await sendInvite(tx, config, existing.id);
     return { userId: existing.id, invite: 'reenviado' };
   });
+}
+
+/** Lista os pedidos de diagnóstico do mais novo ao mais antigo, todos ou só os sem engenheiro atribuído. */
+export async function listLeads(db: Db, query: AdminLeadsQuery): Promise<AdminLead[]> {
+  const rows = await db
+    .select({
+      id: diagnosticLeads.id,
+      nome: diagnosticLeads.nome,
+      email: diagnosticLeads.email,
+      telefone: diagnosticLeads.telefone,
+      cidade: diagnosticLeads.cidade,
+      tipoImovel: diagnosticLeads.tipoImovel,
+      plano: diagnosticLeads.plano,
+      engenheiro: engineers.nome,
+      createdAt: diagnosticLeads.createdAt,
+    })
+    .from(diagnosticLeads)
+    .leftJoin(engineers, eq(engineers.id, diagnosticLeads.engineerId))
+    .where(query.atribuicao === 'sem' ? isNull(diagnosticLeads.engineerId) : undefined)
+    .orderBy(desc(diagnosticLeads.createdAt), desc(diagnosticLeads.id));
+  return rows.map(toAdminLead);
+}
+
+/** Lista as candidaturas da mais nova à mais antiga, opcionalmente só as de um status. */
+export async function listApplications(db: Db, query: AdminApplicationsQuery): Promise<AdminApplication[]> {
+  const rows = await db
+    .select(applicationColumns)
+    .from(applications)
+    .where(query.status ? eq(applications.status, query.status) : undefined)
+    .orderBy(desc(applications.createdAt), desc(applications.id));
+  return rows.map(toAdminApplication);
 }
