@@ -49,13 +49,12 @@ describe('formulários públicos digitados antes da hidratação', () => {
     expect(button()).toBeEnabled();
   });
 
-  it('o diagnóstico mantém nome, tipo, aceite e honeypot preenchidos antes da hidratação e os envia', async () => {
+  it('o diagnóstico mantém nome, aceite e honeypot preenchidos antes da hidratação e os envia', async () => {
     const fn = vi.fn(() => Promise.resolve(new Response(null, { status: 204 })));
     vi.stubGlobal('fetch', fn);
     const container = serverHtml(<DiagnosticForm cidadeInicial="Santo André" />);
     typeBeforeHydration({
       'd-nome': 'Maria Souza',
-      'd-tipoImovel': 'sobrado',
       'd-website': 'robo',
     });
     field<HTMLInputElement>('d-aceiteTermos').checked = true;
@@ -64,12 +63,15 @@ describe('formulários públicos digitados antes da hidratação', () => {
     const user = userEvent.setup();
     await user.type(screen.getByLabelText('E-mail'), 'maria@exemplo.com');
     expect(screen.getByLabelText('Nome completo')).toHaveValue('Maria Souza');
-    expect(screen.getByLabelText('Tipo de imóvel')).toHaveValue('sobrado');
+    expect(screen.getByRole('combobox', { name: 'Tipo de imóvel' })).toHaveTextContent('Selecione');
     expect(screen.getByRole('checkbox')).toBeChecked();
     expect(field<HTMLInputElement>('d-website')).toHaveValue('robo');
 
     await user.type(screen.getByLabelText('Telefone'), '(11) 90000-0000');
-    await user.selectOptions(screen.getByLabelText('Preferência de contato'), 'WhatsApp');
+    await user.click(screen.getByRole('combobox', { name: 'Tipo de imóvel' }));
+    await user.click(screen.getByRole('option', { name: 'Sobrado' }));
+    await user.click(screen.getByRole('combobox', { name: 'Preferência de contato' }));
+    await user.click(screen.getByRole('option', { name: 'WhatsApp' }));
     await user.click(screen.getByRole('button', { name: 'Solicitar diagnóstico' }));
     await screen.findByText('Solicitação registrada.');
     const [, init] = fn.mock.calls[0] as unknown as [string, RequestInit];
@@ -93,12 +95,12 @@ describe('formulários públicos digitados antes da hidratação', () => {
     expect(screen.getByLabelText('Nome completo')).toHaveValue('Maria Souza');
   });
 
-  it('a candidatura mantém nome e área digitados antes da hidratação', async () => {
+  it('a candidatura mantém o nome digitado antes da hidratação', async () => {
     const container = serverHtml(<ApplicationForm />);
-    typeBeforeHydration({ 't-nome': 'João Engenheiro', 't-area': 'engenheiro' });
+    typeBeforeHydration({ 't-nome': 'João Engenheiro' });
     hydrate(container, <ApplicationForm />);
     await userEvent.setup().type(screen.getByLabelText('E-mail'), 'joao@exemplo.com');
     expect(screen.getByLabelText('Nome completo')).toHaveValue('João Engenheiro');
-    expect(screen.getByLabelText('Área de atuação')).toHaveValue('engenheiro');
+    expect(screen.getByRole('combobox', { name: 'Área de atuação' })).toHaveTextContent('Selecione');
   });
 });

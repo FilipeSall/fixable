@@ -9,14 +9,19 @@ const mockFetch = (response: Response) => {
   return fn;
 };
 
+const pick = async (user: ReturnType<typeof userEvent.setup>, label: string, option: string) => {
+  await user.click(screen.getByRole('combobox', { name: label }));
+  await user.click(screen.getByRole('option', { name: option }));
+};
+
 const fillValid = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.type(screen.getByLabelText('Nome completo'), '  Maria Souza ');
   await user.type(screen.getByLabelText('E-mail'), 'maria@exemplo.com');
   await user.type(screen.getByLabelText('Telefone'), '(11) 90000-0000');
   const cidade = screen.getByLabelText('Cidade');
   if (!(cidade as HTMLInputElement).value) await user.type(cidade, 'São Paulo');
-  await user.selectOptions(screen.getByLabelText('Tipo de imóvel'), 'Sobrado');
-  await user.selectOptions(screen.getByLabelText('Preferência de contato'), 'WhatsApp');
+  await pick(user, 'Tipo de imóvel', 'Sobrado');
+  await pick(user, 'Preferência de contato', 'WhatsApp');
   await user.click(screen.getByRole('checkbox'));
 };
 

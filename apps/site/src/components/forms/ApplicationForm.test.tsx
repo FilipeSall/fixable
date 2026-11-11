@@ -31,7 +31,8 @@ describe('ApplicationForm', () => {
     await user.type(screen.getByLabelText('E-mail'), 'joao@exemplo.com');
     await user.type(screen.getByLabelText('Telefone'), '11 98888-7777');
     await user.type(screen.getByLabelText('Cidade'), 'Santos');
-    await user.selectOptions(screen.getByLabelText('Área de atuação'), 'Engenheiro');
+    await user.click(screen.getByRole('combobox', { name: 'Área de atuação' }));
+    await user.click(screen.getByRole('option', { name: 'Engenheiro' }));
     await user.click(screen.getByRole('checkbox'));
     await user.click(screen.getByRole('button', { name: 'Fazer meu cadastro' }));
     expect(await screen.findByText('Cadastro recebido.')).toBeInTheDocument();

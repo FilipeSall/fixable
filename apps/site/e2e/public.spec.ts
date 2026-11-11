@@ -1,9 +1,15 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Locator } from '@playwright/test';
 import { aguardarHidratacao, segurarIlha } from './hydration.ts';
 import { clearMailbox, readInviteLink } from './mailpit.ts';
 
 const senha = 'senha123';
 const aceite = 'Li e aceito os termos de uso e a política de privacidade.';
+
+/** Abre o select customizado pelo rótulo e escolhe a opção pelo nome. */
+async function escolher(form: Locator, rotulo: string, opcao: string): Promise<void> {
+  await form.getByRole('combobox', { name: rotulo }).click();
+  await form.getByRole('option', { name: opcao, exact: true }).click();
+}
 
 test.describe.configure({ mode: 'serial' });
 
@@ -24,8 +30,8 @@ test('visitante solicita diagnóstico com plano e cria a senha pelo convite', as
   await form.getByLabel('E-mail', { exact: true }).fill(email);
   await form.getByLabel('Telefone', { exact: true }).fill('(11) 91234-5678');
   await form.getByLabel('Cidade', { exact: true }).fill('Santo André');
-  await form.getByLabel('Tipo de imóvel').selectOption('apartamento');
-  await form.getByLabel('Preferência de contato').selectOption('email');
+  await escolher(form, 'Tipo de imóvel', 'Apartamento');
+  await escolher(form, 'Preferência de contato', 'E-mail');
   await form.getByLabel(aceite).check();
   await form.getByRole('button', { name: 'Solicitar diagnóstico' }).click();
   await expect(page.getByText('Solicitação registrada.')).toBeVisible();
@@ -46,7 +52,7 @@ test('candidato envia o cadastro e vê "Cadastro recebido."', async ({ page }) =
   await form.getByLabel('E-mail', { exact: true }).fill(`candidato-${Date.now()}@fixable.local`);
   await form.getByLabel('Telefone', { exact: true }).fill('(11) 98765-4321');
   await form.getByLabel('Cidade', { exact: true }).fill('São Paulo');
-  await form.getByLabel('Área de atuação', { exact: true }).selectOption('engenheiro');
+  await escolher(form, 'Área de atuação', 'Engenheiro');
   await form.getByLabel(aceite).check();
   await form.getByRole('button', { name: 'Fazer meu cadastro' }).click();
   await expect(page.getByText('Cadastro recebido.')).toBeVisible();
@@ -83,19 +89,18 @@ for (const caso of [
     const ilha = page.locator('astro-island:has(#diagnostic-form)');
     const form = page.locator('#diagnostic-form');
     const nome = form.getByLabel('Nome completo', { exact: true });
-    const tipo = form.getByLabel('Tipo de imóvel');
     await nome.fill('Digitado Antes');
-    await tipo.selectOption('sobrado');
     await expect(ilha).toHaveAttribute('ssr', /.*/);
     liberar();
     await aguardarHidratacao(page, '#diagnostic-form');
     await form.getByLabel('E-mail', { exact: true }).fill('antes@fixable.local');
     await expect(nome).toHaveValue('Digitado Antes');
-    await expect(tipo).toHaveValue('sobrado');
+    await escolher(form, 'Tipo de imóvel', 'Sobrado');
     await form.getByRole('button', { name: 'Solicitar diagnóstico' }).click();
     await expect(form.getByText('Informe um telefone válido.')).toBeVisible();
     await expect(form.getByText('Informe seu nome completo.')).toHaveCount(0);
     await expect(form.getByText('Selecione o tipo de imóvel.')).toHaveCount(0);
+    await expect(form.getByRole('combobox', { name: 'Tipo de imóvel' })).toHaveText(/Sobrado/);
     await expect(nome).toHaveValue('Digitado Antes');
   });
 }

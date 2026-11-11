@@ -1,5 +1,6 @@
 import type { ChangeEvent } from 'react';
 import type { FormFieldProps } from '../../types/public-forms.types.ts';
+import { CustomSelect } from './CustomSelect.tsx';
 
 /** Campo de formulário público (input, select ou textarea) com rótulo e erro ligado por aria-describedby. */
 export function FormField({
@@ -20,24 +21,17 @@ export function FormField({
   const errorId = `${id}-err`;
   const aria = { 'aria-invalid': error ? true : undefined, 'aria-describedby': error ? errorId : undefined };
   /** Repassa o valor digitado ou selecionado ao formulário. */
-  function handleChange(event: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
+  function handleChange(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
     onChange(name, event.target.value);
   }
   return (
     <div className={full ? 'field full' : 'field'}>
-      <label htmlFor={id}>
+      <label htmlFor={id} id={`${id}-label`}>
         {label}
         {hint ? <span className="muted"> ({hint})</span> : null}
       </label>
       {control === 'select' ? (
-        <select id={id} name={name} value={value} onChange={handleChange} {...aria}>
-          <option value="">Selecione</option>
-          {options?.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
+        <CustomSelect id={id} name={name} value={value} onChange={onChange} options={options ?? []} error={error} />
       ) : null}
       {control === 'textarea' ? (
         <textarea id={id} name={name} value={value} placeholder={placeholder} onChange={handleChange} {...aria} />

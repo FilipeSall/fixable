@@ -13,7 +13,7 @@ function typedBeforeHydration(form: HTMLFormElement | null, initial: FormValues)
     if (element instanceof HTMLInputElement && typeof initialValue === 'boolean') {
       if (element.checked !== initialValue) typed[name] = element.checked;
     } else if (
-      (element instanceof HTMLInputElement || element instanceof HTMLSelectElement || element instanceof HTMLTextAreaElement) &&
+      (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement) &&
       element.value !== initialValue
     ) {
       typed[name] = element.value;

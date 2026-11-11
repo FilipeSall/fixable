@@ -16,6 +16,16 @@ export type ConsentFieldProps = {
 
 export type FormFieldOption = { value: string; label: string };
 
+export type CustomSelectProps = {
+  id: string;
+  name: string;
+  value: string;
+  onChange: (name: string, value: string) => void;
+  options: readonly FormFieldOption[];
+  error?: string;
+  placeholder?: string;
+};
+
 export type FormFieldProps = {
   id: string;
   name: string;
