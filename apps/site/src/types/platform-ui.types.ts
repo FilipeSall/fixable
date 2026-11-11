@@ -101,7 +101,3 @@ export type SideNavSection = {
   label: string;
   items: readonly SideNavItem[];
 };
-
-export type PlaceholderPageProps = {
-  title: string;
-};
