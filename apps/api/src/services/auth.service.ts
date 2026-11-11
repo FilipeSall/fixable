@@ -7,7 +7,7 @@ import type { EmailTokenPurpose } from '../types/email-token.types.ts';
 import { AppError } from '../utils/app-error.ts';
 import { hashPassword, verifyPassword } from '../utils/password.ts';
 import { consumeEmailToken, peekEmailToken } from './email-token.service.ts';
-import { sendInvite, sendPasswordReset } from './invite.service.ts';
+import { resendPublicLink } from './invite.service.ts';
 import { createSession, revokeSession, revokeUserSessions } from './session.service.ts';
 
 const DUMMY_PASSWORD_HASH = await hashPassword('senha-inexistente-0');
@@ -129,8 +129,8 @@ export async function acceptInvite(db: Db, input: { token: string; senha: string
 /** Envia o link de redefinição ou de convite conforme a situação da conta, sem revelar se o e-mail existe. */
 export async function forgotPassword(db: Db, config: Pick<Config, 'APP_ORIGIN'>, email: string): Promise<void> {
   const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
-  if (user?.status === 'ativo') await sendPasswordReset(db, config, user.id);
-  if (user?.status === 'convidado') await sendInvite(db, config, user.id);
+  if (user?.status === 'ativo') await resendPublicLink(db, config, user.id, 'redefinicao');
+  if (user?.status === 'convidado') await resendPublicLink(db, config, user.id, 'convite');
 }
 
 /** Redefine a senha com o link, consome o token e revoga as sessões do usuário. */

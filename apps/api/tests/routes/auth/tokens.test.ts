@@ -229,10 +229,22 @@ describe('redefinição de senha', () => {
     expect(await t.db.select().from(emailOutbox)).toHaveLength(0);
   });
 
-  it('forgot de usuário convidado reenvia o convite e invalida o anterior', async () => {
+  it('forgot de usuário convidado logo depois do convite não emite outro link nem invalida o anterior', async () => {
     const user = await createUser(t.db, { role: 'cliente', status: 'convidado', email: 'a@fixable.com' });
     await sendInvite(t.db, t.config, user.id);
     const previous = await lastLinkToken('convite');
+
+    expect((await forgot('A@Fixable.com')).statusCode).toBe(204);
+
+    expect(await t.db.select().from(emailOutbox)).toHaveLength(1);
+    expect((await lookup(previous)).statusCode).toBe(200);
+  });
+
+  it('forgot de usuário convidado com convite de mais de 10 min reenvia o convite e invalida o anterior', async () => {
+    const user = await createUser(t.db, { role: 'cliente', status: 'convidado', email: 'a@fixable.com' });
+    await sendInvite(t.db, t.config, user.id);
+    const previous = await lastLinkToken('convite');
+    await t.db.update(emailTokens).set({ createdAt: new Date(Date.now() - 11 * MINUTE_MS) });
 
     expect((await forgot('A@Fixable.com')).statusCode).toBe(204);
 
@@ -241,6 +253,15 @@ describe('redefinição de senha', () => {
     expect((queued[1]!.data as { link: string }).link).toMatch(/^http:\/\/localhost:4321\/app\/convite#token=/);
     expect((await accept(previous)).statusCode).toBe(410);
     expect((await accept(await lastLinkToken('convite'))).statusCode).toBe(200);
+  });
+
+  it('forgot leva pelo menos 250 ms com e sem conta, para o tempo não revelar se o e-mail existe', async () => {
+    await createUser(t.db, { role: 'cliente', email: 'ana@fixable.com', senha: 'antiga1234' });
+    for (const email of ['ana@fixable.com', 'ninguem@fixable.com']) {
+      const inicio = performance.now();
+      expect((await forgot(email)).statusCode).toBe(204);
+      expect(performance.now() - inicio).toBeGreaterThanOrEqual(245);
+    }
   });
 
   it('forgot trata e-mail com maiúsculas e espaços como o mesmo usuário', async () => {
@@ -264,9 +285,20 @@ describe('redefinição de senha', () => {
     expect(t.mailer.sent).toHaveLength(1);
   });
 
+  it('segundo pedido em menos de 10 min não emite outro link', async () => {
+    await createUser(t.db, { role: 'cliente', email: 'ana@fixable.com', senha: 'antiga1234' });
+    await forgot('ana@fixable.com');
+    const first = await lastLinkToken('redefinicao');
+    await forgot('ana@fixable.com');
+
+    expect(await t.db.select().from(emailOutbox)).toHaveLength(1);
+    expect((await lookup(first)).statusCode).toBe(200);
+  });
+
   it('dois pedidos antes do processamento entregam só o link mais recente', async () => {
     await createUser(t.db, { role: 'cliente', email: 'ana@fixable.com', senha: 'antiga1234' });
     await forgot('ana@fixable.com');
+    await t.db.update(emailTokens).set({ createdAt: new Date(Date.now() - 11 * MINUTE_MS) });
     await forgot('ana@fixable.com');
     const latest = await lastLinkToken('redefinicao');
 

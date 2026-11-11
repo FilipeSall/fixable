@@ -36,6 +36,30 @@ export async function issueEmailToken(
   return { id: row!.id, token };
 }
 
+/** Diz se o usuário tem um link aberto da finalidade emitido depois do instante informado. */
+export async function hasOpenTokenSince(
+  db: Db | Tx,
+  userId: string,
+  purpose: EmailTokenPurpose,
+  since: Date,
+  now: Date = new Date(),
+): Promise<boolean> {
+  const [row] = await db
+    .select({ id: emailTokens.id })
+    .from(emailTokens)
+    .where(
+      and(
+        eq(emailTokens.userId, userId),
+        eq(emailTokens.purpose, purpose),
+        isNull(emailTokens.usedAt),
+        gt(emailTokens.expiresAt, now),
+        gt(emailTokens.createdAt, since),
+      ),
+    )
+    .limit(1);
+  return row !== undefined;
+}
+
 /** Consulta um link sem consumi-lo e devolve o dono e a finalidade se ainda estiver aberto. */
 export async function peekEmailToken(
   db: Db | Tx,

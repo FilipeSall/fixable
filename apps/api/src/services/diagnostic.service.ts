@@ -12,7 +12,7 @@ import type {
   PublicConfig,
 } from '../types/public.types.ts';
 import { insertInvitedClientUser, onboardClient, requestDescription } from './client-onboarding.service.ts';
-import { sendInvite } from './invite.service.ts';
+import { resendPublicLink } from './invite.service.ts';
 import { enqueueEmail } from './outbox.service.ts';
 
 const EMPTY_VALUE = '—';
@@ -47,7 +47,7 @@ async function findClient(tx: Tx, userId: string): Promise<ExistingClient | null
 /** Avisa o cliente existente conforme o status: reenvia o convite, confirma o recebimento ou não envia nada. */
 async function notifyExistingClient(tx: Tx, config: PublicConfig, account: ExistingAccount): Promise<void> {
   if (account.status === 'convidado') {
-    await sendInvite(tx, config, account.userId);
+    await resendPublicLink(tx, config, account.userId, 'convite');
     return;
   }
   if (account.status === 'ativo') {

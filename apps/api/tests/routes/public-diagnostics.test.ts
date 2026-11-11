@@ -239,9 +239,7 @@ describe('POST /api/public/diagnostics', () => {
     expect(solicitacoes[0]!.clientId).toBe(existente.clientId);
     expect(solicitacoes[0]!.propertyId).toBeNull();
     expect(solicitacoes[0]!.status).toBe('em_analise');
-    expect(solicitacoes[0]!.descricao).toBe(
-      'Diagnóstico adicional — Sobrado · Plano para 3 meses: Infiltração no banheiro da suíte',
-    );
+    expect(solicitacoes[0]!.descricao).toBe('Diagnóstico adicional — Sobrado · Plano para 3 meses');
 
     const [lead] = await t.db.select().from(diagnosticLeads);
     expect(lead).toMatchObject({
@@ -273,13 +271,25 @@ describe('POST /api/public/diagnostics', () => {
     }
   });
 
-  it('cliente existente convidado recebe um convite novo que invalida o anterior', async () => {
+  it('cliente existente convidado: o segundo envio em menos de 10 min não emite outro convite', async () => {
     await criarCliente({ email: 'ana@ex.com', status: 'convidado' });
     expect((await enviar()).statusCode).toBe(204);
     expect((await enviar()).statusCode).toBe(204);
     const convites = (await filaPorTemplate()).filter((item) => item.template === 'convite');
-    expect(convites).toHaveLength(2);
+    expect(convites).toHaveLength(1);
     expect(await t.db.select().from(serviceRequests)).toHaveLength(2);
+  });
+
+  it('envio anônimo com e-mail de cliente ativo não leva o texto livre para a solicitação nem para o e-mail do cliente', async () => {
+    const existente = await criarCliente({ email: 'ana@ex.com', nome: 'Ana Original' });
+    const phishing = 'URGENTE: confirme seus dados em golpe.example e ligue 0800 000 0000';
+
+    expect((await enviar({ ...envio, descricao: phishing })).statusCode).toBe(204);
+
+    const [solicitacao] = await t.db.select().from(serviceRequests).where(eq(serviceRequests.clientId, existente.clientId));
+    expect(solicitacao!.descricao).not.toContain('golpe.example');
+    const recebido = (await filaPorTemplate()).find((item) => item.template === 'diagnostico-recebido')!;
+    expect(JSON.stringify(recebido.data)).not.toContain('golpe.example');
   });
 
   it('e-mail de engenheiro: só grava o lead, resposta 204', async () => {

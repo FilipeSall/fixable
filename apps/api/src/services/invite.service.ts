@@ -3,7 +3,9 @@ import type { Db, Tx } from '../types/db.types.ts';
 import { users } from '../models/index.ts';
 import { enqueueEmail } from './outbox.service.ts';
 import type { EmailTokenPurpose, LinkConfig } from '../types/email-token.types.ts';
-import { issueEmailToken } from './email-token.service.ts';
+import { hasOpenTokenSince, issueEmailToken } from './email-token.service.ts';
+
+const PUBLIC_RESEND_COOLDOWN_MS = 10 * 60 * 1000;
 
 const LINK_PATHS: Record<EmailTokenPurpose, string> = {
   convite: '/app/convite',
@@ -42,6 +44,22 @@ async function sendTokenEmail(
 /** Executa o trabalho em uma transação, aninhada (savepoint) quando já houver uma em andamento. */
 async function inTransaction(db: Db | Tx, work: (tx: Tx) => Promise<void>): Promise<void> {
   await db.transaction(work);
+}
+
+/**
+ * Reenvia o link pedido por uma rota pública, a não ser que outro link aberto da mesma finalidade tenha saído
+ * há menos de 10 minutos; assim um terceiro não invalida o link do dono nem enche a caixa dele.
+ */
+export async function resendPublicLink(
+  db: Db | Tx,
+  config: LinkConfig,
+  userId: string,
+  purpose: EmailTokenPurpose,
+  now: Date = new Date(),
+): Promise<void> {
+  const since = new Date(now.getTime() - PUBLIC_RESEND_COOLDOWN_MS);
+  if (await hasOpenTokenSince(db, userId, purpose, since, now)) return;
+  await inTransaction(db, (tx) => sendTokenEmail(tx, config, userId, purpose));
 }
 
 /** Enfileira o e-mail de convite para o usuário. */

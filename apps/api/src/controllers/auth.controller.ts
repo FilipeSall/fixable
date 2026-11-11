@@ -8,7 +8,10 @@ import type {
   SetPasswordRequest,
   TokenLookupRequest,
 } from '../types/auth.types.ts';
+import { withMinimumDuration } from '../utils/min-duration.ts';
 import { clearSessionCookie, SESSION_COOKIE, setSessionCookie } from '../utils/session-cookie.ts';
+
+const FORGOT_MIN_RESPONSE_MS = 250;
 
 /** Cria o controller de autenticação com os handlers de login, logout, convite, redefinição e usuário atual. */
 export function createAuthController({ db, config }: AuthDeps) {
@@ -42,7 +45,7 @@ export function createAuthController({ db, config }: AuthDeps) {
     },
 
     forgotPassword: async (request: ForgotPasswordRequest, reply: FastifyReply): Promise<FastifyReply> => {
-      await authService.forgotPassword(db, config, request.body.email);
+      await withMinimumDuration(FORGOT_MIN_RESPONSE_MS, authService.forgotPassword(db, config, request.body.email));
       return reply.status(204).send();
     },
 

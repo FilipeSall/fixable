@@ -9,10 +9,14 @@ import { insertDefaultFloorplan } from './property.service.ts';
 const REQUEST_SUMMARY_LIMIT = 120;
 const REQUEST_PREFIX = { inicial: 'Diagnóstico inicial', adicional: 'Diagnóstico adicional' } as const;
 
-/** Monta a descrição da solicitação de diagnóstico com tipo, plano e o início da descrição do problema. */
+/**
+ * Monta a descrição da solicitação de diagnóstico com tipo e plano; só a inicial leva o início da descrição,
+ * porque a adicional cai numa conta existente sem prova de que quem enviou é o dono dela.
+ */
 export function requestDescription(kind: keyof typeof REQUEST_PREFIX, input: DiagnosticInput): string {
   const plano = input.plano ? ` · ${planName(input.plano)}` : '';
-  const resumo = input.descricao ? `: ${[...input.descricao].slice(0, REQUEST_SUMMARY_LIMIT).join('')}` : '';
+  const resumo =
+    kind === 'inicial' && input.descricao ? `: ${[...input.descricao].slice(0, REQUEST_SUMMARY_LIMIT).join('')}` : '';
   return `${REQUEST_PREFIX[kind]} — ${PROPERTY_TYPE_LABELS[input.tipoImovel]}${plano}${resumo}`;
 }
 
