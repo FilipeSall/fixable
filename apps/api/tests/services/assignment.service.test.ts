@@ -1,6 +1,7 @@
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { diagnosticInput } from '@fixable/shared';
-import { clients } from '../../src/models/index.ts';
+import { eq } from 'drizzle-orm';
+import { clients, users } from '../../src/models/index.ts';
 import { createUser, resetDb, testApp, type TestApp } from '../helpers.ts';
 import { pickEngineer } from '../../src/services/assignment.service.ts';
 import { submitDiagnostic } from '../../src/services/diagnostic.service.ts';
@@ -27,6 +28,20 @@ describe('pickEngineer', () => {
   it('devolve null sem engenheiro ativo', async () => {
     await createUser(ctx.db, { role: 'engenheiro', status: 'convidado' });
     await createUser(ctx.db, { role: 'engenheiro', status: 'bloqueado' });
+    expect(await ctx.db.transaction(pickEngineer)).toBeNull();
+  });
+
+  it('ignora engenheiros de demonstração, mesmo sem clientes', async () => {
+    const real = await createUser(ctx.db, { role: 'engenheiro', nome: 'Real' });
+    const demo = await createUser(ctx.db, { role: 'engenheiro', nome: 'Demo' });
+    await ctx.db.update(users).set({ isDemo: true }).where(eq(users.id, demo.id));
+    await addClients(real.id, 3);
+    expect(await ctx.db.transaction(pickEngineer)).toEqual({ id: real.id, nome: 'Real' });
+  });
+
+  it('devolve null quando só há engenheiro de demonstração', async () => {
+    const demo = await createUser(ctx.db, { role: 'engenheiro', nome: 'Demo' });
+    await ctx.db.update(users).set({ isDemo: true }).where(eq(users.id, demo.id));
     expect(await ctx.db.transaction(pickEngineer)).toBeNull();
   });
 

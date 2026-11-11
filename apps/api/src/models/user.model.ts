@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { check, pgEnum, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { boolean, check, pgEnum, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 import { ROLES, USER_STATUSES } from '@fixable/shared';
 
 export const roleEnum = pgEnum('role', ROLES);
@@ -16,6 +16,7 @@ export const users = pgTable(
     telefone: text('telefone'),
     cidade: text('cidade'),
     passwordHash: text('password_hash'),
+    isDemo: boolean('is_demo').notNull().default(false),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true })
       .notNull()

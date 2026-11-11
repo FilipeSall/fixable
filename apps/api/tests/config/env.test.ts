@@ -70,4 +70,12 @@ describe('loadConfig', () => {
     expect(() => loadConfig({ ...dev, LOGIN_RATE_LIMIT: '-3' })).toThrow(/LOGIN_RATE_LIMIT/);
     expect(() => loadConfig({ ...dev, LOGIN_RATE_LIMIT: 'muitos' })).toThrow(/LOGIN_RATE_LIMIT/);
   });
+  it('DEMO_MODE aceita "true" ou "false" e fica desligado por padrão', () => {
+    const dev = { ...base, MAIL_DRIVER: 'memory' };
+    expect(loadConfig(dev).DEMO_MODE).toBe(false);
+    expect(loadConfig(production).DEMO_MODE).toBe(false);
+    expect(loadConfig({ ...dev, DEMO_MODE: 'true' }).DEMO_MODE).toBe(true);
+    expect(loadConfig({ ...dev, DEMO_MODE: 'false' }).DEMO_MODE).toBe(false);
+    expect(() => loadConfig({ ...dev, DEMO_MODE: 'sim' })).toThrow(/DEMO_MODE/);
+  });
 });

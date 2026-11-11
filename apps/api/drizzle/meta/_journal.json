@@ -50,6 +50,13 @@
       "when": 1794363566853,
       "tag": "0006_historico_sobrevive_ao_comodo",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1794370843772,
+      "tag": "0007_usuarios_demo",
+      "breakpoints": true
     }
   ]
 }

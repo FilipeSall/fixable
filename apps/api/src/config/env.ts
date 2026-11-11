@@ -19,6 +19,7 @@ export const configSchema = z
     SMTP_URL: z.string().min(1).optional(),
     MAIL_FROM: z.string().min(1),
     TEAM_EMAIL: z.email().optional(),
+    DEMO_MODE: booleanString.default(false),
   })
   .refine((config) => config.MAIL_DRIVER !== 'smtp' || config.SMTP_URL !== undefined, {
     path: ['SMTP_URL'],
