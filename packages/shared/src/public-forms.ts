@@ -4,6 +4,8 @@ import { APPLICATION_AREAS, CONTACT_PREFERENCES, PLANS, PROPERTY_TYPES } from '.
 
 const MIN_PHONE_DIGITS = 10;
 const MAX_PHONE_DIGITS = 13;
+const NAME_MESSAGE = 'Informe seu nome completo.';
+const NAME_CHARACTERS = /^[\p{L}\p{M}\p{Zs}'’.-]+$/u;
 const TERMS_MESSAGE = 'Aceite os termos de uso e a política de privacidade para continuar.';
 
 export const phoneSchema = z
@@ -11,7 +13,13 @@ export const phoneSchema = z
   .transform((valor) => valor.replaceAll(/\D/g, ''))
   .pipe(z.string().min(MIN_PHONE_DIGITS, 'Informe um telefone válido.').max(MAX_PHONE_DIGITS, 'Informe um telefone válido.'));
 
-const nomeSchema = z.string().trim().min(3, 'Informe seu nome completo.').max(120, 'Informe seu nome completo.');
+const nomeSchema = z
+  .string()
+  .trim()
+  .min(3, NAME_MESSAGE)
+  .max(120, NAME_MESSAGE)
+  .regex(NAME_CHARACTERS, NAME_MESSAGE)
+  .refine((nome) => !nome.toLowerCase().includes('www.'), NAME_MESSAGE);
 const cidadeSchema = z.string().trim().min(1, 'Informe sua cidade.').max(80, 'Informe sua cidade.');
 const termosSchema = z.literal(true, { error: TERMS_MESSAGE });
 const honeypotSchema = z.string().max(200).optional();

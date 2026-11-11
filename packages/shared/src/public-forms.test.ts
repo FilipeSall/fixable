@@ -28,6 +28,25 @@ describe('diagnosticInput', () => {
   it('nome com 2 letras falha', () => {
     expect(mensagem(diagnosticInput.safeParse({ ...valido, nome: 'An' }))).toBe('Informe seu nome completo.');
   });
+  it.each(['José da Silva', "Maria D'Ávila", 'Ana O’Neil', 'Ana-Lúcia Souza', 'J. R. Tolkien', 'Ñandú Çelik'])(
+    'nome %s é aceito',
+    (nome) => {
+      expect(diagnosticInput.safeParse({ ...valido, nome }).success).toBe(true);
+      expect(applicationInput.safeParse({ ...valido, area: 'engenheiro', nome }).success).toBe(true);
+    },
+  );
+  it.each([
+    'Acesse https://golpe.com',
+    'Veja golpe.com://x',
+    'Promo www.golpe.com',
+    'WWW.GOLPE.COM agora',
+    'contato@golpe.com',
+    'Ana Souza @ana',
+    'Ana <b>Souza</b>',
+  ])('nome %s falha', (nome) => {
+    expect(mensagem(diagnosticInput.safeParse({ ...valido, nome }))).toBe('Informe seu nome completo.');
+    expect(mensagem(applicationInput.safeParse({ ...valido, area: 'engenheiro', nome }))).toBe('Informe seu nome completo.');
+  });
   it.each([
     ['tipoImovel', '', 'Selecione o tipo de imóvel.'],
     ['tipoImovel', undefined, 'Selecione o tipo de imóvel.'],
