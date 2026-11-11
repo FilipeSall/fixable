@@ -1,9 +1,10 @@
 import { PROPERTY_TYPE_LABELS, CONTACT_PREFERENCE_LABELS, planName, type DiagnosticInput } from '@fixable/shared';
 import { clients, floors, properties, propertyAttributes, rooms, serviceRequests, users } from '../models/index.ts';
+import type { Retangulo } from '../types/floorplan.types.ts';
 import type { Tx } from '../types/db.types.ts';
 import type { LeadAssignment, PublicConfig } from '../types/public.types.ts';
 import { pickEngineer } from './assignment.service.ts';
-import { floorplanFor } from './floorplan.service.ts';
+import { firstFreeSpot, floorplanFor } from './floorplan.service.ts';
 import { sendInvite } from './invite.service.ts';
 
 const REQUEST_SUMMARY_LIMIT = 120;
@@ -37,9 +38,13 @@ async function insertFloorplan(tx: Tx, propertyId: string, input: DiagnosticInpu
       .insert(floors)
       .values({ propertyId, nome: andar.nome, posicao })
       .returning({ id: floors.id });
-    await tx
-      .insert(rooms)
-      .values(andar.comodos.map((comodo, ordem) => ({ floorId: floor!.id, ...comodo, posicao: ordem })));
+    const ocupados: Retangulo[] = [];
+    const values = andar.comodos.map((comodo, ordem) => {
+      const spot = firstFreeSpot(ocupados, comodo.largura, comodo.altura);
+      ocupados.push({ ...spot, largura: comodo.largura, altura: comodo.altura });
+      return { floorId: floor!.id, ...comodo, ...spot, posicao: ordem };
+    });
+    await tx.insert(rooms).values(values);
   }
 }
 

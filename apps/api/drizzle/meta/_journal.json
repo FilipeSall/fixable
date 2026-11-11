@@ -29,6 +29,13 @@
       "when": 1794312813306,
       "tag": "0003_clientes_imoveis_leads_candidaturas",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794361176730,
+      "tag": "0004_maquete_servicos_agendamentos",
+      "breakpoints": true
     }
   ]
 }

@@ -8,3 +8,5 @@ export * from './floorplan.model.ts';
 export * from './service-request.model.ts';
 export * from './diagnostic-lead.model.ts';
 export * from './application.model.ts';
+export * from './service.model.ts';
+export * from './appointment.model.ts';

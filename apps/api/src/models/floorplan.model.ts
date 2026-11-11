@@ -20,5 +20,7 @@ export const rooms = pgTable('rooms', {
   largura: integer('largura').notNull(),
   altura: integer('altura').notNull(),
   posicao: integer('posicao').notNull(),
+  x: integer('x').notNull().default(0),
+  y: integer('y').notNull().default(0),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });

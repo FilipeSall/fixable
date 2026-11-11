@@ -1,5 +1,5 @@
-import type { PropertyType } from '@fixable/shared';
-import type { Andar, Comodo } from '../types/floorplan.types.ts';
+import { MAQUETE_COLUMNS, type PropertyType } from '@fixable/shared';
+import type { Andar, Comodo, Ponto, Retangulo } from '../types/floorplan.types.ts';
 
 /** Cria um cômodo da planta com nome e dimensões em módulos. */
 const comodo = (nome: string, largura: number, altura: number): Comodo => ({ nome, largura, altura });
@@ -72,4 +72,19 @@ export function floorplanFor(tipo: PropertyType): Andar[] {
       ],
     },
   ];
+}
+
+/** Diz se dois retângulos da grade ocupam alguma célula em comum; bordas encostadas não contam. */
+export function overlaps(a: Retangulo, b: Retangulo): boolean {
+  return a.x < b.x + b.largura && b.x < a.x + a.largura && a.y < b.y + b.altura && b.y < a.y + a.altura;
+}
+
+/** Acha a primeira posição livre, varrendo linha a linha e coluna a coluna, para um cômodo das dimensões dadas. */
+export function firstFreeSpot(ocupados: Retangulo[], largura: number, altura: number): Ponto {
+  for (let y = 0; ; y++) {
+    for (let x = 0; x + largura <= MAQUETE_COLUMNS; x++) {
+      const candidato = { x, y, largura, altura };
+      if (!ocupados.some((outro) => overlaps(candidato, outro))) return { x, y };
+    }
+  }
 }
