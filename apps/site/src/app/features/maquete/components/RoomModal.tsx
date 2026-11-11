@@ -60,7 +60,10 @@ export function RoomModal({ propertyId, floor, room, onClose }: Readonly<RoomMod
         confirmLabel="Excluir cômodo"
         busy={remove.isPending}
         onConfirm={() => remove.mutate()}
-        onCancel={() => setConfirming(false)}
+        onCancel={() => {
+          remove.reset();
+          setConfirming(false);
+        }}
       />
     );
   }

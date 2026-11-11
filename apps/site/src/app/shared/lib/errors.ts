@@ -15,8 +15,3 @@ export function errorMessage(error: unknown): string {
 export function isMissing(error: unknown): boolean {
   return error instanceof ApiRequestError && (error.status === NOT_FOUND || error.status === BAD_REQUEST);
 }
-
-/** Diz se o erro é um 404 da API (recurso inexistente ou sem acesso). */
-export function isNotFound(error: unknown): boolean {
-  return error instanceof ApiRequestError && error.status === NOT_FOUND;
-}

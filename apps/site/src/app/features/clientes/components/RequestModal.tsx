@@ -47,7 +47,10 @@ export function RequestModal({ clientId, properties, request, onClose }: Readonl
         busy={remove.isPending}
         error={remove.error ? errorMessage(remove.error) : ''}
         onConfirm={() => remove.mutate()}
-        onCancel={() => setConfirming(false)}
+        onCancel={() => {
+          remove.reset();
+          setConfirming(false);
+        }}
       />
     );
   }

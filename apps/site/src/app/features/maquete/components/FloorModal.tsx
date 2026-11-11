@@ -42,7 +42,10 @@ export function FloorModal({ propertyId, floor, canDelete, onClose, onDeleted }:
         confirmLabel="Excluir andar"
         busy={remove.isPending}
         onConfirm={() => remove.mutate()}
-        onCancel={() => setConfirming(false)}
+        onCancel={() => {
+          remove.reset();
+          setConfirming(false);
+        }}
       />
     );
   }
