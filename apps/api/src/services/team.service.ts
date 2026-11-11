@@ -1,10 +1,17 @@
 import { and, eq } from 'drizzle-orm';
-import type { AdminApplication, ApplicationArea, Role, TeamInviteInput, TeamInviteResult } from '@fixable/shared';
+import {
+  isDemoEmail,
+  type AdminApplication,
+  type ApplicationArea,
+  type Role,
+  type TeamInviteInput,
+  type TeamInviteResult,
+} from '@fixable/shared';
 import { applications, users } from '../models/index.ts';
 import type { PlatformMailDeps, Viewer } from '../types/platform.types.ts';
 import type { Tx } from '../types/db.types.ts';
 import { AppError } from '../utils/app-error.ts';
-import { demoEmailFilter, isDemoEmail } from '../utils/demo-email.ts';
+import { demoEmailFilter } from '../utils/demo-email.ts';
 import { notFound } from './access-policy.service.ts';
 import { applicationColumns, toAdminApplication } from './admin.service.ts';
 import { sendInvite } from './invite.service.ts';

@@ -38,6 +38,13 @@ describe('createAdmin', () => {
     expect(await t.db.select().from(emailOutbox)).toHaveLength(0);
   });
 
+  it('recusa e-mail do domínio da demonstração', async () => {
+    await expect(createAdmin(t.db, t.config, { nome: 'Chefe', email: 'chefe.demo@fixable.com.br' })).rejects.toThrow(
+      'Este domínio de e-mail é reservado.',
+    );
+    expect(await t.db.select().from(users)).toHaveLength(0);
+  });
+
   it('admin ainda convidado recebe um novo convite e o anterior deixa de valer', async () => {
     const existing = await createUser(t.db, { role: 'admin', status: 'convidado', email: 'chefe@fixable.com' });
     await sendInvite(t.db, t.config, existing.id);

@@ -1,11 +1,13 @@
 import { and, desc, eq, isNull } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
-import type {
-  AdminApplication,
-  AdminApplicationsQuery,
-  AdminLead,
-  AdminLeadsQuery,
-  TeamInviteResult,
+import {
+  isDemoEmail,
+  RESERVED_EMAIL_MESSAGE,
+  type AdminApplication,
+  type AdminApplicationsQuery,
+  type AdminLead,
+  type AdminLeadsQuery,
+  type TeamInviteResult,
 } from '@fixable/shared';
 import type { Config } from '../types/config.types.ts';
 import type { Db } from '../types/db.types.ts';
@@ -43,12 +45,13 @@ const toAdminLead = ({ engenheiro, ...row }: LeadRow): AdminLead => ({
   createdAt: row.createdAt.toISOString(),
 });
 
-/** Cria o admin convidado e envia o convite, ou reenvia se ele ainda não aceitou, tudo numa transação. */
+/** Cria o admin convidado e envia o convite, ou reenvia se ele ainda não aceitou; recusa o domínio demo. */
 export async function createAdmin(
   db: Db,
   config: Pick<Config, 'APP_ORIGIN'>,
   input: { nome: string; email: string },
 ): Promise<TeamInviteResult> {
+  if (isDemoEmail(input.email)) throw new Error(RESERVED_EMAIL_MESSAGE);
   return db.transaction(async (tx) => {
     const [created] = await tx
       .insert(users)

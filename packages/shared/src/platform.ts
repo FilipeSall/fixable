@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { emailSchema } from './auth.ts';
 import { APPLICATION_AREAS, APPLICATION_STATUSES, PLANS, PROPERTY_TYPES, SERVICE_REQUEST_STATUSES } from './catalog.ts';
+import { nonDemoEmailSchema } from './demo.ts';
 import type { AppointmentStatus, ServiceStatus } from './types/platform.types.ts';
 
 export const MAQUETE_COLUMNS = 6;
@@ -125,7 +125,7 @@ export const propertyInput = z.object({
 
 export const teamInviteInput = z.object({
   nome: z.string({ error: NAME_MESSAGE }).trim().min(3, NAME_MESSAGE).max(120, NAME_MESSAGE),
-  email: emailSchema,
+  email: nonDemoEmailSchema,
   role: z.enum(TEAM_INVITE_ROLES, { error: 'Selecione o papel.' }),
 });
 

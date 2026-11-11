@@ -1,10 +1,9 @@
-import { and, eq, inArray, like, notInArray, or } from 'drizzle-orm';
+import { and, eq, inArray, notInArray } from 'drizzle-orm';
 import { DEMO_SENHA } from '@fixable/shared';
 import {
   DEMO_ACCOUNTS,
   DEMO_APPLICATIONS,
   DEMO_CLIENTS,
-  DEMO_EMAIL_SUFFIX,
   DEMO_ENGINEER,
   DEMO_TIME_ZONE,
   DEMO_UNASSIGNED_LEADS,
@@ -31,13 +30,12 @@ import type {
   DemoSeedSummary,
 } from '../types/demo.types.ts';
 import { addDays, dayInMonth, dayOfNextMonth, todayIn } from '../utils/calendar-date.ts';
+import { demoEmailFilter } from '../utils/demo-email.ts';
 import { hashPassword } from '../utils/password.ts';
 import { insertDefaultFloorplan } from './property.service.ts';
 
 const HOUR_MS = 60 * 60 * 1000;
 const DAY_MS = 24 * HOUR_MS;
-
-const DEMO_EMAIL_PATTERN = `%${DEMO_EMAIL_SUFFIX}`;
 
 export const DEMO_MODE_REQUIRED_MESSAGE =
   'Os dados de demonstração só podem ser criados com DEMO_MODE=true (a remoção com --remove funciona sempre).';
@@ -55,11 +53,11 @@ async function assertNoRealAccount(tx: Tx): Promise<void> {
   }
 }
 
-/** Apaga leads, candidaturas e contas extras (de candidaturas demo aprovadas) do domínio da demonstração. */
+/** Apaga leads e candidaturas do domínio da demonstração e as contas demo (is_demo), exceto as mantidas. */
 async function clearDemoExtras(tx: Tx, keepEmails: string[]): Promise<number> {
-  await tx.delete(diagnosticLeads).where(like(diagnosticLeads.email, DEMO_EMAIL_PATTERN));
-  await tx.delete(applications).where(like(applications.email, DEMO_EMAIL_PATTERN));
-  const demoUsers = or(eq(users.isDemo, true), like(users.email, DEMO_EMAIL_PATTERN));
+  await tx.delete(diagnosticLeads).where(demoEmailFilter(diagnosticLeads.email));
+  await tx.delete(applications).where(demoEmailFilter(applications.email));
+  const demoUsers = eq(users.isDemo, true);
   const where = keepEmails.length > 0 ? and(demoUsers, notInArray(users.email, keepEmails)) : demoUsers;
   const removed = await tx.delete(users).where(where).returning({ id: users.id });
   return removed.length;

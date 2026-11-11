@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { emailSchema } from './auth.ts';
+import { nonDemoEmailSchema } from './demo.ts';
 import { APPLICATION_AREAS, CONTACT_PREFERENCES, PLANS, PROPERTY_TYPES } from './catalog.ts';
 
 const MIN_PHONE_DIGITS = 10;
@@ -26,7 +26,7 @@ const honeypotSchema = z.string().max(200).optional();
 
 export const diagnosticInput = z.object({
   nome: nomeSchema,
-  email: emailSchema,
+  email: nonDemoEmailSchema,
   telefone: phoneSchema,
   cidade: cidadeSchema,
   tipoImovel: z.enum(PROPERTY_TYPES, { error: 'Selecione o tipo de imóvel.' }),
@@ -44,7 +44,7 @@ export const diagnosticInput = z.object({
 
 export const applicationInput = z.object({
   nome: nomeSchema,
-  email: emailSchema,
+  email: nonDemoEmailSchema,
   telefone: phoneSchema,
   cidade: cidadeSchema,
   area: z.enum(APPLICATION_AREAS, { error: 'Selecione sua área de atuação.' }),

@@ -2,8 +2,6 @@ import type { DemoAccountSeed, DemoApplicationSeed, DemoClientSeed, DemoLeadSeed
 
 export const DEMO_TIME_ZONE = 'America/Sao_Paulo';
 
-export const DEMO_EMAIL_SUFFIX = '.demo@fixable.com.br';
-
 export const DEMO_ADMIN: DemoAccountSeed = {
   nome: 'Administração Fixable',
   email: 'admin.demo@fixable.com.br',

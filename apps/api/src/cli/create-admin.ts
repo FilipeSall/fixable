@@ -1,5 +1,5 @@
 import { parseArgs } from 'node:util';
-import { emailSchema } from '@fixable/shared';
+import { nonDemoEmailSchema } from '@fixable/shared';
 import { loadConfig } from '../config/env.ts';
 import { createDb } from '../db/client.ts';
 import { createAdmin } from '../services/admin.service.ts';
@@ -12,7 +12,7 @@ function parseInput(argv: string[]): { nome: string; email: string } {
   });
   const nome = values.nome?.trim() ?? '';
   if (!nome) throw new Error('Informe o nome com --nome.');
-  const email = emailSchema.safeParse(values.email ?? '');
+  const email = nonDemoEmailSchema.safeParse(values.email ?? '');
   if (!email.success) throw new Error(email.error.issues[0]?.message ?? 'Informe um e-mail válido.');
   return { nome, email: email.data };
 }

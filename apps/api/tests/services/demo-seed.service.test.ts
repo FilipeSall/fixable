@@ -208,4 +208,13 @@ describe('removeDemo', () => {
     const [cliente] = await ctx.db.select({ id: clients.id }).from(clients);
     expect(cliente?.id).toBe(real.clientId);
   });
+
+  it('não apaga conta real com e-mail do domínio da demonstração, nem no reseed nem na remoção', async () => {
+    const real = await createEngineer(ctx.db, { email: 'joao.demo@fixable.com.br', nome: 'João Real' });
+    await seedDemo(ctx.db, ON, NOW);
+    await seedDemo(ctx.db, ON, NOW);
+    await removeDemo(ctx.db);
+    const [joao] = await ctx.db.select().from(users).where(eq(users.id, real.id));
+    expect(joao).toMatchObject({ email: 'joao.demo@fixable.com.br', isDemo: false });
+  });
 });
