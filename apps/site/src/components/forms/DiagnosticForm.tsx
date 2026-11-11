@@ -75,6 +75,7 @@ export function DiagnosticForm({ cidadeInicial = '' }: Readonly<DiagnosticFormPr
       <FormSuccess
         title="Solicitação registrada."
         text="Um engenheiro da Fixable vai entrar em contato para agendar a visita. Se este for o seu primeiro diagnóstico, você também vai receber um e-mail para criar sua senha."
+        resetLabel="Enviar outra solicitação"
         onReset={form.reset}
       />
     );

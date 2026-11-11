@@ -41,6 +41,7 @@ export function ApplicationForm() {
       <FormSuccess
         title="Cadastro recebido."
         text="A equipe Fixable vai analisar sua candidatura e entrar em contato pelo e-mail informado."
+        resetLabel="Enviar outro cadastro"
         onReset={form.reset}
       />
     );

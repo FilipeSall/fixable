@@ -67,6 +67,7 @@ export type PublicFormState = {
 export type FormSuccessProps = {
   title: string;
   text: string;
+  resetLabel: string;
   onReset: () => void;
   children?: ReactNode;
 };

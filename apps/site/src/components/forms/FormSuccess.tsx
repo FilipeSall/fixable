@@ -1,7 +1,7 @@
 import type { FormSuccessProps } from '../../types/public-forms.types.ts';
 
-/** Painel de sucesso exibido depois do envio, com o ícone de check do modelo e o botão para enviar outra solicitação. */
-export function FormSuccess({ title, text, onReset, children }: Readonly<FormSuccessProps>) {
+/** Painel de sucesso exibido depois do envio, com o ícone de check do modelo e o botão para enviar de novo. */
+export function FormSuccess({ title, text, resetLabel, onReset, children }: Readonly<FormSuccessProps>) {
   return (
     <div className="form-success show" role="status">
       <div className="ic">
@@ -29,7 +29,7 @@ export function FormSuccess({ title, text, onReset, children }: Readonly<FormSuc
       {children}
       <div className="mt-24">
         <button className="btn btn-ghost" type="button" onClick={onReset}>
-          Enviar outra solicitação
+          {resetLabel}
         </button>
       </div>
     </div>

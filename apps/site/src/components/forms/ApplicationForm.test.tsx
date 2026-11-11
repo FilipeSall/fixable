@@ -40,5 +40,8 @@ describe('ApplicationForm', () => {
     const [url, init] = fn.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toBe('/api/public/applications');
     expect(JSON.parse(init.body as string)).toMatchObject({ telefone: '11988887777', area: 'engenheiro', aceiteTermos: true });
+    expect(screen.queryByRole('button', { name: 'Enviar outra solicitação' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Enviar outro cadastro' }));
+    expect(screen.getByLabelText('Nome completo')).toHaveValue('');
   });
 });
