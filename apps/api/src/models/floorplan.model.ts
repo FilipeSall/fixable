@@ -1,4 +1,6 @@
-import { integer, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
+import { check, integer, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { MAQUETE_COLUMNS, MAX_ROOM_HEIGHT, MAX_ROOM_WIDTH } from '@fixable/shared';
 import { properties } from './property.model.ts';
 
 export const floors = pgTable('floors', {
@@ -11,16 +13,31 @@ export const floors = pgTable('floors', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
-export const rooms = pgTable('rooms', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  floorId: uuid('floor_id')
-    .notNull()
-    .references(() => floors.id, { onDelete: 'cascade' }),
-  nome: text('nome').notNull(),
-  largura: integer('largura').notNull(),
-  altura: integer('altura').notNull(),
-  posicao: integer('posicao').notNull(),
-  x: integer('x').notNull().default(0),
-  y: integer('y').notNull().default(0),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-});
+const columns = sql.raw(String(MAQUETE_COLUMNS));
+const lastColumn = sql.raw(String(MAQUETE_COLUMNS - 1));
+const maxWidth = sql.raw(String(MAX_ROOM_WIDTH));
+const maxHeight = sql.raw(String(MAX_ROOM_HEIGHT));
+
+export const rooms = pgTable(
+  'rooms',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    floorId: uuid('floor_id')
+      .notNull()
+      .references(() => floors.id, { onDelete: 'cascade' }),
+    nome: text('nome').notNull(),
+    largura: integer('largura').notNull(),
+    altura: integer('altura').notNull(),
+    posicao: integer('posicao').notNull(),
+    x: integer('x').notNull().default(0),
+    y: integer('y').notNull().default(0),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    check('rooms_largura_range', sql`${table.largura} BETWEEN 1 AND ${maxWidth}`),
+    check('rooms_altura_range', sql`${table.altura} BETWEEN 1 AND ${maxHeight}`),
+    check('rooms_x_range', sql`${table.x} BETWEEN 0 AND ${lastColumn}`),
+    check('rooms_y_min', sql`${table.y} >= 0`),
+    check('rooms_dentro_da_grade', sql`${table.x} + ${table.largura} <= ${columns}`),
+  ],
+);

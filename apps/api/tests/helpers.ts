@@ -11,6 +11,7 @@ import { createMemoryMailer } from '../src/mailers/memory.mailer.ts';
 import type { Config } from '../src/types/config.types.ts';
 import type { Db } from '../src/types/db.types.ts';
 import type { MemoryMailer } from '../src/types/mail.types.ts';
+import type { Clock } from '../src/types/maquete.types.ts';
 
 const DEFAULT_DATABASE_URL_TEST = 'postgres://fixable:fixable@localhost:5432/fixable_test';
 
@@ -22,7 +23,7 @@ export type TestApp = {
   close(): Promise<void>;
 };
 
-export async function testApp(overrides: Partial<Config> = {}): Promise<TestApp> {
+export async function testApp(overrides: Partial<Config> = {}, options: { clock?: Clock } = {}): Promise<TestApp> {
   const databaseUrl = process.env['DATABASE_URL_TEST'] ?? DEFAULT_DATABASE_URL_TEST;
   const config: Config = {
     ...loadConfig({
@@ -38,7 +39,7 @@ export async function testApp(overrides: Partial<Config> = {}): Promise<TestApp>
   };
   const { db, close: closeDb } = createDb(config.DATABASE_URL);
   const mailer = createMemoryMailer();
-  const app = await buildApp({ config, db, mailer });
+  const app = await buildApp({ config, db, mailer, clock: options.clock });
   return {
     app,
     db,

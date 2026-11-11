@@ -7,11 +7,14 @@ import {
   appointmentInput,
   clientDetail,
   idParams,
+  newFloorInput,
   propertyAttributeInput,
   propertyAttributeParams,
+  roomFieldsInput,
   roomInput,
   serviceInput,
   serviceRequestInput,
+  serviceUpdateInput,
   teamInviteInput,
 } from './platform.ts';
 import { API } from './routes.ts';
@@ -103,5 +106,26 @@ describe('platform', () => {
     expect(idParams.safeParse({ id: 'abc' }).success).toBe(false);
     expect(propertyAttributeParams.safeParse({ id, attrId: id }).success).toBe(true);
     expect(propertyAttributeParams.safeParse({ id, attrId: 'x' }).success).toBe(false);
+  });
+
+  it('serviceUpdateInput aceita null ou texto vazio para limpar descrição e prazo', () => {
+    expect(serviceUpdateInput.parse({ descricao: null })).toEqual({ descricao: null });
+    expect(serviceUpdateInput.parse({ descricao: '  ' })).toEqual({ descricao: null });
+    expect(serviceUpdateInput.parse({ prazo: null })).toEqual({ prazo: null });
+    expect(serviceUpdateInput.parse({})).toEqual({});
+    expect(serviceUpdateInput.parse({ descricao: ' Vazamento ' })).toEqual({ descricao: 'Vazamento' });
+    expect(serviceUpdateInput.safeParse({ percentual: 101 }).success).toBe(false);
+  });
+
+  it('serviceInput mantém a descrição vazia como ausente na criação', () => {
+    expect(serviceInput.parse({ ...service, descricao: '' }).descricao).toBeUndefined();
+  });
+
+  it('roomFieldsInput dispensa o andar e newFloorInput dispensa o nome', () => {
+    const campos = { nome: 'Sala', largura: 2, altura: 1 };
+    expect(roomFieldsInput.safeParse(campos).success).toBe(true);
+    expect(roomFieldsInput.safeParse({ ...campos, largura: 5 }).success).toBe(false);
+    expect(newFloorInput.safeParse({}).success).toBe(true);
+    expect(newFloorInput.safeParse({ nome: '' }).success).toBe(false);
   });
 });

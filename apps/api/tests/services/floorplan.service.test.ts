@@ -68,3 +68,11 @@ describe('overlaps', () => {
     expect(overlaps(base, { x: 2, y: 1, largura: 2, altura: 1 })).toBe(true);
   });
 });
+
+describe('firstFreeSpot com dimensões inválidas', () => {
+  it('lança erro em vez de entrar em loop quando a largura passa da grade ou é menor que 1', () => {
+    expect(() => firstFreeSpot([], 7, 1)).toThrow(RangeError);
+    expect(() => firstFreeSpot([], 0, 1)).toThrow(RangeError);
+    expect(() => firstFreeSpot([], 2, 0)).toThrow(RangeError);
+  });
+});

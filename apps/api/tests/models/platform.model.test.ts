@@ -41,6 +41,24 @@ describe('schema da plataforma', () => {
     expect([room.x, room.y]).toEqual([0, 0]);
   });
 
+  it('cômodo rejeita dimensões e posições fora da grade', async () => {
+    const { room } = await seedRoom();
+    const base = { floorId: room.floorId, nome: 'Closet', largura: 1, altura: 1, posicao: 1, x: 0, y: 3 };
+    await expect(ctx.db.insert(rooms).values(base)).resolves.toBeDefined();
+    for (const invalido of [
+      { largura: 5 },
+      { largura: 0 },
+      { altura: 3 },
+      { altura: 0 },
+      { x: -1 },
+      { x: 6 },
+      { y: -1 },
+      { x: 4, largura: 3 },
+    ]) {
+      await expect(ctx.db.insert(rooms).values({ ...base, ...invalido })).rejects.toThrow();
+    }
+  });
+
   it('serviço nasce com percentual 0 e rejeita percentual fora de 0-100', async () => {
     const { property, room } = await seedRoom();
     const base = { roomId: room.id, propertyId: property.id, titulo: 'Infiltração', status: 'atencao' as const };

@@ -42,6 +42,13 @@ const optionalText = z
   .max(2000)
   .transform((valor) => valor || undefined)
   .optional();
+const clearableText = z
+  .string()
+  .trim()
+  .max(2000)
+  .transform((valor) => valor || null)
+  .nullable()
+  .optional();
 
 /** Confere se o texto é uma data real no formato YYYY-MM-DD. */
 const isRealDate = (valor: string): boolean => {
@@ -57,6 +64,8 @@ export const idParams = z.object({ id: idSchema });
 export const propertyAttributeParams = z.object({ id: idSchema, attrId: idSchema });
 
 export const floorInput = z.object({ nome: nameSchema });
+
+export const newFloorInput = floorInput.partial();
 
 export const roomInput = z.object({
   floorId: idSchema,
@@ -79,6 +88,13 @@ export const serviceInput = z.object({
   status: z.enum(SERVICE_STATUSES, { error: 'Selecione o status.' }),
   prazo: dateSchema.optional(),
   percentual: z.number().int().min(0).max(100),
+});
+
+export const roomFieldsInput = roomInput.omit({ floorId: true });
+
+export const serviceUpdateInput = serviceInput.partial().extend({
+  descricao: clearableText,
+  prazo: dateSchema.nullable().optional(),
 });
 
 export const serviceRequestInput = z.object({

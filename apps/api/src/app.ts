@@ -15,7 +15,7 @@ function trustProxyHops(hops: number) {
 }
 
 /** Monta a aplicação Fastify com validação, erros, cookies, rate limit, checagem de Origin, autenticação e rotas sob /api. */
-export async function buildApp({ config, db }: AppDeps): Promise<FastifyInstance> {
+export async function buildApp({ config, db, clock = () => new Date() }: AppDeps): Promise<FastifyInstance> {
   const logger = config.NODE_ENV === 'test' ? false : { serializers: { req: serializeRequest, err: serializeError } };
   const app = Fastify({ logger, trustProxy: trustProxyHops(config.TRUST_PROXY_HOPS) });
   app.setValidatorCompiler(validatorCompiler);
@@ -26,7 +26,7 @@ export async function buildApp({ config, db }: AppDeps): Promise<FastifyInstance
   registerOriginCheck(app, config);
   registerAuth(app, { db, config });
 
-  await app.register(routes({ db, config }), { prefix: '/api' });
+  await app.register(routes({ db, config, clock }), { prefix: '/api' });
 
   return app;
 }

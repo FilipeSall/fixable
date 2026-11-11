@@ -79,8 +79,12 @@ export function overlaps(a: Retangulo, b: Retangulo): boolean {
   return a.x < b.x + b.largura && b.x < a.x + a.largura && a.y < b.y + b.altura && b.y < a.y + a.altura;
 }
 
-/** Acha a primeira posição livre, varrendo linha a linha e coluna a coluna, para um cômodo das dimensões dadas. */
+/** Acha a primeira posição livre, varrendo linha a linha e coluna a coluna; recusa tamanho que não cabe na grade. */
 export function firstFreeSpot(ocupados: Retangulo[], largura: number, altura: number): Ponto {
+  if (!Number.isInteger(largura) || largura < 1 || largura > MAQUETE_COLUMNS) {
+    throw new RangeError(`largura do cômodo fora da grade: ${largura}`);
+  }
+  if (!Number.isInteger(altura) || altura < 1) throw new RangeError(`altura do cômodo inválida: ${altura}`);
   for (let y = 0; ; y++) {
     for (let x = 0; x + largura <= MAQUETE_COLUMNS; x++) {
       const candidato = { x, y, largura, altura };
