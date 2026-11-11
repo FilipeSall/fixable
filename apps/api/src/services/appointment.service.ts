@@ -82,6 +82,9 @@ async function lockAppointmentForWrite(tx: Tx, viewer: Viewer, appointmentId: st
   return locked;
 }
 
+/** Diz se a edição trouxe ao menos um campo, para não mandar um UPDATE sem colunas ao banco. */
+const hasAnyField = (input: AppointmentUpdateInput): boolean => Object.keys(input).length > 0;
+
 /** Diz se algum campo que o cliente vê mudou entre as duas versões do agendamento. */
 const hasVisibleChange = (before: AppointmentRow, after: AppointmentRow): boolean =>
   VISIBLE_FIELDS.some((field) => before[field] !== after[field]);
@@ -194,6 +197,7 @@ export async function updateAppointment(
 ): Promise<Appointment> {
   return db.transaction(async (tx) => {
     const before = await lockAppointmentForWrite(tx, viewer, appointmentId);
+    if (!hasAnyField(input)) return toAppointment(before);
     if (input.propertyId) await assertPropertyOfClient(tx, before.clientId, input.propertyId);
     await tx.update(appointments).set(input).where(eq(appointments.id, appointmentId));
     const row = await findAppointment(tx, appointmentId);

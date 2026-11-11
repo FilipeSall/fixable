@@ -271,6 +271,16 @@ describe('PATCH /api/appointments/:id', () => {
     expect(fila[0]?.data).toMatchObject({ acao: 'atualizado', hora: '10:00' });
   });
 
+  it('corpo vazio devolve o agendamento atual sem e-mail; sem acesso continua 404', async () => {
+    const id = await semear({ data: '2026-11-20', hora: '09:30', servico: 'Revisão elétrica' });
+    const vazio = await send('PATCH', `/api/appointments/${id}`, await loginAs(t.app, engA.email, SENHA), {});
+    expect(vazio.statusCode).toBe(200);
+    expect(vazio.json<Appointment>()).toMatchObject({ id, status: 'confirmado', servico: 'Revisão elétrica', hora: '09:30' });
+    const alheio = await send('PATCH', `/api/appointments/${id}`, await loginAs(t.app, engB.email, SENHA), {});
+    expect(alheio.statusCode).toBe(404);
+    expect(await emails()).toHaveLength(0);
+  });
+
   it('admin muda data, hora, imóvel e limpa a descrição', async () => {
     const id = await semear({ data: '2026-11-20', hora: '09:30' });
     await t.db.update(appointments).set({ descricao: 'Levar escada' }).where(eq(appointments.id, id));
