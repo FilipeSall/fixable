@@ -1,0 +1,5 @@
+handle /emails* {
+	header X-Frame-Options SAMEORIGIN
+	header Cache-Control no-store
+	reverse_proxy mailpit:8025
+}

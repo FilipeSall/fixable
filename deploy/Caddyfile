@@ -7,7 +7,6 @@
 		Strict-Transport-Security "max-age=31536000"
 		X-Content-Type-Options nosniff
 		Referrer-Policy same-origin
-		X-Frame-Options DENY
 		-Server
 	}
 }
@@ -16,6 +15,9 @@
 	encode zstd gzip
 
 	import cabecalhos_de_seguranca
+
+	@fora_da_caixa_de_emails not path /emails*
+	header @fora_da_caixa_de_emails X-Frame-Options DENY
 
 	log {
 		output stdout
@@ -27,6 +29,8 @@
 			resp_headers>Set-Cookie delete
 		}
 	}
+
+	import /etc/caddy/extra/*.caddy
 
 	@astro path /_astro/*
 	@pagina not path /_astro/*
@@ -52,6 +56,7 @@
 
 	handle_errors 404 {
 		import cabecalhos_de_seguranca
+		header X-Frame-Options DENY
 		header Cache-Control no-cache
 		rewrite * /404.html
 		file_server

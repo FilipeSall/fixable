@@ -1,6 +1,6 @@
 # Fixable — roteiro de hospedagem
 
-A Fixable roda inteira em Docker num único servidor Ubuntu: site, API, banco e backup diário. A infra precisa entregar quatro coisas: o servidor, o domínio apontado, uma conta de SMTP e acesso ao repositório. O resto são os passos abaixo. O guia completo, com todos os detalhes, está em `deploy/README.md`.
+A Fixable roda inteira em Docker num único servidor Ubuntu: site, API, banco e backup diário. Para a apresentação, a infra precisa entregar três coisas: o servidor, o domínio apontado e acesso ao repositório. Os e-mails ficam numa caixa de teste no próprio servidor, então não é preciso SMTP de verdade até o uso real. O resto são os passos abaixo. O guia completo, com todos os detalhes, está em `deploy/README.md`.
 
 ## 1. O que a infra precisa providenciar
 
@@ -10,8 +10,8 @@ A Fixable roda inteira em Docker num único servidor Ubuntu: site, API, banco e 
 | Acesso | SSH com usuário sudo | Quem faz o deploy precisa de sudo para instalar o Docker. |
 | Portas abertas | 22 (SSH), 80/tcp, 443/tcp e 443/udp | 80 e 443 são obrigatórias para o certificado HTTPS (Let's Encrypt). Nenhuma outra porta deve ficar aberta. |
 | Domínio | Registro `A` (e `AAAA`, se houver IPv6) apontando para o IP do servidor | Definir se o endereço oficial é com ou sem `www`. O outro pode redirecionar. |
-| SMTP | Host, porta, usuário e senha de um provedor de e-mail transacional ou do e-mail do domínio | O domínio do remetente precisa de SPF, DKIM e DMARC configurados no DNS, senão os convites caem no spam. |
-| E-mails | Uma caixa para avisos do certificado (`ACME_EMAIL`) e uma da equipe (`TEAM_EMAIL`) | A da equipe recebe os avisos de novos leads e cadastros. |
+| SMTP (só para o uso real) | Host, porta, usuário e senha de um provedor de e-mail transacional ou do e-mail do domínio | Dispensável na apresentação. No uso real, o domínio do remetente precisa de SPF, DKIM e DMARC no DNS, senão os convites caem no spam. |
+| E-mails | Uma caixa para avisos do certificado (`ACME_EMAIL`) e uma da equipe (`TEAM_EMAIL`) | Na apresentação, só o `ACME_EMAIL` precisa ser real. A da equipe recebe os avisos de novos leads e cadastros no uso real. |
 | Repositório | Acesso de leitura ao Git (deploy key ou token) | Para o `git clone` e o `git pull` no servidor. |
 | Cópia externa do backup | Um destino fora do servidor (outra máquina, bucket, storage) | O backup diário fica no mesmo disco do banco; alguém precisa copiá-lo para fora. |
 
@@ -21,9 +21,10 @@ Sem CDN na frente na primeira subida. Se depois quiserem Cloudflare com proxy li
 
 ```
 Internet ──443/80──▶ web (Caddy) ──┬── arquivos do site (apps/site/dist)
-                                   └── /api/* ──▶ api (Node) ──▶ db (Postgres 17)
-                                                                    ▲
-                                                 backup (pg_dump diário)
+                                   ├── /api/* ──▶ api (Node) ──▶ db (Postgres 17)
+                                   │               │                 ▲
+                                   │               ▼ e-mails         backup (pg_dump diário)
+                                   └── /emails/ ─▶ mailpit (só na apresentação)
 ```
 
 | Container | Função | Porta no host |
@@ -32,6 +33,7 @@ Internet ──443/80──▶ web (Caddy) ──┬── arquivos do site (app
 | `api` | API Fastify; aplica as migrations do banco ao iniciar | nenhuma |
 | `db` | Postgres 17, dados no volume `db-data` | nenhuma |
 | `backup` | `pg_dump` diário no volume `backups`, mantém 7 dias | nenhuma |
+| `mailpit` | Só na apresentação: caixa de e-mails de teste em `https://<dominio>/emails/`, com senha | nenhuma |
 
 Só o Caddy fica exposto. O banco e a API não publicam porta.
 
@@ -75,13 +77,19 @@ Todos os comandos rodam no servidor, via SSH.
 
     Preencher o `deploy/.env.prod` (seção 4).
 
-5. Criar o atalho do Compose (colocar também no `~/.bashrc`):
+5. Gerar a senha da caixa de e-mails de teste e colar a linha impressa no `deploy/.env.prod`, com as aspas simples:
 
     ```sh
-    alias fx='docker compose --env-file deploy/.env.prod -f deploy/compose.prod.yml'
+    bash deploy/mailpit-auth.sh apresentacao
     ```
 
-6. Gerar o site e subir tudo:
+6. Criar o atalho do Compose para a apresentação, que inclui a caixa de e-mails (colocar também no `~/.bashrc`):
+
+    ```sh
+    alias fx='docker compose --env-file deploy/.env.prod -f deploy/compose.prod.yml -f deploy/compose.demo.yml'
+    ```
+
+7. Gerar o site e subir tudo:
 
     ```sh
     pnpm install --frozen-lockfile
@@ -90,13 +98,7 @@ Todos os comandos rodam no servidor, via SSH.
     fx up -d --build
     ```
 
-7. Criar o primeiro administrador (o convite chega por e-mail):
-
-    ```sh
-    fx exec api node src/cli/create-admin.ts --nome "Nome do Admin" --email admin@exemplo.com
-    ```
-
-8. Para a apresentação, criar as contas e os dados de demonstração:
+8. Criar as contas e os dados de demonstração:
 
     ```sh
     fx exec -T api node src/cli/seed-demo.ts
@@ -113,9 +115,10 @@ Todos os comandos rodam no servidor, via SSH.
 | `POSTGRES_USER` | `fixable` | |
 | `POSTGRES_PASSWORD` | gerar com `openssl rand -hex 32` | Só letras e números. |
 | `POSTGRES_DB` | `fixable` | |
-| `SMTP_URL` | `smtps://usuario:senha@smtp.provedor.com:465` | Porta 587: `smtp://...:587`. Caracteres especiais codificados (`@` vira `%40`). |
-| `MAIL_FROM` | `"Fixable <nao-responda@fixable.com.br>"` | Entre aspas; domínio autorizado no SMTP. |
-| `TEAM_EMAIL` | `equipe@fixable.com.br` | Obrigatório. |
+| `SMTP_URL` | `smtp://mailpit:1025` | Na apresentação, deixe esse valor. No uso real: `smtps://usuario:senha@smtp.provedor.com:465` (porta 587: `smtp://...:587`, caracteres especiais codificados, `@` vira `%40`). |
+| `MAIL_FROM` | `"Fixable <nao-responda@fixable.com.br>"` | Entre aspas. No uso real, o domínio precisa estar autorizado no SMTP. |
+| `TEAM_EMAIL` | `equipe@fixable.com.br` | Obrigatório. Na apresentação, os avisos para ela aparecem na caixa de teste. |
+| `MAILPIT_UI_AUTH` | gerada pelo `deploy/mailpit-auth.sh` | Usuário e senha da caixa de e-mails de teste. Entre aspas simples. |
 | `DEMO_MODE` | `true` | Mostra as contas de demonstração na tela de login. Usar `false` quando o sistema for usado de verdade. |
 | `PUBLIC_FORM_RATE_LIMIT`, `TOKEN_RATE_LIMIT`, `LOGIN_RATE_LIMIT` | `5`, `20`, `10` | Manter os valores do exemplo. |
 | `BACKUP_TIME`, `BACKUP_RETENTION_DAYS`, `TZ` | `03:00`, `7`, `America/Sao_Paulo` | Horário e retenção do backup. |
@@ -124,10 +127,11 @@ O arquivo fica fora do Git. A API não sobe se faltar variável obrigatória, e 
 
 ## 5. Como conferir que deu certo
 
-- [ ] `fx ps` mostra os quatro containers como `healthy` ou `running`.
+- [ ] `fx ps` mostra os cinco containers (com o `mailpit`) como `healthy` ou `running`.
 - [ ] `curl https://<dominio>/api/health` responde `{"status":"ok","db":"ok"}`.
 - [ ] O site abre em `https://<dominio>` com cadeado válido.
-- [ ] O convite do administrador chegou por e-mail (fora do spam).
+- [ ] `https://<dominio>/emails/` pede usuário e senha e abre a caixa de e-mails de teste.
+- [ ] Ao enviar o formulário "Solicite seu diagnóstico" do site, o aviso para a equipe aparece na caixa de teste.
 - [ ] `https://<dominio>/app/login` mostra as contas de demonstração e o login com `admin.demo@fixable.com.br` / `fixable123` funciona.
 - [ ] `fx exec backup ls -lh /backups` lista um arquivo `.dump`.
 
@@ -138,12 +142,12 @@ Se algo falhar, os logs estão em `fx logs -f web api`.
 - **Atualizar a versão:** fazer backup (`fx restart backup`), `git pull`, gerar o site, subir a API nova, esperar o health e só então publicar o site. A sequência exata está na seção 7 do `deploy/README.md` e precisa ser seguida nessa ordem.
 - **Backup:** automático todo dia às 03:00, guardado 7 dias no próprio servidor. Copiar os dumps para fora com regularidade (`fx cp backup:/backups/. <pasta>`).
 - **Restaurar:** parar a API, recriar o banco e rodar o `pg_restore`. Comandos na seção 6 do `deploy/README.md`.
-- **Fim da apresentação:** mudar `DEMO_MODE=false`, rodar `fx up -d api` e apagar os dados demo com `fx exec -T api node src/cli/seed-demo.ts --remove`.
+- **Fim da apresentação:** apagar os dados demo com `fx exec -T api node src/cli/seed-demo.ts --remove`. Depois, no `.env.prod`, mudar `DEMO_MODE=false` e colocar o `SMTP_URL` real. Por fim, voltar o atalho para `alias fx='docker compose --env-file deploy/.env.prod -f deploy/compose.prod.yml'` e rodar `fx up -d --remove-orphans`, que tira a caixa de teste. Com o SMTP real, crie o primeiro administrador real: `fx exec api node src/cli/create-admin.ts --nome "Nome" --email admin@exemplo.com`.
 - **Limitação:** rodar uma instância só da API (o controle de tentativas fica em memória).
 
 ## 7. O que ainda depende da cliente
 
 - Textos de Termos de Uso e Política de Privacidade (hoje aparecem como "Documento em elaboração").
 - Telefone e razão social reais (hoje são placeholders no rodapé e no SEO).
-- Credenciais do SMTP e a caixa `TEAM_EMAIL` real.
+- Credenciais do SMTP e a caixa `TEAM_EMAIL` real, para o uso depois da apresentação.
 - Domínio definitivo e se usa `www` ou não.

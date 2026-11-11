@@ -9,15 +9,18 @@ Kit de produção para um servidor Ubuntu com Docker. O `compose.prod.yml` sobe 
 | `web`    | `caddy:2`            | HTTPS automático (Let's Encrypt), site estático de `apps/site/dist` e proxy de `/api` para a API. | 80, 443 e 443/udp |
 | `backup` | `postgres:17`        | `pg_dump` diário no volume `backups`, com retenção de 7 dias.                                | nenhuma             |
 
+Na apresentação, o `deploy/compose.demo.yml` acrescenta um quinto serviço, o `mailpit`, que guarda os e-mails numa caixa de teste (seção 5.2).
+
 O banco e a API não publicam porta: só o Caddy fala com a API. O Caddy repassa à API, no `X-Forwarded-For`, só o IP do visitante (`{client_ip}`), e a API confia em um salto (`TRUST_PROXY_HOPS=1`, fixo no compose). Assim ninguém de fora consegue forjar o IP usado no rate limit.
 
 O que o `Caddyfile` faz:
 
 - `/api/*` vai para a API;
 - `/app/*` serve o arquivo pedido ou cai em `/app/index.html`, a SPA;
+- `/emails/*` vai para a caixa de e-mails de teste, só quando o `compose.demo.yml` está em uso. Ele monta o `deploy/mailpit.caddy` em `/etc/caddy/extra/`, que o `Caddyfile` importa. Sem esse arquivo, `/emails/` responde 404;
 - o resto serve o arquivo, ou `<caminho>/index.html`, ou responde 404 com a página `/404.html`;
 - comprime com zstd e gzip;
-- envia `Strict-Transport-Security: max-age=31536000` (HSTS de um ano, sem `includeSubDomains` e sem `preload`), `X-Content-Type-Options: nosniff`, `Referrer-Policy: same-origin` e `X-Frame-Options: DENY` em toda resposta, inclusive no 404, e esconde o cabeçalho `Server`;
+- envia `Strict-Transport-Security: max-age=31536000` (HSTS de um ano, sem `includeSubDomains` e sem `preload`), `X-Content-Type-Options: nosniff`, `Referrer-Policy: same-origin` e `X-Frame-Options: DENY` em toda resposta, inclusive no 404 (na caixa de e-mails vale `SAMEORIGIN`, porque ela mostra cada e-mail num iframe), e esconde o cabeçalho `Server`;
 - usa o `ACME_EMAIL` como contato na conta do Let's Encrypt, que avisa por e-mail sobre problemas na renovação do certificado;
 - `Cache-Control: no-cache` no HTML e nos arquivos sem hash, e `public, max-age=31536000, immutable` em `/_astro/*`, que tem hash no nome;
 - grava o log de acesso sem a query string e sem `Referer`, `Cookie`, `Authorization` e `Set-Cookie`. Os tokens de convite e de redefinição de senha viajam no fragmento da URL (`#token=...`), que o navegador não envia, e a consulta do token é um POST. Então nenhum token chega ao log.
@@ -87,6 +90,7 @@ Edite `deploy/.env.prod`. Ele fica fora do git (`.gitignore`) e da imagem Docker
 | `TOKEN_RATE_LIMIT`      | `20`                                        | Requisições por IP a cada 15 minutos em cada rota de token (aceitar convite, redefinir senha e consultar o token). Sem a variável, vale `20`. |
 | `LOGIN_RATE_LIMIT`      | `10`                                        | Tentativas de login por IP a cada 15 minutos. Sem a variável, vale `10`.                                     |
 | `DEMO_MODE`             | `true`                                      | Liga as contas de demonstração na tela de login (seção 5.1). O exemplo vem ligado para a apresentação; sem a variável, vale `false`. |
+| `MAILPIT_UI_AUTH`       | gerada por `bash deploy/mailpit-auth.sh apresentacao` | Só com o `compose.demo.yml`: usuário e senha da caixa de e-mails de teste (seção 5.2). Entre aspas simples. |
 | `BACKUP_TIME`           | `03:00`                                     | Horário do backup diário, no fuso `TZ`.                                                                      |
 | `BACKUP_RETENTION_DAYS` | `7`                                         | Dias que cada dump fica guardado.                                                                            |
 | `TZ`                    | `America/Sao_Paulo`                         | Fuso do serviço de backup.                                                                                   |
@@ -99,7 +103,7 @@ Todos os comandos abaixo rodam na raiz do repositório. Para não repetir os par
 alias fx='docker compose --env-file deploy/.env.prod -f deploy/compose.prod.yml'
 ```
 
-`fx` equivale a `docker compose --env-file deploy/.env.prod -f deploy/compose.prod.yml`. Sem o `--env-file`, o Compose não lê o `.env.prod`.
+`fx` equivale a `docker compose --env-file deploy/.env.prod -f deploy/compose.prod.yml`. Sem o `--env-file`, o Compose não lê o `.env.prod`. Para a apresentação, com a caixa de e-mails de teste, o alias muda (seção 5.2).
 
 ## 4. Gerar o site e subir
 
@@ -169,6 +173,40 @@ Depois de desligar, revise as contas criadas enquanto o modo demo esteve ligado 
 
 ```sh
 fx exec -T db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "select email, role, status, created_at from users where not is_demo order by created_at desc"'
+```
+
+### 5.2 Caixa de e-mails da apresentação (Mailpit)
+
+Para apresentar sem SMTP de verdade, suba junto o `deploy/compose.demo.yml`. Ele acrescenta o Mailpit, um servidor de e-mail de teste:
+
+- a API envia todos os e-mails para ele. O `SMTP_URL=smtp://mailpit:1025` é fixo no arquivo e vale mesmo que o `.env.prod` traga outro, então nenhum e-mail sai para a internet;
+- a caixa fica em `https://<DOMAIN>/emails/`, protegida por usuário e senha;
+- o Mailpit guarda até 500 e-mails e perde todos quando o container reinicia.
+
+1. Gere a senha da caixa e copie a linha impressa para o `deploy/.env.prod`:
+
+   ```sh
+   bash deploy/mailpit-auth.sh apresentacao
+   ```
+
+   A linha sai como `MAILPIT_UI_AUTH='apresentacao:$2a$10$...'`. Mantenha as aspas simples, porque o hash tem `$`.
+
+2. O `SMTP_URL` continua obrigatório no `.env.prod`, mas não é usado: deixe `SMTP_URL=smtp://mailpit:1025`. O `MAIL_FROM` e o `TEAM_EMAIL` podem ficar com os endereços do exemplo.
+
+3. Enquanto o Mailpit estiver em uso, troque o alias da seção 3 por este, que vale para todos os comandos `fx` deste guia:
+
+   ```sh
+   alias fx='docker compose --env-file deploy/.env.prod -f deploy/compose.prod.yml -f deploy/compose.demo.yml'
+   ```
+
+4. Suba com `fx up -d` e abra `https://<DOMAIN>/emails/`.
+
+Chegam lá o aviso de novo diagnóstico para a equipe e a confirmação para quem preencheu o formulário, o aviso de candidatura, os agendamentos para o cliente, os convites e a redefinição de senha. Um diagnóstico enviado pelo formulário durante a apresentação vira um lead real: o e-mail aparece na caixa, mas o lead não aparece para o admin demo.
+
+Para usar a plataforma de verdade, preencha o `SMTP_URL` real, volte ao alias da seção 3 e suba sem o Mailpit:
+
+```sh
+fx up -d --remove-orphans
 ```
 
 ## 6. Backups
