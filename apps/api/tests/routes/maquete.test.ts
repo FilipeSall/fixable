@@ -1,4 +1,4 @@
-import { and, asc, eq, sql } from 'drizzle-orm';
+import { and, asc, eq, isNull, ne, sql } from 'drizzle-orm';
 import type { ApiError, Floor, Floorplan, HistoryItem } from '@fixable/shared';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { floors, rooms, services } from '../../src/models/index.ts';
@@ -301,15 +301,23 @@ describe('POST /api/floors/:id/rooms', () => {
   });
 });
 
-async function esperarBloqueio() {
+async function esperarBloqueio(minimo = 1, parar: () => boolean = () => false) {
   for (let tentativa = 0; tentativa < 200; tentativa++) {
+    if (parar()) return;
     const [row] = await t.db.execute<{ total: number }>(
       sql`SELECT count(*)::int AS total FROM pg_stat_activity WHERE wait_event_type = 'Lock' AND datname = current_database()`,
     );
-    if (row!.total > 0) return;
+    if (row!.total >= minimo) return;
     await new Promise((resolve) => setTimeout(resolve, 20));
   }
-  throw new Error('a requisição não ficou esperando o lock do andar');
+  throw new Error('a requisição não ficou esperando o lock');
+}
+
+async function servicosAtivosSemComodo() {
+  return t.db
+    .select({ id: services.id })
+    .from(services)
+    .where(and(isNull(services.roomId), ne(services.status, 'concluido')));
 }
 
 function sinal() {
@@ -425,5 +433,81 @@ describe('DELETE /api/rooms/:id', () => {
       expect(response.statusCode).toBe(404);
     }
     expect(await t.db.select().from(rooms).where(eq(rooms.id, garagem.id))).toHaveLength(1);
+  });
+});
+
+describe('exclusões concorrentes nunca deixam serviço ativo sem cômodo', () => {
+  it('cômodo e serviço criados durante a exclusão do andar', async () => {
+    const garagem = await comodo(clienteA.propertyId, 'Garagem');
+    const cookie = await loginAs(t.app, engA.email, SENHA);
+    const portao = sinal();
+    const travado = sinal();
+    const bloqueio = t.db.transaction(async (tx) => {
+      await tx.select({ id: rooms.id }).from(rooms).where(eq(rooms.id, garagem.id)).for('key share');
+      travado.resolve();
+      await portao.promise;
+    });
+    try {
+      await travado.promise;
+      const exclusao = send('DELETE', `/api/floors/${garagem.floorId}`, cookie);
+      await esperarBloqueio();
+      let criacaoTerminou = false;
+      const criacao = send('POST', `/api/floors/${garagem.floorId}/rooms`, cookie, {
+        nome: 'Depósito',
+        largura: 1,
+        altura: 1,
+      }).finally(() => {
+        criacaoTerminou = true;
+      });
+      await esperarBloqueio(2, () => criacaoTerminou);
+      if (criacaoTerminou) {
+        const novo = (await criacao).json<{ id: string }>();
+        const servico = await send('POST', `/api/properties/${clienteA.propertyId}/services`, cookie, {
+          roomId: novo.id,
+          titulo: 'Pintura',
+          status: 'execucao',
+        });
+        expect(servico.statusCode).toBe(201);
+      }
+      portao.resolve();
+      await bloqueio;
+      expect((await exclusao).statusCode).toBe(204);
+      expect([201, 404]).toContain((await criacao).statusCode);
+      expect(await servicosAtivosSemComodo()).toEqual([]);
+    } finally {
+      portao.resolve();
+    }
+  });
+
+  it('reabertura de serviço movido enquanto o cômodo de destino é excluído', async () => {
+    const lavabo = await comodo(clienteA.propertyId, 'Lavabo');
+    const garagem = await comodo(clienteA.propertyId, 'Garagem');
+    const servicoId = await addService(clienteA.propertyId, lavabo.id, 'concluido');
+    const cookie = await loginAs(t.app, engA.email, SENHA);
+    const portao = sinal();
+    const movido = sinal();
+    const movimento = t.db.transaction(async (tx) => {
+      await tx.select({ id: services.id }).from(services).where(eq(services.id, servicoId)).for('update');
+      await tx.update(services).set({ roomId: garagem.id }).where(eq(services.id, servicoId));
+      movido.resolve();
+      await portao.promise;
+    });
+    try {
+      await movido.promise;
+      const reabertura = send('PATCH', `/api/services/${servicoId}`, cookie, { status: 'execucao' });
+      await esperarBloqueio();
+      const exclusao = send('DELETE', `/api/rooms/${garagem.id}`, cookie);
+      await esperarBloqueio(2);
+      portao.resolve();
+      await movimento;
+      const respostas = await Promise.all([reabertura, exclusao]);
+      expect([
+        [200, 400],
+        [400, 204],
+      ]).toContainEqual(respostas.map((response) => response.statusCode));
+      expect(await servicosAtivosSemComodo()).toEqual([]);
+    } finally {
+      portao.resolve();
+    }
   });
 });

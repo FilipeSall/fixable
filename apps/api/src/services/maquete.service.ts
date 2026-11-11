@@ -77,9 +77,10 @@ async function lockProperty(tx: Tx, propertyId: string): Promise<void> {
   await tx.select({ id: properties.id }).from(properties).where(eq(properties.id, propertyId)).for('no key update');
 }
 
-/** Trava o andar até o fim da transação, para que duas gravações não ocupem o mesmo espaço. */
+/** Trava o andar até o fim da transação, para que duas gravações não ocupem o mesmo espaço; 404 se ele sumiu. */
 async function lockFloor(tx: Tx, floorId: string): Promise<void> {
-  await tx.select({ id: floors.id }).from(floors).where(eq(floors.id, floorId)).for('no key update');
+  const [floor] = await tx.select({ id: floors.id }).from(floors).where(eq(floors.id, floorId)).for('no key update');
+  if (!floor) throw notFound();
 }
 
 /** Relê o cômodo travando a linha, depois do lock do andar, para partir da posição gravada por quem segurava o lock; 404 se sumiu. */
@@ -102,14 +103,15 @@ async function otherRooms(tx: Tx, floorId: string, exceptRoomId?: string): Promi
   return tx.select(roomColumns).from(rooms).where(and(...conditions));
 }
 
-/** Conta os serviços não concluídos dos cômodos informados. */
-async function activeServicesIn(tx: Tx, roomIds: string[]): Promise<number> {
+/** Trava os serviços dos cômodos até o fim da transação e conta os não concluídos, para nenhum ser reaberto antes da exclusão. */
+async function lockedActiveServices(tx: Tx, roomIds: string[]): Promise<number> {
   if (roomIds.length === 0) return 0;
-  const [row] = await tx
-    .select({ total: count() })
+  const rows = await tx
+    .select({ status: services.status })
     .from(services)
-    .where(and(inArray(services.roomId, roomIds), ne(services.status, 'concluido')));
-  return row!.total;
+    .where(inArray(services.roomId, roomIds))
+    .for('update');
+  return rows.filter((row) => row.status !== 'concluido').length;
 }
 
 /** Devolve a maquete do imóvel: andares com cômodos e os serviços visíveis em andamento. */
@@ -168,8 +170,9 @@ export async function deleteFloor(db: Db, viewer: Viewer, floorId: string): Prom
     await lockProperty(tx, propertyId);
     const [stats] = await tx.select({ total: count() }).from(floors).where(eq(floors.propertyId, propertyId));
     if (stats!.total <= 1) throw invalid(LAST_FLOOR_MESSAGE);
+    await lockFloor(tx, floorId);
     const floorRooms = await tx.select({ id: rooms.id }).from(rooms).where(eq(rooms.floorId, floorId)).for('update');
-    if ((await activeServicesIn(tx, floorRooms.map((room) => room.id))) > 0) throw invalid(FLOOR_ACTIVE_MESSAGE);
+    if ((await lockedActiveServices(tx, floorRooms.map((room) => room.id))) > 0) throw invalid(FLOOR_ACTIVE_MESSAGE);
     await tx.delete(floors).where(eq(floors.id, floorId));
   });
 }
@@ -221,7 +224,7 @@ export async function deleteRoom(db: Db, viewer: Viewer, roomId: string): Promis
   await db.transaction(async (tx) => {
     await requireRoomWrite(tx, viewer, roomId);
     await tx.select({ id: rooms.id }).from(rooms).where(eq(rooms.id, roomId)).for('update');
-    if ((await activeServicesIn(tx, [roomId])) > 0) throw invalid(ROOM_ACTIVE_MESSAGE);
+    if ((await lockedActiveServices(tx, [roomId])) > 0) throw invalid(ROOM_ACTIVE_MESSAGE);
     await tx.delete(rooms).where(eq(rooms.id, roomId));
   });
 }
