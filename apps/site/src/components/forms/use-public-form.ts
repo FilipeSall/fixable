@@ -43,11 +43,16 @@ export function usePublicForm(config: PublicFormConfig, formRef: RefObject<HTMLF
     setErrors((current) => ({ ...current, [name]: '' }));
   }
 
-  /** Mostra os erros e leva o foco ao primeiro campo inválido, na ordem do formulário. */
+  /** Mostra os erros e foca o primeiro campo inválido; se nenhum campo visível falhou, mostra a mensagem no topo. */
   function fail(fields: Record<string, string>) {
     setErrors(fields);
     const first = config.order.find((name) => fields[name]);
-    document.getElementById(`${config.idPrefix}-${first}`)?.focus();
+    if (first) {
+      document.getElementById(`${config.idPrefix}-${first}`)?.focus();
+      return;
+    }
+    const message = Object.values(fields).find(Boolean);
+    if (message) setFormError(message);
   }
 
   /** Valida os dados, envia à API e atualiza o estado conforme a resposta. */

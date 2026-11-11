@@ -117,6 +117,17 @@ describe('DiagnosticForm', () => {
     expect(screen.getByText('Confira os campos destacados.')).toBeInTheDocument();
   });
 
+  it('400 de um campo fora do formulário (plano) mostra a mensagem dele em vez de "Confira os campos destacados."', async () => {
+    window.history.pushState({}, '', '/?plano=3m');
+    mockFetch(Response.json({ error: { code: 'validation', message: 'x', fields: { plano: 'Plano inválido.' } } }, { status: 400 }));
+    const user = userEvent.setup();
+    render(<DiagnosticForm />);
+    await fillValid(user);
+    await user.click(screen.getByRole('button', { name: 'Solicitar diagnóstico' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Plano inválido.');
+    expect(screen.queryByText('Confira os campos destacados.')).not.toBeInTheDocument();
+  });
+
   it('429 mostra "Muitas tentativas..."', async () => {
     mockFetch(new Response(null, { status: 429 }));
     const user = userEvent.setup();
