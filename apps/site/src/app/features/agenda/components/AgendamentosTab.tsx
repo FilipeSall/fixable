@@ -21,7 +21,7 @@ export function AgendamentosTab({ clientId, property, properties, editable }: Re
       <AgendaView
         actions={editable ? <AddBox label="Novo agendamento" onClick={() => setEditing('new')} /> : null}
         monthKey={monthKey}
-        appointments={data ?? []}
+        appointments={data}
         editable={editable}
         onMonthChange={setMonthKey}
         onEdit={editable ? setEditing : undefined}

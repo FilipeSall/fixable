@@ -40,13 +40,18 @@ const appointments: Appointment[] = [base, { ...base, id: 'ag2', servico: 'Revis
 
 type Init = { method?: string; body?: unknown } | undefined;
 
-function stubApi(me: Me, overrides: Record<string, (init: Init) => unknown> = {}) {
+function stubApi(
+  me: Me,
+  overrides: Record<string, (init: Init) => unknown> = {},
+  agenda: () => Promise<Appointment[]> = () => Promise.resolve(appointments),
+) {
   mockedFetch.mockImplementation((path: string, init?: Init) => {
     const key = `${init?.method ?? 'GET'} ${path}`;
     const handler = overrides[key];
     if (handler) return Promise.resolve(handler(init));
-    if (key.startsWith(`GET ${API.clientAppointments('c1')}?`)) return Promise.resolve(appointments);
-    if (key.startsWith('GET /api/appointments?')) return Promise.resolve(appointments.map((item) => ({ ...item, clientId: 'c1', clientNome: 'Ana Souza' })));
+    if (key.startsWith(`GET ${API.clientAppointments('c1')}?`)) return agenda();
+    if (key.startsWith('GET /api/appointments?'))
+      return agenda().then((items) => items.map((item) => ({ ...item, clientId: 'c1', clientNome: 'Ana Souza' })));
     const routes: Record<string, unknown> = {
       [`GET ${API.me}`]: me,
       [`GET ${API.meClient}`]: { clientId: 'c1' },
@@ -154,4 +159,48 @@ describe('agendamentos', () => {
     expect((await screen.findAllByText('Ana Souza')).length).toBeGreaterThan(0);
     expect(mockedFetch).toHaveBeenCalledWith('/api/appointments?mes=2026-11');
   });
+});
+
+describe('estados da lista de agendamentos', () => {
+  const VAZIO = /Nenhum serviço agendado neste mês\./;
+  const FALHA = 'Não foi possível carregar a agenda.';
+  const telas = [
+    { nome: 'aba Agendamentos do cliente', rota: '/clientes/c1', viaTab: true },
+    { nome: 'calendário do engenheiro', rota: '/calendario', viaTab: false },
+  ];
+
+  beforeEach(() => {
+    mockedFetch.mockReset();
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2026, 10, 10, 12, 0));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  for (const tela of telas) {
+    it(`${tela.nome}: enquanto carrega mostra o carregamento e não diz que o mês está vazio`, async () => {
+      stubApi(rafael, {}, () => new Promise(() => {}));
+      await openAgenda(tela.rota, tela.viaTab);
+      expect(await screen.findByRole('heading', { name: 'Novembro de 2026' })).toBeInTheDocument();
+      expect(screen.getByText('Carregando...')).toBeInTheDocument();
+      expect(screen.queryByText(VAZIO)).not.toBeInTheDocument();
+    });
+
+    it(`${tela.nome}: na falha mostra o erro e não diz que o mês está vazio`, async () => {
+      stubApi(rafael, {}, () => Promise.reject(new ApiRequestError(500, 'internal', FALHA)));
+      await openAgenda(tela.rota, tela.viaTab);
+      expect(await screen.findByText(FALHA)).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Novembro de 2026' })).toBeInTheDocument();
+      expect(screen.queryByText(VAZIO)).not.toBeInTheDocument();
+    });
+
+    it(`${tela.nome}: resposta vazia mostra que o mês está vazio`, async () => {
+      stubApi(rafael, {}, () => Promise.resolve([]));
+      await openAgenda(tela.rota, tela.viaTab);
+      expect(await screen.findByText(VAZIO)).toBeInTheDocument();
+      expect(screen.queryByText('Carregando...')).not.toBeInTheDocument();
+    });
+  }
 });

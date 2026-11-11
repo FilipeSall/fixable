@@ -40,7 +40,7 @@ export type AgendamentosTabProps = {
 
 export type AgendaViewProps = {
   monthKey: string;
-  appointments: readonly AgendaItem[];
+  appointments: readonly AgendaItem[] | undefined;
   editable: boolean;
   onMonthChange: (monthKey: string) => void;
   onEdit?: (appointment: Appointment) => void;

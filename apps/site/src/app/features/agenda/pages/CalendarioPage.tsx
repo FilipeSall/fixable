@@ -14,7 +14,7 @@ export function CalendarioPage() {
       <p className="app-sub">Todos os agendamentos dos seus clientes. Use a seta de um agendamento para ver a descrição completa e o cliente atendido.</p>
       {isPending ? <p role="status">Carregando...</p> : null}
       {error ? <p role="alert">{errorMessage(error)}</p> : null}
-      <AgendaView monthKey={monthKey} appointments={data ?? []} editable onMonthChange={setMonthKey} />
+      <AgendaView monthKey={monthKey} appointments={data} editable onMonthChange={setMonthKey} />
     </>
   );
 }

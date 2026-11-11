@@ -9,14 +9,15 @@ import { dayKeyOf, monthTitle } from '../lib/calendar.ts';
 import { AppointmentCard } from './AppointmentCard.tsx';
 import { CalendarMonth } from './CalendarMonth.tsx';
 
-/** Calendário do mês com a lista de agendamentos, as ações de status e a exclusão. */
+/** Calendário do mês com a lista de agendamentos, as ações de status e a exclusão; só diz que o mês está vazio depois de a lista chegar. */
 export function AgendaView({ monthKey, appointments, editable, onMonthChange, onEdit, emptyHint = '', actions = null }: Readonly<AgendaViewProps>) {
   const [todayKey] = useState(() => dayKeyOf(new Date()));
   const [openId, setOpenId] = useState<string | null>(null);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [removing, setRemoving] = useState<AgendaItem | null>(null);
   const { changeStatus, remove } = useAppointmentActions();
-  const sorted = [...appointments].sort((a, b) => `${a.data} ${a.hora}`.localeCompare(`${b.data} ${b.hora}`));
+  const loaded = appointments ?? [];
+  const sorted = [...loaded].sort((a, b) => `${a.data} ${a.hora}`.localeCompare(`${b.data} ${b.hora}`));
 
   /** Destaca o dia e abre o primeiro agendamento dele. */
   function selectDay(day: string) {
@@ -29,7 +30,7 @@ export function AgendaView({ monthKey, appointments, editable, onMonthChange, on
       <CalendarMonth
         monthKey={monthKey}
         todayKey={todayKey}
-        appointments={appointments}
+        appointments={loaded}
         selectedDay={selectedDay}
         onMonthChange={(key) => {
           setSelectedDay(null);
@@ -40,7 +41,7 @@ export function AgendaView({ monthKey, appointments, editable, onMonthChange, on
       <h3 className="ag-list-title">Agendamentos de {monthTitle(monthKey).split(' de ')[0]?.toLowerCase()}</h3>
       {actions}
       {changeStatus.error ? <p role="alert">{errorMessage(changeStatus.error)}</p> : null}
-      {sorted.length === 0 ? <EmptyState>Nenhum serviço agendado neste mês.{emptyHint}</EmptyState> : null}
+      {appointments?.length === 0 ? <EmptyState>Nenhum serviço agendado neste mês.{emptyHint}</EmptyState> : null}
       {sorted.map((appointment) => (
         <AppointmentCard
           key={appointment.id}
