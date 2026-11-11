@@ -14,7 +14,6 @@ RUN pnpm --filter api deploy --prod /out
 
 FROM node:24-slim
 ENV NODE_ENV=production
-ENV TRUST_PROXY_HOPS=1
 WORKDIR /app
 COPY --from=build --chown=node:node /out ./
 COPY --from=build --chown=node:node /repo/packages/shared ./packages/shared

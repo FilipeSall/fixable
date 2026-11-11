@@ -16,6 +16,9 @@ function expectSecurityHeaders(res: APIResponse): void {
   expect(headers['x-content-type-options']).toBe('nosniff');
   expect(headers['referrer-policy']).toBe('same-origin');
   expect(headers['x-frame-options']).toBe('DENY');
+  expect(headers['content-security-policy']).toBe("object-src 'none'; base-uri 'self'; form-action 'self'");
+  expect(headers['permissions-policy']).toBe('camera=(), microphone=(), geolocation=(), payment=(), usb=()');
+  expect(headers['via']).toBeUndefined();
 }
 
 /** Espera o convite chegar ao Mailpit do smoke e devolve o link com o token no fragmento. */

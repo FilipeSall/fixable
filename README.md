@@ -93,7 +93,7 @@ docker compose exec -T db psql -U fixable -d fixable -c "select email, role, sta
 A API descobre o IP do visitante, usado no rate limit, pelo `X-Forwarded-For`, confiando em `TRUST_PROXY_HOPS` saltos:
 
 - `0` (padrão, desenvolvimento): ignora o cabeçalho e usa o endereço da conexão;
-- `1`: só um proxy fica na frente da API, como o Caddy do `deploy/compose.prod.yml`. É o padrão da imagem Docker e o valor fixo do compose de produção.
+- `1`: só um proxy fica na frente da API, como o Caddy do `deploy/compose.prod.yml`. É o valor fixo do compose de produção; a imagem Docker sozinha usa `0`, para não confiar em `X-Forwarded-For` se alguém publicar a porta da API sem o Caddy na frente.
 
 Um valor maior que o número real de proxies deixa o visitante forjar o IP. Um valor menor faz todos os visitantes dividirem o mesmo limite.
 
