@@ -13,28 +13,33 @@ import { createAuthController } from '../controllers/auth.controller.ts';
 import type { Db } from '../types/db.types.ts';
 
 const LOGIN_WINDOW = '15 minutes';
-const LOGIN_MAX_ATTEMPTS = 10;
 const TOKEN_WINDOW = '15 minutes';
-const TOKEN_MAX_REQUESTS = 20;
 const FORGOT_WINDOW = '1 hour';
 const FORGOT_MAX_REQUESTS = 5;
 
-const tokenRateLimit = {
-  rateLimit: { max: TOKEN_MAX_REQUESTS, timeWindow: TOKEN_WINDOW, keyGenerator: (request: { ip: string }) => request.ip },
-};
+/** Monta o rate limit por IP dos endpoints que recebem token, com o máximo vindo da configuração. */
+function tokenRateLimit(max: number) {
+  return {
+    rateLimit: { max, timeWindow: TOKEN_WINDOW, keyGenerator: (request: { ip: string }) => request.ip },
+  };
+}
 
 /** Declara as rotas de autenticação com schema, rate limit e o controller correspondente. */
-export function authRoutes(deps: { db: Db; config: Pick<Config, 'COOKIE_SECURE' | 'APP_ORIGIN'> }) {
+export function authRoutes(deps: {
+  db: Db;
+  config: Pick<Config, 'COOKIE_SECURE' | 'APP_ORIGIN' | 'TOKEN_RATE_LIMIT' | 'LOGIN_RATE_LIMIT'>;
+}) {
   return (instance: FastifyInstance, _options: object, done: () => void): void => {
     const app = instance.withTypeProvider<ZodTypeProvider>();
     const controller = createAuthController(deps);
+    const tokenLimit = tokenRateLimit(deps.config.TOKEN_RATE_LIMIT);
 
     app.post(
       '/auth/login',
       {
         config: {
           rateLimit: {
-            max: LOGIN_MAX_ATTEMPTS,
+            max: deps.config.LOGIN_RATE_LIMIT,
             timeWindow: LOGIN_WINDOW,
             keyGenerator: (request) => request.ip,
           },
@@ -48,13 +53,13 @@ export function authRoutes(deps: { db: Db; config: Pick<Config, 'COOKIE_SECURE' 
 
     app.post(
       '/auth/tokens/lookup',
-      { config: tokenRateLimit, schema: { body: tokenLookupInput, response: { 200: tokenInfoResponse } } },
+      { config: tokenLimit, schema: { body: tokenLookupInput, response: { 200: tokenInfoResponse } } },
       controller.tokenLookup,
     );
 
     app.post(
       '/auth/invite/accept',
-      { config: tokenRateLimit, schema: { body: setPasswordInput, response: { 200: meResponse } } },
+      { config: tokenLimit, schema: { body: setPasswordInput, response: { 200: meResponse } } },
       controller.acceptInvite,
     );
 
@@ -75,7 +80,7 @@ export function authRoutes(deps: { db: Db; config: Pick<Config, 'COOKIE_SECURE' 
 
     app.post(
       '/auth/password/reset',
-      { config: tokenRateLimit, schema: { body: setPasswordInput } },
+      { config: tokenLimit, schema: { body: setPasswordInput } },
       controller.resetPassword,
     );
 

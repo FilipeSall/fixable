@@ -6,6 +6,8 @@ export const apiEnv = {
   COOKIE_SECURE: 'false',
   TRUST_PROXY_HOPS: '0',
   PUBLIC_FORM_RATE_LIMIT: '100',
+  TOKEN_RATE_LIMIT: '1000',
+  LOGIN_RATE_LIMIT: '1000',
   PORT: '3333',
   NODE_ENV: 'development',
   MAIL_FROM: 'Fixable <nao-responda@fixable.local>',

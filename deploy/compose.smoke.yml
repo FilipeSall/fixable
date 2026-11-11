@@ -8,3 +8,6 @@ services:
     depends_on:
       mailpit:
         condition: service_started
+    environment:
+      TOKEN_RATE_LIMIT: ${TOKEN_RATE_LIMIT:?defina TOKEN_RATE_LIMIT no .env.smoke}
+      LOGIN_RATE_LIMIT: ${LOGIN_RATE_LIMIT:?defina LOGIN_RATE_LIMIT no .env.smoke}

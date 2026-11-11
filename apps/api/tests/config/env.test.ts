@@ -56,4 +56,18 @@ describe('loadConfig', () => {
     expect(() => loadConfig({ ...dev, PUBLIC_FORM_RATE_LIMIT: '0' })).toThrow(/PUBLIC_FORM_RATE_LIMIT/);
     expect(() => loadConfig({ ...dev, PUBLIC_FORM_RATE_LIMIT: 'muitos' })).toThrow(/PUBLIC_FORM_RATE_LIMIT/);
   });
+
+  it('TOKEN_RATE_LIMIT e LOGIN_RATE_LIMIT são inteiros positivos com padrões 20 e 10', () => {
+    const dev = { ...base, MAIL_DRIVER: 'memory' };
+    expect(loadConfig(production).TOKEN_RATE_LIMIT).toBe(20);
+    expect(loadConfig(production).LOGIN_RATE_LIMIT).toBe(10);
+    expect(loadConfig({ ...dev, TOKEN_RATE_LIMIT: '1000', LOGIN_RATE_LIMIT: '1000' })).toMatchObject({
+      TOKEN_RATE_LIMIT: 1000,
+      LOGIN_RATE_LIMIT: 1000,
+    });
+    expect(() => loadConfig({ ...dev, TOKEN_RATE_LIMIT: '0' })).toThrow(/TOKEN_RATE_LIMIT/);
+    expect(() => loadConfig({ ...dev, TOKEN_RATE_LIMIT: '2.5' })).toThrow(/TOKEN_RATE_LIMIT/);
+    expect(() => loadConfig({ ...dev, LOGIN_RATE_LIMIT: '-3' })).toThrow(/LOGIN_RATE_LIMIT/);
+    expect(() => loadConfig({ ...dev, LOGIN_RATE_LIMIT: 'muitos' })).toThrow(/LOGIN_RATE_LIMIT/);
+  });
 });

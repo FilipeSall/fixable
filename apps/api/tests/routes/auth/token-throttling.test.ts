@@ -59,4 +59,23 @@ describe('proteção dos endpoints de token', () => {
     expect(statuses.slice(0, 20).every((status) => status === 410)).toBe(true);
     expect(statuses[20]).toBe(429);
   });
+
+  it('o limite dos endpoints de token vem de TOKEN_RATE_LIMIT: com 2, a 3ª requisição é 429', async () => {
+    const limitado = await testApp({ TOKEN_RATE_LIMIT: 2 });
+    try {
+      await limitado.app.ready();
+      const lookup = () =>
+        limitado.app.inject({
+          method: 'POST',
+          url: '/api/auth/tokens/lookup',
+          headers: { origin: ORIGIN },
+          payload: { token: 'inexistente', senha: 'novasenha123' },
+        });
+      expect((await lookup()).statusCode).toBe(410);
+      expect((await lookup()).statusCode).toBe(410);
+      expect((await lookup()).statusCode).toBe(429);
+    } finally {
+      await limitado.close();
+    }
+  });
 });

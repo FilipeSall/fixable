@@ -255,3 +255,25 @@ describe('TRUST_PROXY_HOPS', () => {
     }
   });
 });
+
+describe('LOGIN_RATE_LIMIT', () => {
+  it('o limite de login vem da configuração: com 3, a 4ª tentativa é 429', async () => {
+    const limitado = await testApp({ LOGIN_RATE_LIMIT: 3 });
+    try {
+      await limitado.app.ready();
+      const attempt = () =>
+        limitado.app.inject({
+          method: 'POST',
+          url: '/api/auth/login',
+          headers: { origin: ORIGIN },
+          payload: { email: 'ninguem@fixable.com', senha: SENHA },
+        });
+      for (let i = 0; i < 3; i++) {
+        expect((await attempt()).statusCode).toBe(401);
+      }
+      expect((await attempt()).statusCode).toBe(429);
+    } finally {
+      await limitado.close();
+    }
+  });
+});
