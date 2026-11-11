@@ -33,11 +33,11 @@ sudo usermod -aG docker "$USER"
 
 Saia e entre de novo na sessão SSH para o grupo `docker` valer. Confira com `docker compose version`.
 
-Instale o Node 24 e o pnpm, usados só para gerar o site estático:
+Instale o Node 24 e o pnpm, usados só para gerar o site estático, e o `rsync`, usado para publicá-lo:
 
 ```sh
 curl -fsSL https://deb.nodesource.com/setup_24.x | sudo -E bash -
-sudo apt-get install -y nodejs git
+sudo apt-get install -y nodejs git rsync
 sudo corepack enable
 ```
 
@@ -106,7 +106,11 @@ alias fx='docker compose --env-file deploy/.env.prod -f deploy/compose.prod.yml'
 O site sai em dois passos, para que nada chegue ao ar antes da hora:
 
 - `deploy/build-site.sh` lê o `DOMAIN` do `deploy/.env.prod` e gera o site com `SITE_URL=https://<DOMAIN>`, o endereço usado no canonical, no sitemap e no `robots.txt`. O resultado fica em `deploy/.site-build`, que o Caddy não serve. O build roda numa pasta temporária e só substitui o `deploy/.site-build` quando termina sem erro.
-- `deploy/publish-site.sh` sincroniza o `deploy/.site-build` com `apps/site/dist`, a pasta que o Caddy serve, e apaga o `deploy/.site-build`. Usa `rsync --delete-after` ou, sem `rsync`, cópia seguida da remoção dos arquivos que sobraram. A pasta `apps/site/dist` nunca é apagada nem recriada, porque o Caddy a monta em `/srv`.
+- `deploy/publish-site.sh` sincroniza o `deploy/.site-build` com `apps/site/dist`, a pasta que o Caddy serve, e apaga o `deploy/.site-build`. Exige o `rsync` (`sudo apt-get install -y rsync`, se faltar). Publica em duas fases, para nenhuma página nova apontar para um arquivo que ainda não chegou:
+  1. copia primeiro tudo o que não é HTML, inclusive os JS e CSS novos de `/_astro/`;
+  2. depois copia o HTML e apaga o que sobrou da versão anterior, menos o `/_astro/`.
+
+  Os arquivos antigos de `/_astro/` ficam por 7 dias, para quem ainda está com uma página da versão anterior aberta. Depois disso, a publicação seguinte os apaga. A pasta `apps/site/dist` nunca é apagada nem recriada, porque o Caddy a monta em `/srv`.
 
 Na primeira subida ainda não há API antiga com que o site novo possa conflitar, então publique antes de subir. Assim a pasta `apps/site/dist` já existe com o seu usuário como dono quando o Docker a monta:
 
