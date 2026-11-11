@@ -8,6 +8,7 @@ import {
   type PropertySummary,
   type ServiceRequest,
   type ServiceRequestInput,
+  type ServiceRequestUpdateInput,
 } from '@fixable/shared';
 import { apiFetch } from '../../api.ts';
 
@@ -70,7 +71,7 @@ export function createRequest(clientId: string, input: ServiceRequestInput): Pro
 }
 
 /** Altera uma solicitação existente. */
-export function updateRequest(id: string, input: ServiceRequestInput): Promise<ServiceRequest> {
+export function updateRequest(id: string, input: ServiceRequestUpdateInput): Promise<ServiceRequest> {
   return apiFetch<ServiceRequest>(API.request(id), { method: 'PATCH', body: input });
 }
 

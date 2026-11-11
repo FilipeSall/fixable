@@ -1,6 +1,7 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
+import { CalendarioPage } from './features/agenda/pages/CalendarioPage.tsx';
 import { ClientePage } from './features/clientes/pages/ClientePage.tsx';
 import { ClientesPage } from './features/clientes/pages/ClientesPage.tsx';
 import { MeuPainelPage } from './features/clientes/pages/MeuPainelPage.tsx';
@@ -42,7 +43,7 @@ export function App() {
               <Route element={<AppShell />}>
                 <Route path="/clientes" element={<ClientesPage />} />
                 <Route path="/clientes/:clientId" element={<ClientePage />} />
-                <Route path="/calendario" element={<PlaceholderPage title="Calendário" />} />
+                <Route path="/calendario" element={<CalendarioPage />} />
               </Route>
             </Route>
             <Route element={<RequireAuth roles={['admin']} />}>

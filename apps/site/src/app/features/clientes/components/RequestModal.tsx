@@ -27,8 +27,8 @@ export function RequestModal({ clientId, properties, request, onClose }: Readonl
 
   const save = useMutation({
     mutationFn: () => {
-      const input = { descricao, status, ...(propertyId ? { propertyId } : {}) };
-      return request ? updateRequest(request.id, input) : createRequest(clientId, input);
+      if (request) return updateRequest(request.id, { descricao, status, propertyId: propertyId || null });
+      return createRequest(clientId, { descricao, status, ...(propertyId ? { propertyId } : {}) });
     },
     onSuccess: () => refresh(request ? 'Solicitação atualizada.' : 'Solicitação adicionada.'),
   });

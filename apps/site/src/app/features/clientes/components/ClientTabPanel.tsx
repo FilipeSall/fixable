@@ -1,5 +1,6 @@
 import type { ClientTabKey, ClientTabProps } from '../../../../types/clientes.types.ts';
 import { EmptyState } from '../../../shared/components/EmptyState.tsx';
+import { AgendamentosTab } from '../../agenda/components/AgendamentosTab.tsx';
 import { HistoricoTab } from '../../maquete/components/HistoricoTab.tsx';
 import { MaqueteTab } from '../../maquete/components/MaqueteTab.tsx';
 import { ResidenciaTab } from './ResidenciaTab.tsx';
@@ -11,6 +12,8 @@ export function ClientTabPanel({ tab, ...props }: Readonly<ClientTabProps & { ta
   switch (tab) {
     case 'solicitacoes':
       return <SolicitacoesTab {...props} />;
+    case 'agendamentos':
+      return <AgendamentosTab key={key} {...props} />;
     case 'servicos':
       return <MaqueteTab key={key} property={props.property} editable={props.editable} />;
     case 'historico':
