@@ -1,9 +1,19 @@
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, eq, inArray, like, notInArray, or } from 'drizzle-orm';
 import { DEMO_SENHA } from '@fixable/shared';
-import { DEMO_ACCOUNTS, DEMO_CLIENTS, DEMO_ENGINEER, DEMO_TIME_ZONE } from '../db/demo-data.ts';
 import {
+  DEMO_ACCOUNTS,
+  DEMO_APPLICATIONS,
+  DEMO_CLIENTS,
+  DEMO_EMAIL_SUFFIX,
+  DEMO_ENGINEER,
+  DEMO_TIME_ZONE,
+  DEMO_UNASSIGNED_LEADS,
+} from '../db/demo-data.ts';
+import {
+  applications,
   appointments,
   clients,
+  diagnosticLeads,
   floors,
   properties,
   propertyAttributes,
@@ -27,6 +37,8 @@ import { insertDefaultFloorplan } from './property.service.ts';
 const HOUR_MS = 60 * 60 * 1000;
 const DAY_MS = 24 * HOUR_MS;
 
+const DEMO_EMAIL_PATTERN = `%${DEMO_EMAIL_SUFFIX}`;
+
 export const DEMO_MODE_REQUIRED_MESSAGE =
   'Os dados de demonstração só podem ser criados com DEMO_MODE=true (a remoção com --remove funciona sempre).';
 
@@ -41,6 +53,16 @@ async function assertNoRealAccount(tx: Tx): Promise<void> {
     const list = conflicts.map((row) => row.email).join(', ');
     throw new Error(`Estes e-mails já pertencem a contas reais e não serão alterados: ${list}`);
   }
+}
+
+/** Apaga leads, candidaturas e contas extras (de candidaturas demo aprovadas) do domínio da demonstração. */
+async function clearDemoExtras(tx: Tx, keepEmails: string[]): Promise<number> {
+  await tx.delete(diagnosticLeads).where(like(diagnosticLeads.email, DEMO_EMAIL_PATTERN));
+  await tx.delete(applications).where(like(applications.email, DEMO_EMAIL_PATTERN));
+  const demoUsers = or(eq(users.isDemo, true), like(users.email, DEMO_EMAIL_PATTERN));
+  const where = keepEmails.length > 0 ? and(demoUsers, notInArray(users.email, keepEmails)) : demoUsers;
+  const removed = await tx.delete(users).where(where).returning({ id: users.id });
+  return removed.length;
 }
 
 /** Cria ou atualiza pelo e-mail uma conta demo ativa, com a senha conhecida, e devolve o id. */
@@ -109,6 +131,18 @@ async function recreateClient(tx: Tx, seed: DemoClientSeed, ids: { userId: strin
     .values({ ...ids, createdAt: new Date(now.getTime() - seed.clienteHaDias * DAY_MS) })
     .returning({ id: clients.id });
   const clientId = client!.id;
+  await tx.insert(diagnosticLeads).values({
+    nome: seed.nome,
+    email: seed.email,
+    telefone: seed.telefone,
+    cidade: seed.imovel.cidade,
+    tipoImovel: seed.imovel.tipo,
+    ...seed.diagnostico,
+    consentAt: new Date(now.getTime() - seed.clienteHaDias * DAY_MS),
+    clientId,
+    engineerId: ids.engineerId,
+    createdAt: new Date(now.getTime() - seed.clienteHaDias * DAY_MS),
+  });
   const [property] = await tx
     .insert(properties)
     .values({ clientId, ...seed.imovel })
@@ -141,6 +175,22 @@ async function recreateClient(tx: Tx, seed: DemoClientSeed, ids: { userId: strin
   );
 }
 
+/** Grava os leads sem atribuição e as candidaturas da demonstração, com datas relativas a agora. */
+async function insertAdminQueue(tx: Tx, now: Date): Promise<void> {
+  await tx.insert(diagnosticLeads).values(
+    DEMO_UNASSIGNED_LEADS.map(({ horasAtras, ...lead }) => {
+      const createdAt = new Date(now.getTime() - horasAtras * HOUR_MS);
+      return { ...lead, consentAt: createdAt, createdAt };
+    }),
+  );
+  await tx.insert(applications).values(
+    DEMO_APPLICATIONS.map(({ diasAtras, ...application }) => {
+      const createdAt = new Date(now.getTime() - diasAtras * DAY_MS);
+      return { ...application, consentAt: createdAt, createdAt };
+    }),
+  );
+}
+
 /** Soma, entre os clientes demo, quantos itens de um tipo (serviços, solicitações...) a demonstração cria. */
 function total(pick: (seed: DemoClientSeed) => unknown[]): number {
   return DEMO_CLIENTS.reduce((sum, seed) => sum + pick(seed).length, 0);
@@ -154,6 +204,8 @@ function summary(): DemoSeedSummary {
     servicos: total((seed) => seed.servicos),
     solicitacoes: total((seed) => seed.solicitacoes),
     agendamentos: total((seed) => seed.agendamentos),
+    leads: DEMO_CLIENTS.length + DEMO_UNASSIGNED_LEADS.length,
+    candidaturas: DEMO_APPLICATIONS.length,
   };
 }
 
@@ -163,18 +215,20 @@ export async function seedDemo(db: Db, config: DemoConfig, now: Date = new Date(
   const passwordHash = await hashPassword(DEMO_SENHA);
   await db.transaction(async (tx) => {
     await assertNoRealAccount(tx);
+    await clearDemoExtras(tx, DEMO_ACCOUNTS.map((account) => account.email));
     const userIds = new Map<string, string>();
     for (const account of DEMO_ACCOUNTS) userIds.set(account.email, await upsertAccount(tx, account, passwordHash));
     const engineerId = userIds.get(DEMO_ENGINEER.email)!;
     for (const seed of DEMO_CLIENTS) {
       await recreateClient(tx, seed, { userId: userIds.get(seed.email)!, engineerId }, now);
     }
+    await insertAdminQueue(tx, now);
   });
   return summary();
 }
 
-/** Apaga as contas de demonstração e, em cascata, os clientes, imóveis e agendas delas. */
+/** Apaga contas, leads e candidaturas da demonstração e, em cascata, os clientes, imóveis e agendas delas. */
 export async function removeDemo(db: Db): Promise<{ usuarios: number }> {
-  const removed = await db.delete(users).where(eq(users.isDemo, true)).returning({ id: users.id });
-  return { usuarios: removed.length };
+  const usuarios = await db.transaction((tx) => clearDemoExtras(tx, []));
+  return { usuarios };
 }

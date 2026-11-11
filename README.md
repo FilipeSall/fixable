@@ -62,7 +62,7 @@ docker compose exec -T api node src/cli/seed-demo.ts
 
 Fora do Docker (lendo o `.env`): `pnpm --filter api seed-demo`.
 
-O comando cria as contas abaixo, todas com a senha `fixable123`, e os dados do modelo para cada cliente: imóvel, dados da residência, planta padrão, serviços nos cômodos (um concluído há poucas horas, para mostrar a regra das 24 h), solicitações e agendamentos no mês atual e no próximo. As datas são relativas ao dia em que o comando roda; rode de novo antes de uma apresentação para a demo parecer atual.
+O comando cria as contas abaixo, todas com a senha `fixable123`, e os dados do modelo para cada cliente: imóvel, dados da residência, planta padrão, serviços nos cômodos (um concluído há poucas horas, para mostrar a regra das 24 h), solicitações e agendamentos no mês atual e no próximo. Para as telas do admin, cria um lead por cliente demo (atribuído ao Rafael), dois leads sem atribuição e quatro candidaturas (duas pendentes, uma aprovada e uma recusada). As datas são relativas ao dia em que o comando roda; rode de novo antes de uma apresentação para a demo parecer atual.
 
 | Perfil | E-mail |
 |---|---|
@@ -72,7 +72,7 @@ O comando cria as contas abaixo, todas com a senha `fixable123`, e os dados do m
 | Cliente (Carlos Mendes, apartamento) | `carlos.demo@fixable.com.br` |
 | Cliente (Juliana Prado, casa térrea) | `juliana.demo@fixable.com.br` |
 
-Rodar de novo apaga e recria só os clientes demo, numa transação; nada de outras contas é alterado. O comando recusa rodar sem `DEMO_MODE=true` e recusa se um desses e-mails já for de uma conta real. Contas demo nunca recebem leads reais: a atribuição automática ignora o engenheiro demo.
+Rodar de novo apaga e recria só os clientes demo, numa transação; nada de outras contas é alterado. Leads, candidaturas e contas com e-mail terminado em `.demo@fixable.com.br` são tratados como demonstração: o reseed e o `--remove` os apagam, e aprovar uma candidatura desse domínio cria uma conta demo, que nunca recebe leads reais. O comando recusa rodar sem `DEMO_MODE=true` e recusa se um desses e-mails já for de uma conta real. Contas demo nunca recebem leads reais: a atribuição automática ignora o engenheiro demo.
 
 Para usar a plataforma de verdade, desligue o modo demo (`DEMO_MODE=false` e reinicie a API) e apague as contas demo com os dados delas:
 

@@ -1,6 +1,8 @@
-import type { DemoAccountSeed, DemoClientSeed } from '../types/demo.types.ts';
+import type { DemoAccountSeed, DemoApplicationSeed, DemoClientSeed, DemoLeadSeed } from '../types/demo.types.ts';
 
 export const DEMO_TIME_ZONE = 'America/Sao_Paulo';
+
+export const DEMO_EMAIL_SUFFIX = '.demo@fixable.com.br';
 
 export const DEMO_ADMIN: DemoAccountSeed = {
   nome: 'Administração Fixable',
@@ -29,6 +31,11 @@ const ANA: DemoClientSeed = {
   descricao: 'Sobrado de dois andares na Vila Mariana, com serviços em andamento.',
   clienteHaDias: 90,
   imovel: { tipo: 'sobrado', cidade: 'São Paulo', apelido: 'Sobrado · Vila Mariana' },
+  diagnostico: {
+    descricao: 'Disjuntor desarmando, fissuras na sala e mancha de umidade no box da suíte.',
+    preferenciaContato: 'whatsapp',
+    plano: '12m',
+  },
   residencia: [
     ['Tipo de imóvel', 'Sobrado'],
     ['Endereço', 'Rua das Acácias, 214 — Vila Mariana'],
@@ -143,6 +150,11 @@ const CARLOS: DemoClientSeed = {
   descricao: 'Apartamento na Pompeia, com um serviço concluído há poucas horas.',
   clienteHaDias: 40,
   imovel: { tipo: 'apartamento', cidade: 'São Paulo', apelido: 'Apartamento · Pompeia' },
+  diagnostico: {
+    descricao: 'Vazamento constante embaixo da pia da cozinha.',
+    preferenciaContato: 'telefone',
+    plano: '3m',
+  },
   residencia: [
     ['Tipo de imóvel', 'Apartamento'],
     ['Endereço', 'Av. Pompeia, 1550, ap. 82'],
@@ -213,6 +225,11 @@ const JULIANA: DemoClientSeed = {
   descricao: 'Casa térrea recém-cadastrada, aguardando a visita de diagnóstico.',
   clienteHaDias: 5,
   imovel: { tipo: 'casa_terrea', cidade: 'Santo André', apelido: 'Casa térrea · Santo André' },
+  diagnostico: {
+    descricao: 'Manchas de umidade no quarto e disjuntor desarmando.',
+    preferenciaContato: 'email',
+    plano: null,
+  },
   residencia: [
     ['Tipo de imóvel', 'Casa térrea'],
     ['Endereço', 'Rua Itambé, 77'],
@@ -238,3 +255,67 @@ const JULIANA: DemoClientSeed = {
 export const DEMO_CLIENTS: DemoClientSeed[] = [ANA, CARLOS, JULIANA];
 
 export const DEMO_ACCOUNTS: DemoAccountSeed[] = [DEMO_ADMIN, DEMO_ENGINEER, ...DEMO_CLIENTS];
+
+export const DEMO_UNASSIGNED_LEADS: DemoLeadSeed[] = [
+  {
+    nome: 'Marina Costa',
+    email: 'marina.costa.demo@fixable.com.br',
+    telefone: '(11) 99231-4410',
+    cidade: 'Guarulhos',
+    tipoImovel: 'apartamento',
+    descricao: 'Infiltração no teto do banheiro depois das chuvas.',
+    preferenciaContato: 'whatsapp',
+    plano: '6m',
+    horasAtras: 20,
+  },
+  {
+    nome: 'Roberto Almeida',
+    email: 'roberto.almeida.demo@fixable.com.br',
+    telefone: '(11) 98765-3301',
+    cidade: 'São Bernardo do Campo',
+    tipoImovel: 'empresa',
+    descricao: 'Manutenção preventiva da parte elétrica e hidráulica do escritório.',
+    preferenciaContato: 'telefone',
+    plano: null,
+    horasAtras: 3,
+  },
+];
+
+export const DEMO_APPLICATIONS: DemoApplicationSeed[] = [
+  {
+    nome: 'Beatriz Fonseca',
+    email: 'beatriz.fonseca.demo@fixable.com.br',
+    telefone: '(11) 97733-1290',
+    cidade: 'São Paulo',
+    area: 'engenheiro',
+    status: 'pendente',
+    diasAtras: 2,
+  },
+  {
+    nome: 'Marcos Ribeiro',
+    email: 'marcos.ribeiro.demo@fixable.com.br',
+    telefone: '(11) 94731-1067',
+    cidade: 'São Paulo',
+    area: 'outro',
+    status: 'pendente',
+    diasAtras: 1,
+  },
+  {
+    nome: 'Paulo Andrade',
+    email: 'paulo.andrade.demo@fixable.com.br',
+    telefone: '(11) 95128-4470',
+    cidade: 'São Paulo',
+    area: 'outro',
+    status: 'aprovada',
+    diasAtras: 20,
+  },
+  {
+    nome: 'Ricardo Nunes',
+    email: 'ricardo.nunes.demo@fixable.com.br',
+    telefone: '(11) 96402-8815',
+    cidade: 'São Bernardo do Campo',
+    area: 'outro',
+    status: 'recusada',
+    diasAtras: 12,
+  },
+];

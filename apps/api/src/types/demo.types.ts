@@ -1,5 +1,9 @@
 import type {
+  ApplicationArea,
+  ApplicationStatus,
   AppointmentStatus,
+  ContactPreference,
+  PlanId,
   PropertyType,
   Role,
   ServiceRequestStatus,
@@ -40,10 +44,37 @@ export type DemoAccountSeed = {
   descricao: string;
 };
 
+export type DemoDiagnosticSeed = {
+  descricao: string;
+  preferenciaContato: ContactPreference;
+  plano: PlanId | null;
+};
+
+export type DemoLeadSeed = DemoDiagnosticSeed & {
+  nome: string;
+  email: string;
+  telefone: string;
+  cidade: string;
+  tipoImovel: PropertyType;
+  horasAtras: number;
+};
+
+export type DemoApplicationSeed = {
+  nome: string;
+  email: string;
+  telefone: string;
+  cidade: string;
+  area: ApplicationArea;
+  status: ApplicationStatus;
+  diasAtras: number;
+};
+
 export type DemoClientSeed = DemoAccountSeed & {
   role: 'cliente';
+  telefone: string;
   clienteHaDias: number;
   imovel: { tipo: PropertyType; cidade: string; apelido: string };
+  diagnostico: DemoDiagnosticSeed;
   residencia: [chave: string, valor: string][];
   servicos: DemoServiceSeed[];
   solicitacoes: DemoRequestSeed[];
@@ -56,6 +87,8 @@ export type DemoSeedSummary = {
   servicos: number;
   solicitacoes: number;
   agendamentos: number;
+  leads: number;
+  candidaturas: number;
 };
 
 export type DemoConfig = Pick<Config, 'DEMO_MODE'>;

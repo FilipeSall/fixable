@@ -18,7 +18,8 @@ async function seed(db: Db, config: DemoConfig): Promise<void> {
   const resumo = await seedDemo(db, config);
   console.log(
     `Demonstração pronta: ${resumo.clientes} clientes, ${resumo.servicos} serviços, ` +
-      `${resumo.solicitacoes} solicitações e ${resumo.agendamentos} agendamentos.`,
+      `${resumo.solicitacoes} solicitações, ${resumo.agendamentos} agendamentos, ` +
+      `${resumo.leads} leads e ${resumo.candidaturas} candidaturas.`,
   );
   for (const account of DEMO_ACCOUNTS) console.log(`  ${account.role.padEnd(10)} ${account.email}`);
   console.log(`Senha de todas as contas: ${DEMO_SENHA}`);
@@ -34,7 +35,7 @@ async function main(): Promise<void> {
     close = connection.close;
     if (remove) {
       const { usuarios } = await removeDemo(connection.db);
-      console.log(`Demonstração removida: ${usuarios} contas apagadas com os dados delas.`);
+      console.log(`Demonstração removida: ${usuarios} contas apagadas com os dados, leads e candidaturas demo.`);
     } else {
       await seed(connection.db, config);
     }

@@ -4,6 +4,7 @@ import { applications, users } from '../models/index.ts';
 import type { PlatformMailDeps } from '../types/platform.types.ts';
 import type { Tx } from '../types/db.types.ts';
 import { AppError } from '../utils/app-error.ts';
+import { isDemoEmail } from '../utils/demo-email.ts';
 import { notFound } from './access-policy.service.ts';
 import { applicationColumns, toAdminApplication } from './admin.service.ts';
 import { sendInvite } from './invite.service.ts';
@@ -42,7 +43,7 @@ async function setApplicationStatus(
   return toAdminApplication(updated!);
 }
 
-/** Aprova a candidatura pendente criando a conta convidada do papel da área e enviando o convite, numa transação. */
+/** Aprova a candidatura pendente, cria a conta convidada (demo se o e-mail for demo) e envia o convite. */
 export async function approveApplication(
   { db, config }: PlatformMailDeps,
   applicationId: string,
@@ -58,6 +59,7 @@ export async function approveApplication(
         email: application.email.trim().toLowerCase(),
         telefone: application.telefone,
         cidade: application.cidade,
+        isDemo: isDemoEmail(application.email),
       })
       .onConflictDoNothing({ target: users.email })
       .returning({ id: users.id });

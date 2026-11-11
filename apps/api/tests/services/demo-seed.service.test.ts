@@ -2,8 +2,10 @@ import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { count, eq, inArray } from 'drizzle-orm';
 import { DEMO_SENHA } from '@fixable/shared';
 import {
+  applications,
   appointments,
   clients,
+  diagnosticLeads,
   floors,
   properties,
   propertyAttributes,
@@ -48,6 +50,8 @@ async function tableCounts(db: Db) {
     services,
     serviceRequests,
     appointments,
+    diagnosticLeads,
+    applications,
   };
   const entries = await Promise.all(
     Object.entries(tables).map(async ([name, table]) => {
@@ -84,7 +88,15 @@ describe('seedDemo', () => {
 
   it('cria as cinco contas demo ativas, com a senha conhecida, e os três clientes do Rafael', async () => {
     const summary = await seedDemo(ctx.db, ON, NOW);
-    expect(summary).toEqual({ usuarios: 5, clientes: 3, servicos: 8, solicitacoes: 7, agendamentos: 8 });
+    expect(summary).toEqual({
+      usuarios: 5,
+      clientes: 3,
+      servicos: 8,
+      solicitacoes: 7,
+      agendamentos: 8,
+      leads: 5,
+      candidaturas: 4,
+    });
 
     const contas = await ctx.db
       .select({ email: users.email, role: users.role, status: users.status, isDemo: users.isDemo })
