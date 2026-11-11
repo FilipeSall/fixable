@@ -1,4 +1,4 @@
-import { QueryCache, QueryClient } from '@tanstack/react-query';
+import { MutationCache, QueryCache, QueryClient } from '@tanstack/react-query';
 import { ApiRequestError } from './api.ts';
 import { ME_KEY } from './features/auth/me-key.ts';
 
@@ -22,19 +22,33 @@ function retryUpTo(maxRetries: number): (failureCount: number, error: unknown) =
   };
 }
 
-/** Diz se a falha de uma consulta que não é a da sessão indica que a sessão caiu (401). */
-function lostSession(error: unknown, queryKey: readonly unknown[]): boolean {
-  return error instanceof ApiRequestError && error.status === HTTP_UNAUTHORIZED && queryKey[0] !== ME_KEY[0];
+/** Diz se a falha veio de uma resposta 401 da API. */
+function isUnauthorized(error: unknown): boolean {
+  return error instanceof ApiRequestError && error.status === HTTP_UNAUTHORIZED;
 }
 
-/** Cria o cliente do React Query com a política de repetição do app, uma só repetição para a sessão e nova consulta da sessão a cada 401. */
+/** Diz se a falha de uma consulta que não é a da sessão indica que a sessão caiu (401). */
+function lostSession(error: unknown, queryKey: readonly unknown[]): boolean {
+  return isUnauthorized(error) && queryKey[0] !== ME_KEY[0];
+}
+
+/** Cria o cliente do React Query com a política de repetição do app e nova consulta da sessão a cada 401, em consultas e gravações. */
 export function createQueryClient(): QueryClient {
   const queryCache = new QueryCache({
     onError: (error, query) => {
       if (lostSession(error, query.queryKey)) void client.invalidateQueries({ queryKey: ME_KEY });
     },
   });
-  const client = new QueryClient({ queryCache, defaultOptions: { queries: { retry: retryUpTo(MAX_RETRIES) } } });
+  const mutationCache = new MutationCache({
+    onError: (error) => {
+      if (isUnauthorized(error) && client.getQueryData(ME_KEY)) void client.invalidateQueries({ queryKey: ME_KEY });
+    },
+  });
+  const client = new QueryClient({
+    queryCache,
+    mutationCache,
+    defaultOptions: { queries: { retry: retryUpTo(MAX_RETRIES) } },
+  });
   client.setQueryDefaults(ME_KEY, { retry: retryUpTo(ME_MAX_RETRIES) });
   return client;
 }

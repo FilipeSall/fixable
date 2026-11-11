@@ -46,4 +46,30 @@ describe('createQueryClient', () => {
 
     expect(queryClient.getQueryState(ME_KEY)?.isInvalidated).toBe(false);
   });
+
+  it('um 401 numa gravação com sessão ativa faz a sessão ser consultada de novo', async () => {
+    const queryClient = createQueryClient();
+    queryClient.setQueryData(ME_KEY, { id: 'u1' });
+
+    await queryClient
+      .getMutationCache()
+      .build(queryClient, { mutationFn: () => Promise.reject(unauthorized) })
+      .execute(undefined)
+      .catch(() => undefined);
+
+    expect(queryClient.getQueryState(ME_KEY)?.isInvalidated).toBe(true);
+  });
+
+  it('um 401 numa gravação sem sessão, como o login com senha errada, não mexe na sessão', async () => {
+    const queryClient = createQueryClient();
+    queryClient.setQueryData(ME_KEY, null);
+
+    await queryClient
+      .getMutationCache()
+      .build(queryClient, { mutationFn: () => Promise.reject(unauthorized) })
+      .execute(undefined)
+      .catch(() => undefined);
+
+    expect(queryClient.getQueryState(ME_KEY)?.isInvalidated).toBe(false);
+  });
 });
