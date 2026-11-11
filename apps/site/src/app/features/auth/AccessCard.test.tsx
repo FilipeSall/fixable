@@ -1,13 +1,10 @@
-import { API, type DemoAccount, type Me } from '@fixable/shared';
+import { API, type DemoAccount } from '@fixable/shared';
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiRequestError } from '../../api.ts';
-import { AppShell } from '../../shared/components/AppShell.tsx';
 import { LoginPage } from './LoginPage.tsx';
-import { RequireAuth } from './RequireAuth.tsx';
-import { ana, mockedFetch, renderApp, unauthenticated } from './test-utils.tsx';
+import { mockedFetch, renderApp, unauthenticated } from './test-utils.tsx';
 
 vi.mock('../../api.ts', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../api.ts')>()),
@@ -19,17 +16,12 @@ const contas: DemoAccount[] = [
   { nome: 'Ana Souza', email: 'ana.demo@fixable.com.br', role: 'cliente', descricao: 'Sobrado em Santo André' },
 ];
 
-function stub(demo: DemoAccount[] | null | 'pendente', me: Me | null = null) {
-  let current = me;
+function stub(demo: DemoAccount[] | null | 'pendente') {
   mockedFetch.mockImplementation((path: string) => {
-    if (path === API.me) return current ? Promise.resolve(current) : Promise.reject(unauthenticated());
+    if (path === API.me) return Promise.reject(unauthenticated());
     if (path === API.demoAccounts) {
       if (demo === 'pendente') return new Promise(() => undefined);
       return demo ? Promise.resolve(demo) : Promise.reject(new ApiRequestError(404, 'not_found', 'Recurso não encontrado.'));
-    }
-    if (path === API.logout) {
-      current = null;
-      return Promise.resolve(undefined);
     }
     return Promise.reject(new Error(`inesperado: ${path}`));
   });
@@ -69,23 +61,5 @@ describe('tela de login', () => {
     expect(await screen.findByRole('heading', { name: 'Como ter acesso' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Solicitar diagnóstico' })).toHaveAttribute('href', '/#solicitar');
     expect(screen.queryByRole('heading', { name: 'Contas de demonstração' })).not.toBeInTheDocument();
-  });
-
-  it('Sair leva exatamente a /login, sem next', async () => {
-    stub(contas, ana);
-    renderApp(
-      <Routes>
-        <Route element={<RequireAuth roles={['cliente']} />}>
-          <Route element={<AppShell />}>
-            <Route path="/cliente" element={<h1>Painel</h1>} />
-          </Route>
-        </Route>
-        <Route path="/login" element={<p>tela de login</p>} />
-      </Routes>,
-      '/cliente',
-    );
-    await userEvent.setup().click(await screen.findByRole('button', { name: 'Sair' }));
-    expect(await screen.findByText('tela de login')).toBeInTheDocument();
-    expect(screen.getByTestId('location')).toHaveTextContent(/^\/login$/);
   });
 });

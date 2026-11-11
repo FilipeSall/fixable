@@ -37,6 +37,7 @@ export function AuthProvider({ children }: Readonly<AuthProviderProps>) {
 
   useEffect(() => {
     if (data === undefined) return;
+    if (data) loggedOutRef.current = false;
     const identity = data?.id ?? null;
     const previous = identityRef.current;
     identityRef.current = identity;

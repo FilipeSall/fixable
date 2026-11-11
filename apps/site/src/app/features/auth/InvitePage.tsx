@@ -16,24 +16,24 @@ export function InvitePage() {
 
   return (
     <AuthLayout>
-        <h1 className="app-h">Crie sua senha</h1>
-        <TokenGate purpose="convite">
-          {(token, info) => {
-            /** Cria a senha com o token do convite, limpa o link da URL, guarda o usuário e vai para a página do papel. */
-            async function accept(senha: string) {
-              const me = await apiFetch<Me>(API.acceptInvite, { method: 'POST', body: { token, senha } });
-              clearTokenFromUrl();
-              await setMe(me);
-              await navigate(homeFor(me.role), { replace: true });
-            }
-            return (
-              <>
-                <p className="muted">Olá, {info.nome}. Defina uma senha para acessar a Fixable.</p>
-                <SetPasswordForm submitLabel="Criar senha" busyLabel="Salvando..." onSubmit={accept} />
-              </>
-            );
-          }}
-        </TokenGate>
+      <h1 className="app-h">Crie sua senha</h1>
+      <TokenGate purpose="convite">
+        {(token, info) => {
+          /** Cria a senha com o token do convite, limpa o link da URL, guarda o usuário e vai para a página do papel. */
+          async function accept(senha: string) {
+            const me = await apiFetch<Me>(API.acceptInvite, { method: 'POST', body: { token, senha } });
+            clearTokenFromUrl();
+            await setMe(me);
+            await navigate(homeFor(me.role), { replace: true });
+          }
+          return (
+            <>
+              <p className="muted">Olá, {info.nome}. Defina uma senha para acessar a Fixable.</p>
+              <SetPasswordForm submitLabel="Criar senha" busyLabel="Salvando..." onSubmit={accept} />
+            </>
+          );
+        }}
+      </TokenGate>
     </AuthLayout>
   );
 }

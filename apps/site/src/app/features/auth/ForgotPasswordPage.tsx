@@ -45,34 +45,34 @@ export function ForgotPasswordPage() {
 
   return (
     <AuthLayout>
-        <h1 className="app-h">Esqueci minha senha</h1>
-        {sent ? (
-          <p role="status">{CONFIRMATION}</p>
-        ) : (
-          <form className="fx-form" noValidate onSubmit={handleSubmit}>
-            <Field
-              id="f-email"
-              label="E-mail"
-              type="email"
-              autoComplete="username"
-              placeholder="voce@email.com"
-              value={email}
-              onChange={setEmail}
-              error={errors.email}
-            />
-            {formError ? (
-              <p className="err" role="alert">
-                {formError}
-              </p>
-            ) : null}
-            <button type="submit" className="btn btn-primary btn-block" disabled={submitting}>
-              {submitting ? 'Enviando...' : 'Enviar link'}
-            </button>
-          </form>
-        )}
-        <p className="auth-switch">
-          <Link to="/login">Voltar para o login</Link>
-        </p>
+      <h1 className="app-h">Esqueci minha senha</h1>
+      {sent ? (
+        <p role="status">{CONFIRMATION}</p>
+      ) : (
+        <form className="fx-form" noValidate onSubmit={handleSubmit}>
+          <Field
+            id="f-email"
+            label="E-mail"
+            type="email"
+            autoComplete="username"
+            placeholder="voce@email.com"
+            value={email}
+            onChange={setEmail}
+            error={errors.email}
+          />
+          {formError ? (
+            <p className="err" role="alert">
+              {formError}
+            </p>
+          ) : null}
+          <button type="submit" className="btn btn-primary btn-block" disabled={submitting}>
+            {submitting ? 'Enviando...' : 'Enviar link'}
+          </button>
+        </form>
+      )}
+      <p className="auth-switch">
+        <Link to="/login">Voltar para o login</Link>
+      </p>
     </AuthLayout>
   );
 }

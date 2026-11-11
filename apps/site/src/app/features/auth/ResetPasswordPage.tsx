@@ -21,19 +21,19 @@ export function ResetPasswordPage() {
 
   return (
     <AuthLayout>
-        <h1 className="app-h">Redefinir senha</h1>
-        <TokenGate purpose="redefinicao">
-          {(token) => {
-            /** Redefine a senha com o token, limpa o link da URL, encerra a sessão local e leva ao login com aviso. */
-            async function reset(senha: string) {
-              await apiFetch<void>(API.reset, { method: 'POST', body: { token, senha } });
-              clearTokenFromUrl();
-              await setMe(null);
-              setPasswordReset(true);
-            }
-            return <SetPasswordForm submitLabel="Redefinir senha" busyLabel="Salvando..." onSubmit={reset} />;
-          }}
-        </TokenGate>
+      <h1 className="app-h">Redefinir senha</h1>
+      <TokenGate purpose="redefinicao">
+        {(token) => {
+          /** Redefine a senha com o token, limpa o link da URL, encerra a sessão local e leva ao login com aviso. */
+          async function reset(senha: string) {
+            await apiFetch<void>(API.reset, { method: 'POST', body: { token, senha } });
+            clearTokenFromUrl();
+            await setMe(null);
+            setPasswordReset(true);
+          }
+          return <SetPasswordForm submitLabel="Redefinir senha" busyLabel="Salvando..." onSubmit={reset} />;
+        }}
+      </TokenGate>
     </AuthLayout>
   );
 }

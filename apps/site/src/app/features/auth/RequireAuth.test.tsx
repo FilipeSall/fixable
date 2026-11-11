@@ -1,9 +1,12 @@
-import { API } from '@fixable/shared';
+import { API, type Me } from '@fixable/shared';
+import { useQueryClient } from '@tanstack/react-query';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Route, Routes } from 'react-router';
+import { Link, Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiRequestError } from '../../api.ts';
+import { AppShell } from '../../shared/components/AppShell.tsx';
+import { ME_KEY } from './me-key.ts';
 import { RequireAuth } from './RequireAuth.tsx';
 import { RootRedirect } from './RootRedirect.tsx';
 import { ana, mockedFetch, renderApp, unauthenticated } from './test-utils.tsx';
@@ -86,5 +89,84 @@ describe('RequireAuth', () => {
     renderGuarded('/');
     expect(await screen.findByRole('alert')).toHaveTextContent('Não foi possível verificar sua sessão.');
     expect(screen.getByTestId('location').textContent).toBe('/');
+  });
+});
+
+/** Botão de teste que reconsulta a sessão, como o React Query faz ao voltar o foco para a janela. */
+function SessionRefetch() {
+  const queryClient = useQueryClient();
+  return (
+    <button type="button" onClick={() => void queryClient.invalidateQueries({ queryKey: ME_KEY })}>
+      Reconsultar sessão
+    </button>
+  );
+}
+
+function renderShell() {
+  return renderApp(
+    <>
+      <Routes>
+        <Route element={<RequireAuth roles={['cliente']} />}>
+          <Route element={<AppShell />}>
+            <Route path="/cliente" element={<h1>Painel</h1>} />
+          </Route>
+        </Route>
+        <Route
+          path="/login"
+          element={
+            <>
+              <p>tela de login</p>
+              <Link to="/cliente">Voltar ao painel</Link>
+            </>
+          }
+        />
+      </Routes>
+      <SessionRefetch />
+    </>,
+    '/cliente',
+  );
+}
+
+function stubSession(initial: Me | null) {
+  const session = { current: initial };
+  mockedFetch.mockImplementation((path: string) => {
+    if (path === API.me) return session.current ? Promise.resolve(session.current) : Promise.reject(unauthenticated());
+    if (path === API.logout) {
+      session.current = null;
+      return Promise.resolve(undefined);
+    }
+    return Promise.reject(new Error(`inesperado: ${path}`));
+  });
+  return session;
+}
+
+describe('saída da sessão', () => {
+  beforeEach(() => {
+    mockedFetch.mockReset();
+  });
+
+  it('Sair leva exatamente a /login, sem next', async () => {
+    stubSession(ana);
+    renderShell();
+    await userEvent.setup().click(await screen.findByRole('button', { name: 'Sair' }));
+    expect(await screen.findByText('tela de login')).toBeInTheDocument();
+    expect(screen.getByTestId('location')).toHaveTextContent(/^\/login$/);
+  });
+
+  it('depois de Sair, uma sessão que volta pela reconsulta e expira de novo leva ao login com next', async () => {
+    const session = stubSession(ana);
+    renderShell();
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: 'Sair' }));
+    expect(await screen.findByText('tela de login')).toBeInTheDocument();
+
+    session.current = ana;
+    await user.click(screen.getByRole('button', { name: 'Reconsultar sessão' }));
+    await user.click(screen.getByRole('link', { name: 'Voltar ao painel' }));
+    expect(await screen.findByRole('heading', { name: 'Painel' })).toBeInTheDocument();
+
+    session.current = null;
+    await user.click(screen.getByRole('button', { name: 'Reconsultar sessão' }));
+    await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('/login?next=%2Fcliente'));
   });
 });

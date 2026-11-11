@@ -64,45 +64,45 @@ export function LoginPage() {
 
   return (
     <AuthLayout aside={<AccessCard onPick={pickDemo} />}>
-        <h1 className="app-h">Entrar na plataforma</h1>
-        <p className="app-sub">
-          Cada perfil abre um ambiente diferente: o cliente acompanha a própria casa, o engenheiro administra clientes e
-          profissionais, e o profissional parceiro executa e registra os serviços.
-        </p>
-        {notice ? <p role="status">{notice}</p> : null}
-        <form className="fx-form" noValidate onSubmit={handleSubmit}>
-          <Field
-            id="l-email"
-            label="E-mail"
-            type="email"
-            autoComplete="username"
-            placeholder="voce@email.com"
-            value={email}
-            onChange={setEmail}
-            error={errors.email}
-          />
-          <Field
-            id="l-senha"
-            label="Senha"
-            type="password"
-            autoComplete="current-password"
-            placeholder="Sua senha"
-            value={senha}
-            onChange={setSenha}
-            error={errors.senha}
-          />
-          {formError ? (
-            <p className="err" role="alert">
-              {formError}
-            </p>
-          ) : null}
-          <button ref={submitRef} type="submit" className="btn btn-primary btn-block" disabled={submitting}>
-            {submitting ? 'Entrando...' : 'Entrar'}
-          </button>
-        </form>
-        <p className="auth-switch">
-          <Link to="/esqueci-senha">Esqueci minha senha</Link>
-        </p>
+      <h1 className="app-h">Entrar na plataforma</h1>
+      <p className="app-sub">
+        Cada perfil abre um ambiente diferente: o cliente acompanha a própria casa, o engenheiro administra clientes e
+        profissionais, e o profissional parceiro executa e registra os serviços.
+      </p>
+      {notice ? <p role="status">{notice}</p> : null}
+      <form className="fx-form" noValidate onSubmit={handleSubmit}>
+        <Field
+          id="l-email"
+          label="E-mail"
+          type="email"
+          autoComplete="username"
+          placeholder="voce@email.com"
+          value={email}
+          onChange={setEmail}
+          error={errors.email}
+        />
+        <Field
+          id="l-senha"
+          label="Senha"
+          type="password"
+          autoComplete="current-password"
+          placeholder="Sua senha"
+          value={senha}
+          onChange={setSenha}
+          error={errors.senha}
+        />
+        {formError ? (
+          <p className="err" role="alert">
+            {formError}
+          </p>
+        ) : null}
+        <button ref={submitRef} type="submit" className="btn btn-primary btn-block" disabled={submitting}>
+          {submitting ? 'Entrando...' : 'Entrar'}
+        </button>
+      </form>
+      <p className="auth-switch">
+        <Link to="/esqueci-senha">Esqueci minha senha</Link>
+      </p>
     </AuthLayout>
   );
 }
